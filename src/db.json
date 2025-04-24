@@ -1,0 +1,264 @@
+{
+  "categories": [
+    { "id": 1, "name": "Fashion", "icon": "bx-closet", "path": "/fashion" },
+    { "id": 2, "name": "Electronics", "icon": "bx-chip", "path": "/electronics" },
+    { "id": 3, "name": "Motors", "icon": "bx-car", "path": "/motors" },
+    { "id": 4, "name": "Collectibles", "icon": "bx-collection", "path": "/collectibles" },
+    { "id": 5, "name": "Sports", "icon": "bx-football", "path": "/sports" },
+    { "id": 6, "name": "Health & Beauty", "icon": "bx-heart-circle", "path": "/health-beauty" },
+    { "id": 7, "name": "Home & Garden", "icon": "bx-home-heart", "path": "/home-garden" },
+    { "id": 8, "name": "Deals", "icon": "bx-bolt-circle", "path": "/deals" },
+    { "id": 9, "name": "Local", "icon": "bx-map", "path": "/local" },
+    { "id": 10, "name": "Selling", "icon": "bx-camera", "path": "/sell" }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "Smartphone X",
+      "price": 699,
+      "rating": 4.8,
+      "image": "/assets/images/product1.jpg",
+      "categoryId": 2,
+      "description": "A cutting-edge smartphone with 5G support and a stunning display.",
+      "stock": 50,
+      "sellerId": 1,
+      "reviews": [
+        { "id": 1, "userId": 1, "rating": 5, "comment": "Amazing phone!", "date": "2025-04-20" },
+        { "id": 2, "userId": 2, "rating": 4.5, "comment": "Great value for money.", "date": "2025-04-21" }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Laptop Pro",
+      "price": 1299,
+      "rating": 4.7,
+      "image": "/assets/images/product2.jpg",
+      "categoryId": 2,
+      "description": "High-performance laptop for professionals.",
+      "stock": 30,
+      "sellerId": 1,
+      "reviews": [
+        { "id": 3, "userId": 3, "rating": 4.8, "comment": "Perfect for work!", "date": "2025-04-22" }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Wireless Headphones",
+      "price": 199,
+      "rating": 4.6,
+      "image": "/assets/images/product3.jpg",
+      "categoryId": 2,
+      "description": "Noise-canceling headphones with long battery life.",
+      "stock": 100,
+      "sellerId": 2,
+      "reviews": []
+    },
+    {
+      "id": 4,
+      "name": "Smart Watch",
+      "price": 299,
+      "rating": 4.5,
+      "image": "/assets/images/product4.jpg",
+      "categoryId": 2,
+      "description": "Track your fitness with this stylish smart watch.",
+      "stock": 80,
+      "sellerId": 2,
+      "reviews": []
+    },
+    {
+      "id": 5,
+      "name": "Gaming Console",
+      "price": 499,
+      "rating": 4.9,
+      "image": "/assets/images/product5.jpg",
+      "categoryId": 2,
+      "description": "Next-gen gaming console for immersive gameplay.",
+      "stock": 20,
+      "sellerId": 1,
+      "reviews": []
+    },
+    {
+      "id": 6,
+      "name": "Designer Jacket",
+      "price": 149,
+      "rating": 4.4,
+      "image": "/assets/images/product6.jpg",
+      "categoryId": 1,
+      "description": "Stylish jacket for all seasons.",
+      "stock": 60,
+      "sellerId": 3,
+      "reviews": []
+    },
+    {
+      "id": 7,
+      "name": "Running Shoes",
+      "price": 89,
+      "rating": 4.3,
+      "image": "/assets/images/product7.jpg",
+      "categoryId": 5,
+      "description": "Lightweight running shoes for athletes.",
+      "stock": 90,
+      "sellerId": 4,
+      "reviews": []
+    },
+    {
+      "id": 8,
+      "name": "Car Accessory Kit",
+      "price": 59,
+      "rating": 4.2,
+      "image": "/assets/images/product8.jpg",
+      "categoryId": 3,
+      "description": "Essential accessories for your car.",
+      "stock": 40,
+      "sellerId": 2,
+      "reviews": []
+    },
+    {
+      "id": 9,
+      "name": "Vintage Collectible",
+      "price": 299,
+      "rating": 4.7,
+      "image": "/assets/images/product9.jpg",
+      "categoryId": 4,
+      "description": "Rare vintage item for collectors.",
+      "stock": 10,
+      "sellerId": 3,
+      "reviews": []
+    },
+    {
+      "id": 10,
+      "name": "Garden Tool Set",
+      "price": 79,
+      "rating": 4.5,
+      "image": "/assets/images/product10.jpg",
+      "categoryId": 7,
+      "description": "Complete set of tools for gardening.",
+      "stock": 70,
+      "sellerId": 4,
+      "reviews": []
+    }
+  ],
+  "deals": [
+    { "id": 1, "name": "50% Off Electronics", "image": "/assets/images/deal1.jpg" },
+    { "id": 2, "name": "Fashion Clearance", "image": "/assets/images/deal2.jpg" },
+    { "id": 3, "name": "Home Essentials", "image": "/assets/images/deal3.jpg" },
+    { "id": 4, "name": "Sports Gear Sale", "image": "/assets/images/deal4.jpg" }
+  ],
+  "stores": [
+    { "id": 1, "name": "TechTrend Innovations", "image": "/assets/images/store1.jpg" },
+    { "id": 2, "name": "Fashion Hub", "image": "/assets/images/store2.jpg" },
+    { "id": 3, "name": "Sports Emporium", "image": "/assets/images/store3.jpg" },
+    { "id": 4, "name": "Home Depot", "image": "/assets/images/store4.jpg" }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "email": "user1@example.com",
+      "password": "hashedpassword1",
+      "name": "John Doe",
+      "role": "buyer",
+      "address": "123 Main St, City, Country",
+      "createdAt": "2025-04-20"
+    },
+    {
+      "id": 2,
+      "email": "user2@example.com",
+      "password": "hashedpassword2",
+      "name": "Jane Smith",
+      "role": "buyer",
+      "address": "456 Oak St, City, Country",
+      "createdAt": "2025-04-21"
+    },
+    {
+      "id": 3,
+      "email": "seller1@example.com",
+      "password": "hashedpassword3",
+      "name": "TechTrend Seller",
+      "role": "seller",
+      "address": "789 Pine St, City, Country",
+      "createdAt": "2025-04-22"
+    },
+    {
+      "id": 4,
+      "email": "seller2@example.com",
+      "password": "hashedpassword4",
+      "name": "Fashion Hub Seller",
+      "role": "seller",
+      "address": "101 Elm St, City, Country",
+      "createdAt": "2025-04-23"
+    }
+  ],
+  "cart": [
+    {
+      "id": 1,
+      "userId": 1,
+      "items": [
+        { "productId": 1, "quantity": 2 },
+        { "productId": 3, "quantity": 1 }
+      ]
+    },
+    {
+      "id": 2,
+      "userId": 2,
+      "items": [
+        { "productId": 6, "quantity": 1 }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "id": 1,
+      "userId": 1,
+      "sellerId": 1,
+      "items": [
+        { "productId": 2, "quantity": 1, "price": 1299 }
+      ],
+      "total": 1299,
+      "status": "shipped",
+      "createdAt": "2025-04-22",
+      "shippingAddress": "123 Main St, City, Country"
+    },
+    {
+      "id": 2,
+      "userId": 2,
+      "sellerId": 3,
+      "items": [
+        { "productId": 6, "quantity": 2, "price": 149 }
+      ],
+      "total": 298,
+      "status": "processing",
+      "createdAt": "2025-04-23",
+      "shippingAddress": "456 Oak St, City, Country"
+    }
+  ],
+  "sellers": [
+    {
+      "id": 1,
+      "userId": 3,
+      "storeName": "TechTrend Innovations",
+      "description": "Leading tech products provider.",
+      "rating": 4.8
+    },
+    {
+      "id": 2,
+      "userId": 4,
+      "storeName": "Fashion Hub",
+      "description": "Trendy fashion for all.",
+      "rating": 4.5
+    },
+    {
+      "id": 3,
+      "userId": 4,
+      "storeName": "Sports Emporium",
+      "description": "Your sports gear destination.",
+      "rating": 4.6
+    },
+    {
+      "id": 4,
+      "userId": 4,
+      "storeName": "Home Depot",
+      "description": "Everything for your home.",
+      "rating": 4.7
+    }
+  ]
+}

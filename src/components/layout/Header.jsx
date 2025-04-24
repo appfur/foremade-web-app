@@ -41,7 +41,7 @@ const Header = () => {
             <Link to="/help" className="hover:text-blue-600 hidden lg:inline">
               Help & Contact
             </Link>
-            <div className="relative group lg:hidden">
+            <div className="relative group lg:hidden p-1">
               <button className="hover:text-blue-600 flex items-center">
                 More <i className="bx bx-chevron-down ml-1"></i>
               </button>
@@ -62,12 +62,6 @@ const Header = () => {
             <Link to="/ship-to" className="hover:text-blue-600">
               Ship to
             </Link>
-            <Link to="/sell" className="hover:text-blue-600">
-              Sell
-            </Link>
-            <Link to="/watchlist" className="hover:text-blue-600">
-              Watchlist
-            </Link>
             <div className="relative group">
               <button className="hover:text-blue-600 flex items-center">
                 My Foremade <i className="bx bx-chevron-down ml-1"></i>
@@ -87,10 +81,13 @@ const Header = () => {
                 </Link>
               </div>
             </div>
-            <i className="bx bx-bell text-gray-600"></i>
-            <Link to="/cart" className="flex items-center">
-              <i className="bx bx-cart-alt text-gray-600"></i>
+            <Link to="/sell" className="hover:text-blue-600">
+              Sell
             </Link>
+            <Link to="/watchlist" className="hover:text-blue-600">
+              Watchlist
+            </Link>
+            <i className="bx bx-bell text-lg text-gray-600"></i>
           </div>
         </div>
       </div>
@@ -173,11 +170,11 @@ const Header = () => {
             />
             <i className="bx bx-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-600 text-lg"></i>
           </div>
-          <button className="bg-blue-600 text-white p-2 rounded-r-md">
+          <button className="bg-blue-600 text-white p-1 rounded-r-md">
             <i className="bx bx-search text-xl"></i>
           </button>
         </div>
-        <div className="flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide p-2">
           {user ? (
             <Link
               to="/my-account"
