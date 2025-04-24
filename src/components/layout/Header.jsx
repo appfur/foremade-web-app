@@ -8,6 +8,11 @@ const Header = () => {
 
   return (
     <header className="bg-white">
+      {/* Status Bar (Mobile Only) */}
+      <div className="bg-black text-white text-xs p-1 flex justify-between sm:hidden">
+        <span>10:42 AM</span>
+        <span>🔋 100%</span>
+      </div>
 
       {/* Top Bar (Visible on Desktop and Tablet) */}
       <div className="hidden sm:block bg-white border-b border-gray-200 text-gray-600 py-2">
@@ -42,7 +47,7 @@ const Header = () => {
             <Link to="/help" className="hover:text-blue-600 hidden lg:inline">
               Help & Contact
             </Link>
-            {/* Show "More" dropdown only on tablet (sm to md) */}
+            {/* Show "More" dropdown only on tablet (sm to lg) */}
             <div className="relative group lg:hidden">
               <button className="hover:text-blue-600 flex items-center">
                 More <i className="bx bx-chevron-down ml-1"></i>
@@ -155,10 +160,10 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Category Links (Visible on Desktop and Tablet) */}
+      {/* Category Links (Visible on Desktop and Tablet, Centered) */}
       <div className="hidden sm:block border-t border-gray-200 py-2">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-gray-600">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 text-xs text-gray-600">
             <Link to="/foremade-live" className="hover:text-blue-600">
               Foremade Live
             </Link>
@@ -196,7 +201,7 @@ const Header = () => {
             <Link to="/sell" className="hover:text-blue-600 hidden lg:inline">
               Sell
             </Link>
-            {/* Show "More" dropdown only on tablet (sm to md) */}
+            {/* Show "More" dropdown only on tablet (sm to lg) */}
             <div className="relative group lg:hidden">
               <button className="hover:text-blue-600 flex items-center">
                 More <i className="bx bx-chevron-down ml-1"></i>
@@ -233,10 +238,10 @@ const Header = () => {
       <div
         className={`fixed inset-y-0 left-0 w-64 bg-white transform ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } transition-transform duration-300 sm:hidden z-50`}
+        } transition-transform duration-300 sm:hidden z-50 shadow-lg`}
       >
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-base font-bold">Menu</h2>
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+          <h2 className="text-base font-bold text-gray-800">Menu</h2>
           <button
             onClick={() => setIsSidebarOpen(false)}
             className="text-gray-600 focus:outline-none"
@@ -244,19 +249,19 @@ const Header = () => {
             <i className="bx bx-x text-2xl"></i>
           </button>
         </div>
-        <nav className="flex flex-col p-4 space-y-2 text-sm text-gray-600">
+        <nav className="flex flex-col p-4 space-y-3 text-sm text-gray-600">
           {user ? (
-            <p className="cursor-pointer">
+            <p className="cursor-pointer text-gray-800 font-medium">
               Hi, {user.email}!
             </p>
           ) : (
             <p className="cursor-pointer">
               Hi!{' '}
-              <Link to="/login" className="text-black underline">
+              <Link to="/login" className="text-blue-600 underline">
                 Sign in
               </Link>
-              |
-              <Link to="/register" className="text-black underline">
+              <span className="mx-1">|</span>
+              <Link to="/register" className="text-blue-600 underline">
                 Register
               </Link>
             </p>
@@ -276,7 +281,7 @@ const Header = () => {
           <Link to="/ship-to" className="hover:text-blue-600">
             Delivery Options
           </Link>
-          <Link to="/sell" className="text-black hover:text-blue-600">
+          <Link to="/sell" className="text-gray-800 hover:text-blue-600">
             Start Selling
           </Link>
           <Link to="/favorites" className="hover:text-blue-600">
@@ -285,13 +290,16 @@ const Header = () => {
           <Link to="/my-account" className="hover:text-blue-600">
             My Account
           </Link>
+          <Link to="/watchlist" className="hover:text-blue-600">
+            Watchlist
+          </Link>
           {user && (
             <button
               onClick={() => {
                 logout();
                 setIsSidebarOpen(false);
               }}
-              className="text-left hover:text-blue-600"
+              className="text-left text-gray-600 hover:text-blue-600"
             >
               Logout
             </button>
@@ -306,7 +314,7 @@ const Header = () => {
             <input
               type="text"
               placeholder="Search for anything"
-              className="w-full text-black border border-gray-300 rounded-full p-3 text-sm focus:outline-none"
+              className="w-full text-black border border-gray-300 rounded-full p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
             <i className="bx bx-camera absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600"></i>
           </div>
@@ -316,25 +324,25 @@ const Header = () => {
         <div className="flex items-center justify-start gap-2 m-2 overflow-x-auto hide-scrollbar">
           <Link
             to="/saved"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-heart mr-2"></i>Saved
           </Link>
           <Link
             to="/local"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-map mr-2"></i>Local
           </Link>
           <Link
             to="/fashion"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-closet mr-2"></i>Fashion
           </Link>
           <Link
             to="/motors"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-car mr-2"></i>Motors
           </Link>
