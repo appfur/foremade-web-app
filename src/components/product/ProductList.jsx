@@ -4,7 +4,7 @@ import ProductCard from '../home/ProductCard';
 import Spinner from '../common/Spinner';
 
 const ProductList = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState([]); // Ensure initial state is an array
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -12,9 +12,14 @@ const ProductList = () => {
     const fetchProducts = async () => {
       try {
         const response = await api.get('/products.php');
-        setProducts(response.data);
+        // Log response to debug
+        console.log('API response:', response.data);
+        // Ensure response.data is an array; fallback to empty array if not
+        setProducts(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
+        console.error('API error:', err);
         setError(err.response?.data?.error || 'Failed to load products');
+        setProducts([]); // Reset to empty array on error
       } finally {
         setLoading(false);
       }

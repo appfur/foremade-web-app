@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 
 const Carousel = () => {
   const slides = [
-    { image: '/assets/images/hero1.jpg', text: 'Shop the Latest Deals!' },
-    { image: '/assets/images/hero2.jpg', text: 'Discover Unique Finds!' },
+    { image: '/src/assets/images/hero1.jpg', text: 'Shop the Latest Deals!' },
+    { image: '/src/assets/images/hero2.jpg', text: 'Discover Unique Finds!' },
   ];
   const [current, setCurrent] = useState(0);
 
@@ -22,7 +22,7 @@ const Carousel = () => {
         className="w-full h-full object-cover"
       />
       <div className="absolute inset-0 flex items-center justify-start p-4 bg-black bg-opacity-30">
-        <h2 className="text-3xl text-white font-bold">{slides[current].text}</h2>
+        <h2 className="text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-bold">{slides[current].text}</h2>
       </div>
     </div>
   );
