@@ -3,15 +3,21 @@ import { useState, useEffect } from 'react';
 const Carousel = () => {
   const slides = [
     {
-      image: '/assets/images/hero1.jpg',
+      image: '/src/assets/images/hero1.jpg',
       text: 'Discovered Supports Tailored For You',
       description: 'Explore solutions for shipping, returns, and more.',
       button: 'Shop Now',
     },
     {
-      image: '/assets/images/hero2.jpg',
+      image: '/src/assets/images/hero2.jpg',
       text: 'Shop The Latest Deals',
       description: 'Find unique products at unbeatable prices.',
+      button: 'Shop Now',
+    },
+    {
+      image: '/src/assets/images/hero3.jpg',
+      text: 'Top Notch Findings.',
+      description: 'Quality and refinable products.',
       button: 'Shop Now',
     },
     
@@ -51,7 +57,7 @@ const Carousel = () => {
                 {slide.text}
               </h2>
               <p className="text-sm sm:text-xs mb-4">{slide.description}</p>
-              <button className="bg-white text-gray-800 px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 text-sm sm:text-xs">
+              <button className="bg-white border-none transition-all hover:text-white text-gray-800 px-8 py-3 rounded-full border border-gray-300 hover:bg-blue-300 text-sm sm:text-xs">
                 {slide.button}
               </button>
             </div>
