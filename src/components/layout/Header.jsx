@@ -321,7 +321,6 @@ const Header = () => {
           </div>
         </div>
       </div>
-
       {/* Sidebar (Mobile) */}
       <div
         className={`fixed inset-y-0 left-0 w-64 bg-white transform ${
