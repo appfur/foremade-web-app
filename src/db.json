@@ -17,7 +17,7 @@
         "name": "Smartphone X",
         "price": 699,
         "rating": 4.8,
-        "image": "/assets/images/product1.jpg",
+        "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe38c2b422f.webp",
         "categoryId": 2,
         "description": "A cutting-edge smartphone with 5G support and a stunning display.",
         "stock": 50,

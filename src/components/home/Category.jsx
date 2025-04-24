@@ -1,8 +1,8 @@
 const Categories = () => {
   return (
     <section className="container mx-auto px-4 py-8">
-      <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">Top Categories</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">Categories</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {/* Cut the Price Card */}
         <div className="sm:col-span-2 bg-[#E0F4FF] text-black rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center">
           <div className="flex-1">
@@ -45,7 +45,7 @@ const Categories = () => {
         </div>
 
         {/* Style Meets Function Card */}
-        <div className="bg-[#EDE9FE] text-black rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between">
+        <div className="bg-[#EDE9FE] text-black rounded-lg p-5 sm:p-6 flex sm:flex-row items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg md:text-xl font-bold mb-2">Style Meets Function</h3>
             <a
@@ -65,7 +65,7 @@ const Categories = () => {
         </div>
 
         {/* Capture the Magic Card */}
-        <div className="bg-[#FFE5E5] text-black rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between">
+        <div className="bg-[#FFE5E5] text-black rounded-lg p-5 sm:p-6 flex sm:flex-row items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg md:text-xl font-bold mb-2">Capture the Magic Around</h3>
             <a

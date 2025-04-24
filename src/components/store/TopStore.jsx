@@ -1,9 +1,30 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import db from '../../db.json';
+import SkeletonLoader from '../common/SkeletonLoader';
 
 const TopStores = () => {
   const scrollRef = useRef(null);
+  const [stores, setStores] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStores = () => {
+      try {
+        // Simulate a delay to show the skeleton loader
+        setTimeout(() => {
+          const storeData = Array.isArray(db.stores) ? db.stores : [];
+          setStores(storeData);
+          setLoading(false);
+        }, 3000); // 1-second delay
+      } catch (err) {
+        console.error('Error loading stores from db.json:', err);
+        setStores([]);
+        setLoading(false);
+      }
+    };
+    fetchStores();
+  }, []);
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -22,11 +43,33 @@ const TopStores = () => {
     return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  if (loading) {
+    return (
+      <section className="p-4 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">
+              Top Stores
+            </h2>
+            <div className="flex items-center gap-2">
+              <div className="h-5 bg-gray-200 rounded w-16"></div>
+              <div className="bg-gray-200 rounded-full p-1 h-8 w-8"></div>
+              <div className="bg-gray-200 rounded-full p-1 h-8 w-8"></div>
+            </div>
+          </div>
+          <SkeletonLoader count={4} />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="p-4 bg-white">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-gray-800">Top Stores</h2>
+          <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">
+            Top Stores
+          </h2>
           <div className="flex items-center gap-2">
             <Link to="/stores" className="text-blue-600 text-sm hover:underline">
               View All
@@ -49,7 +92,7 @@ const TopStores = () => {
           ref={scrollRef}
           className="flex gap-4 overflow-x-auto scrollbar-hide"
         >
-          {db.stores.map((store) => (
+          {stores.map((store) => (
             <Link
               key={store.id}
               to={`/store/${store.id}`}
