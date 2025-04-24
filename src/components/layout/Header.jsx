@@ -177,73 +177,73 @@ const Header = () => {
             <i className="bx bx-search text-xl"></i>
           </button>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide">
           {user ? (
             <Link
               to="/my-account"
-              className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+              className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
             >
               <i className="bx bx-user mr-2"></i>My Account
             </Link>
           ) : (
             <Link
               to="/login"
-              className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+              className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
             >
               <i className="bx bx-log-in mr-2"></i>Sign in
             </Link>
           )}
           <Link
             to="/fashion"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-closet mr-2"></i>Fashion
           </Link>
           <Link
             to="/sell"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-camera mr-2"></i>Selling
           </Link>
           <Link
             to="/local"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-map mr-2"></i>Local
           </Link>
           <Link
             to="/electronics"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-chip mr-2"></i>Electronics
           </Link>
           <Link
             to="/motors"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-car mr-2"></i>Motors
           </Link>
           <Link
             to="/collectibles"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-collection mr-2"></i>Collectibles
           </Link>
           <Link
             to="/sports"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-football mr-2"></i>Sports
           </Link>
           <Link
             to="/health-beauty"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-heart-circle mr-2"></i>Health & Beauty
           </Link>
           <Link
             to="/home-garden"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-home-heart mr-2"></i>Home & Garden
           </Link>
@@ -321,6 +321,7 @@ const Header = () => {
           </div>
         </div>
       </div>
+
       {/* Sidebar (Mobile) */}
       <div
         className={`fixed inset-y-0 left-0 w-64 bg-white transform ${
