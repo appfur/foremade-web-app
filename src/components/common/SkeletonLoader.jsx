@@ -96,7 +96,7 @@ const SkeletonLoader = ({ type = 'default', count = 1 }) => {
         );
 
       default:
-        // Used in TopStores - mimics a store card
+        // Used in TopStores - mimics a store cards
         return (
           <div className="w-80 sm:w-full h-40 bg-gray-200 rounded-lg animate-pulse">
             <div className="p-4">
@@ -111,6 +111,7 @@ const SkeletonLoader = ({ type = 'default', count = 1 }) => {
         );
     }
   };
+
 
   return (
     <div className={type === 'default' ? 'flex gap-4 overflow-x-auto' : ''}>
