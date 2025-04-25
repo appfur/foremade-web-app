@@ -5,10 +5,9 @@ const Category = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate a loading delay
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1500); // 1.5-second delay to match TopStores
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -16,10 +15,10 @@ const Category = () => {
   if (loading) {
     return (
       <section className="container mx-auto px-4 py-8">
-      <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">
-        Top Categories
-      </h2>        
-      <SkeletonLoader type="categories" />
+        <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">
+          Top Categories
+        </h2>
+        <SkeletonLoader type="categories" />
       </section>
     );
   }
@@ -29,7 +28,7 @@ const Category = () => {
       <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">Top Categories</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {/* Cut the Price Card */}
-        <div className="sm:col-span-2 bg-[#E0F4FF] text-black rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center">
+        <div className="sm:col-span-2 bg-[#E0F4FF] text-black rounded-lg p-4 sm:p-6 flex flex-co sm:flex-row  max-md:items-center tems-left justify-between">
           <div className="flex-1">
             <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">Cut the Price, Not the Features</h3>
             <p className="text-sm sm:text-xs mb-4">Get the latest phones at 20% off</p>
@@ -40,7 +39,7 @@ const Category = () => {
               Buy Now
             </a>
           </div>
-          <div className="flex-1 mt-4 sm:mt-0">
+          <div className="mt-4 sm:mt-0 sm:self-start">
             <img
               src="https://pngimg.com/uploads/iphone16/small/iphone16_PNG6.png"
               alt="Phone"
@@ -53,17 +52,17 @@ const Category = () => {
         <div className="max-md:hidden bg-[#D1FAE5] rounded-lg p-4 sm:p-6 flex flex-col justify-between">
           <div>
             <h3 className="text-base sm:text-lg md:text-xl font-bold text-teal-800 mb-2">Happy Club</h3>
-            <p className="text-sm sm:text-xs text-teal-800 mb-4">Collect coupons from stores and apply to get special discount</p>
+            <p className="text-sm sm:text-xs text-teal-800 mb-4">Collect coupons from stores and apply to get special discounts</p>
           </div>
           <div className="space-y-4">
             <div className="bg-white rounded-lg p-4">
               <p className="text-sm sm:text-xs font-semibold text-teal-800">10% OFF</p>
-              <p className="text-xs sm:text-[0.65rem] text-gray-600">For ALL SHOPS</p>
+              <p className="text-xs sm:text-[0.65rem] text-gray-600">For HYNOLYN</p>
               <p className="text-xs sm:text-[0.65rem] text-gray-600">CODE: 0va6ghmixg</p>
             </div>
             <div className="bg-white rounded-lg p-4">
               <p className="text-sm sm:text-xs font-semibold text-teal-800">30% OFF</p>
-              <p className="text-xs sm:text-[0.65rem] text-gray-600">For ALL SHOPS</p>
+              <p className="text-xs sm:text-[0.65rem] text-gray-600">For FOREMADE & Appfur</p>
               <p className="text-xs sm:text-[0.65rem] text-gray-600">CODE: h7ay6gi9T7</p>
             </div>
           </div>

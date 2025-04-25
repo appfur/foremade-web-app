@@ -291,21 +291,21 @@
   "stores": [
     {
       "id": 1,
-      "name": "TechTrend Innovations",
+      "name": "HYNOLYN HEALTH SERVICES",
       "image": "https://pngimg.com/uploads/iphone16/small/iphone16_PNG6.png",
       "productCount": 5,
       "rating": 4.8,
       "reviewCount": 0,
       "products": [
         { "id": 1, "image": "https://pngimg.com/uploads/iphone16/small/iphone16_PNG6.png", "price": 16500 },
-        { "id": 2, "image": "https://example.com/images/foremade-vitamin-c.jpg", "price": 16000 },
+        { "id": 2, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3a4b3a47d.webp", "price": 16000 },
         { "id": 3, "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3550315f2.webp", "price": 1048500 }
       ]
     },
     {
       "id": 2,
-      "name": "Fashion Hub",
-      "image": "/assets/images/store2.jpg",
+      "name": "Foremade",
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3a4b3a47d.webp",
       "productCount": 6,
       "rating": 4.5,
       "reviewCount": 0,
@@ -317,7 +317,7 @@
     },
     {
       "id": 3,
-      "name": "Sports Emporium",
+      "name": "HYNOLYN HEALTH SERVICES",
       "image": "/assets/images/store3.jpg",
       "productCount": 5,
       "rating": 4.6,
@@ -330,7 +330,7 @@
     },
     {
       "id": 4,
-      "name": "Home Depot",
+      "name": "Appfur",
       "image": "/assets/images/store4.jpg",
       "productCount": 6,
       "rating": 4.7,

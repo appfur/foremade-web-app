@@ -235,69 +235,46 @@ const Header = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 text-xs text-gray-600">
             <Link to="/foremade-live" className="hover:text-blue-600">
-              Foremade Live
+              Tablet & Phones
             </Link>
             <Link to="/saved" className="hover:text-blue-600">
-              Saved
-            </Link>
-            <Link to="/electronics" className="hover:text-blue-600">
-              Electronics
-            </Link>
-            <Link to="/motors" className="hover:text-blue-600">
-              Motors
-            </Link>
-            <Link to="/fashion" className="hover:text-blue-600">
-              Fashion
-            </Link>
-            <Link to="/collectibles" className="hover:text-blue-600 hidden lg:inline">
-              Collectibles and Art
-            </Link>
-            <Link to="/sports" className="hover:text-blue-600 hidden lg:inline">
-              Sports
-            </Link>
-            <Link to="/health-beauty" className="hover:text-blue-600 hidden lg:inline">
               Health & Beauty
             </Link>
-            <Link to="/industrial" className="hover:text-blue-600 hidden lg:inline">
-              Industrial Equipment
-            </Link>
-            <Link to="/home-garden" className="hover:text-blue-600 hidden lg:inline">
-              Home & Garden
-            </Link>
-            <Link to="/deals" className="hover:text-blue-600 hidden lg:inline">
-              Deals
-            </Link>
-            <Link to="/sell" className="hover:text-blue-600 hidden lg:inline">
-              Sell
-            </Link>
+            
+            {/* /////////////////// */}
             <div className="relative group lg:hidden">
               <button className="hover:text-blue-600 flex items-center">
                 More <i className="bx bx-chevron-down ml-1"></i>
               </button>
               <div className="absolute hidden group-hover:block bg-white border border-gray-200 py-2 mt-1 z-10 w-48 rounded-md shadow-lg">
                 <Link to="/collectibles" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Collectibles and Art
+                  Baby Products
                 </Link>
                 <Link to="/sports" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Sports
+                  Computer & Accessories
                 </Link>
                 <Link to="/health-beauty" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Health & Beauty
-                </Link>
-                <Link to="/industrial" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Industrial Equipment
-                </Link>
-                <Link to="/home-garden" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Home & Garden
-                </Link>
-                <Link to="/deals" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Deals
-                </Link>
-                <Link to="/sell" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Sell
+                  Game & Fun
                 </Link>
               </div>
             </div>
+
+            {/* ///////////////// */}
+            <Link to="/electronics" className="hover:text-blue-600">
+              Foremade Fashion
+            </Link>
+            <Link to="/motors" className="hover:text-blue-600">
+              Electronics
+            </Link>
+            <Link to="/health-beauty" className="hover:text-blue-600 hidden lg:inline">
+              Drinks & Categories
+            </Link>
+            <Link to="/industrial" className="hover:text-blue-600 hidden lg:inline">
+              Home & Kitchen
+            </Link>
+            <Link to="/home-garden" className="hover:text-blue-600 hidden lg:inline">
+              Smart Watches
+            </Link>
           </div>
         </div>
       </div>
