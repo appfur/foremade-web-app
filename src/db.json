@@ -292,12 +292,12 @@
     {
       "id": 1,
       "name": "TechTrend Innovations",
-      "image": "/assets/images/store1.jpg",
+      "image": "https://pngimg.com/uploads/iphone16/small/iphone16_PNG6.png",
       "productCount": 5,
       "rating": 4.8,
       "reviewCount": 0,
       "products": [
-        { "id": 1, "image": "https://example.com/images/colon-cleanser-tea.jpg", "price": 16500 },
+        { "id": 1, "image": "https://pngimg.com/uploads/iphone16/small/iphone16_PNG6.png", "price": 16500 },
         { "id": 2, "image": "https://example.com/images/foremade-vitamin-c.jpg", "price": 16000 },
         { "id": 3, "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3550315f2.webp", "price": 1048500 }
       ]

@@ -42,9 +42,9 @@ const Category = () => {
           </div>
           <div className="flex-1 mt-4 sm:mt-0">
             <img
-              src="/src/assets/images/iphone-mockup.png"
+              src="https://pngimg.com/uploads/iphone16/small/iphone16_PNG6.png"
               alt="Phone"
-              className="w-full h-auto"
+              className="w-20 h-40"
             />
           </div>
         </div>
@@ -82,7 +82,7 @@ const Category = () => {
           </div>
           <div className="mt-4 sm:mt-0">
             <img
-              src="/src/assets/images/laptop-mockup.png"
+              src="https://pngimg.com/uploads/laptop/small/laptop_PNG101763.png"
               alt="Laptop"
               className="w-24 sm:w-28 h-auto"
             />
@@ -102,7 +102,7 @@ const Category = () => {
           </div>
           <div className="mt-4 sm:mt-0">
             <img
-              src="/src/assets/images/camera-mockup.png"
+              src="https://pngimg.com/uploads/camera_lens/small/camera_lens_PNG4.png"
               alt="Camera"
               className="w-20 sm:w-24 h-auto"
             />
@@ -122,7 +122,7 @@ const Category = () => {
           </div>
           <div className="mt-4 sm:mt-0">
             <img
-              src="/src/assets/images/bottle-mockup-2.png"
+              src="https://pngimg.com/uploads/pills/small/pills_PNG16492.png"
               alt="Bottle"
               className="w-20 sm:w-24 h-auto"
             />
