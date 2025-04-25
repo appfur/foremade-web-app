@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Home from './pages/Home';
@@ -13,7 +12,6 @@ import Product from './pages/Product';
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
         <Header />
         <main className="min-h-screen">
           <Routes>
@@ -27,7 +25,6 @@ function App() {
           </Routes>
         </main>
         <Footer />
-      </AuthProvider>
     </BrowserRouter>
   );
 }
