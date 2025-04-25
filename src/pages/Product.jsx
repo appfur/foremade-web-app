@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import db from '../../db.json';
-import ProductCard from '../home/ProductCard';
-import SkeletonLoader from '../common/SkeletonLoader';
+import db from '../db.json';
+import ProductCard from '/src/components/home/ProductCard';
+import SkeletonLoader from '/src/components/common/SkeletonLoader';
 
 const Product = () => {
   const { id } = useParams(); // Get product ID from URL
@@ -140,7 +140,7 @@ const Product = () => {
           </div>
         </div>
         {/* Similar Products (Desktop: Sidebar, Mobile: Below) */}
-        <div className="w-full md:w-1/4">
+        <div className="w-full md:w-1/4 max-md:hidden">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
           <div className="flex flex-col gap-4 md:border-l md:pl-4">
             {similarProducts.length > 0 ? (
@@ -156,7 +156,7 @@ const Product = () => {
         </div>
       </div>
       {/* Similar Products for Mobile (Below Product Details) */}
-      <div className="md:hidden mt-6">
+      <div className="md:hidden lg:hidden xl:hidden mt-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
         <div className="grid grid-cols-2 gap-4">
           {similarProducts.length > 0 ? (
