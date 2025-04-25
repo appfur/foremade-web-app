@@ -14,7 +14,6 @@ const Home = () => {
       <RecommendedForYou />
       <SellerBanner />
       <BuyerBanner />
-      {/* <ProductList /> */}
     </div>
   );
 };

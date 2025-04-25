@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import SkeletonLoader from '../common/SkeletonLoader';
 
-const Categories = () => {
+const Category = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ const Categories = () => {
       <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">
         Top Categories
       </h2>        
-      <SkeletonLoader type="categories" />
+      {/* <SkeletonLoader type="categories" /> */}
       </section>
     );
   }
@@ -133,4 +133,4 @@ const Categories = () => {
   );
 };
 
-export default Categories;
+export default Category;

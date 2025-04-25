@@ -1,9 +1,7 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
 
 const Header = () => {
-  const { user, logout } = useContext(AuthContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
 
@@ -13,22 +11,16 @@ const Header = () => {
       <div className="hidden sm:block bg-white border-b border-gray-200 text-gray-600 py-2">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
-            {user ? (
-              <p className="cursor-pointer">
-                Hi, {user.email}!
-              </p>
-            ) : (
-              <p className="cursor-pointer">
-                Hi!{' '}
-                <Link to="/login" className="text-blue-500 underline">
-                  Sign in
-                </Link>{' '}
-                or{' '}
-                <Link to="/register" className="text-blue-500 underline">
-                  Register
-                </Link>
-              </p>
-            )}
+            <p className="cursor-pointer">
+              Hi!{' '}
+              <Link to="/login" className="text-blue-500 underline">
+                Sign in
+              </Link>{' '}
+              or{' '}
+              <Link to="/register" className="text-blue-500 underline">
+                Register
+              </Link>
+            </p>
             <Link to="/deals" className="hover:text-blue-600">
               Daily Deals
             </Link>
@@ -175,21 +167,12 @@ const Header = () => {
           </button>
         </div>
         <div className="flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide p-2">
-          {user ? (
-            <Link
-              to="/my-account"
-              className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-            >
-              <i className="bx bx-user mr-2"></i>My Account
-            </Link>
-          ) : (
-            <Link
-              to="/login"
-              className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-            >
-              <i className="bx bx-log-in mr-2"></i>Sign in
-            </Link>
-          )}
+          <Link
+            to="/login"
+            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+          >
+            <i className="bx bx-log-in mr-2"></i>Sign in
+          </Link>
           <Link
             to="/fashion"
             className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
@@ -335,26 +318,19 @@ const Header = () => {
           </button>
         </div>
         <nav className="flex flex-col p-4 space-y-2 text-sm text-gray-600">
-          {user ? (
-            <div className="flex items-center space-x-2 mb-4">
-              <i className="bx bx-user-circle text-2xl text-gray-600"></i>
-              <p className="text-gray-800 font-medium">{user.email}</p>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-2 mb-4">
-              <i className="bx bx-log-in-circle text-2xl text-gray-600"></i>
-              <p className="cursor-pointer">
-                Hi!{' '}
-                <Link to="/login" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
-                  Sign in
-                </Link>
-                <span className="mx-1">|</span>
-                <Link to="/register" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
-                  Register
-                </Link>
-              </p>
-            </div>
-          )}
+          <div className="flex items-center space-x-2 mb-4">
+            <i className="bx bx-log-in-circle text-2xl text-gray-600"></i>
+            <p className="cursor-pointer">
+              Hi!{' '}
+              <Link to="/login" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
+                Sign in
+              </Link>
+              <span className="mx-1">|</span>
+              <Link to="/register" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
+                Register
+              </Link>
+            </p>
+          </div>
           <Link to="/deals" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
             <i className="bx bx-bolt-circle text-lg"></i>
             <span>Hot Deals</span>
@@ -399,18 +375,6 @@ const Header = () => {
             <i className="bx bx-cog text-lg"></i>
             <span>Settings</span>
           </Link>
-          {user && (
-            <button
-              onClick={() => {
-                logout();
-                setIsSidebarOpen(false);
-              }}
-              className="flex items-center space-x-2 text-gray-600 hover:text-blue-600"
-            >
-              <i className="bx bx-log-out text-lg"></i>
-              <span>Logout</span>
-            </button>
-          )}
         </nav>
       </div>
 

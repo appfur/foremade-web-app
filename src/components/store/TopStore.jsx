@@ -56,7 +56,7 @@ const TopStores = () => {
               <div className="bg-gray-200 rounded-full p-1 h-8 w-8 sm:hidden"></div>
             </div>
           </div>
-          <SkeletonLoader count={4} />
+          {/* <SkeletonLoader count={4} /> */}
         </div>
       </section>
     );
