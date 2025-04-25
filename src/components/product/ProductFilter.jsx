@@ -197,7 +197,7 @@ const ProductFilter = ({ onFilterChange = () => {} }) => {
               onClick={() => { clearFilters(); toggleFilter(); }}
               className="w-full bg-blue-500 text-white text-sm py-2 rounded-lg hover:bg-blue-600 transition"
             >
-              Apply Filters
+              Clear Filters
             </button>
           </div>
         </div>
