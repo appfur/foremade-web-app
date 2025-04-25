@@ -7,6 +7,7 @@ import Products from './pages/Products';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
+import BestSelling from './components/product/BestSelling';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <main className="min-h-screen">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/bestSelling" element={<BestSelling />} />
             <Route path="/products" element={<Products />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
