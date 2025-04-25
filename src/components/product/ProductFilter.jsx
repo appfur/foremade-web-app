@@ -97,9 +97,9 @@ const ProductFilter = ({ onFilterChange = () => {} }) => {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="p-2">
       {/* Mobile Filter Dropdown Button */}
-      <div className="md:hidden mb-4">
+      <div className="md:hidden mb-2">
         <button
           onClick={toggleFilter}
           className="w-full bg-blue-500 text-white text-sm py-2 px-4 rounded-lg hover:bg-blue-600 transition flex items-center justify-center"
@@ -111,8 +111,8 @@ const ProductFilter = ({ onFilterChange = () => {} }) => {
 
       {/* Mobile Filter Dropdown */}
       {isFilterOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden flex items-center justify-center">
-          <div className="bg-white rounded-lg w-11/12 max-h-[80vh] overflow-y-auto p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden flex items-start justify-center pt-4">
+          <div className="bg-white rounded-lg w-11/12 max-h-[90vh] overflow-y-auto p-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-800">Filter & Sort</h2>
               <button onClick={toggleFilter} className="text-gray-600 hover:text-gray-800">
@@ -194,17 +194,17 @@ const ProductFilter = ({ onFilterChange = () => {} }) => {
             </div>
             {/* Clear Filters Button */}
             <button
-              onClick={clearFilters}
+              onClick={() => { clearFilters(); toggleFilter(); }}
               className="w-full bg-blue-500 text-white text-sm py-2 rounded-lg hover:bg-blue-600 transition"
             >
-              Clear Filters
+              Apply Filters
             </button>
           </div>
         </div>
       )}
 
       {/* Desktop Filter Panel */}
-      <div className="hidden md:block p-4 bg-white border border-gray-200 rounded-lg shadow-sm max-w-xs">
+      <div className="hidden md:block p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
         {/* Search by Name */}
         <div className="mb-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2">Search by Name</label>

@@ -1,3 +1,4 @@
+import BuyerBanner from '../components/home/BuyerBanner';
 import Carousel from '../components/home/Carousel';
 import Category from '../components/home/Category';
 import SellerBanner from '../components/home/SellerBanner';
@@ -12,6 +13,7 @@ const Home = () => {
       <Category />
       <RecommendedForYou />
       <SellerBanner />
+      <BuyerBanner />
       {/* <ProductList /> */}
     </div>
   );
