@@ -1,456 +1,456 @@
 {
-    "categories": [
-      { "id": 1, "name": "Fashion", "icon": "bx-closet", "path": "/fashion" },
-      { "id": 2, "name": "Electronics", "icon": "bx-chip", "path": "/electronics" },
-      { "id": 3, "name": "Motors", "icon": "bx-car", "path": "/motors" },
-      { "id": 4, "name": "Collectibles", "icon": "bx-collection", "path": "/collectibles" },
-      { "id": 5, "name": "Sports", "icon": "bx-football", "path": "/sports" },
-      { "id": 6, "name": "Health & Beauty", "icon": "bx-heart-circle", "path": "/health-beauty" },
-      { "id": 7, "name": "Home & Garden", "icon": "bx-home-heart", "path": "/home-garden" },
-      { "id": 8, "name": "Deals", "icon": "bx-bolt-circle", "path": "/deals" },
-      { "id": 9, "name": "Local", "icon": "bx-map", "path": "/local" },
-      { "id": 10, "name": "Selling", "icon": "bx-camera", "path": "/sell" }
-    ],
-"products": [
-  {
-    "id": 1,
-    "name": "Colon Cleanser Tea",
-    "price": 16500,
-    "rating": 5.0,
-    "image": "https://example.com/images/colon-cleanser-tea.jpg",
-    "categoryId": 6,
-    "description": "Natural tea for detox and colon health.",
-    "stock": 50,
-    "sellerId": 1,
-    "reviews": []
-  },
-  {
-    "id": 2,
-    "name": "Foremade Vitamin C",
-    "price": 16000,
-    "rating": 5.0,
-    "image": "https://example.com/images/foremade-vitamin-c.jpg",
-    "categoryId": 6,
-    "description": "Vitamin C supplement for immune support.",
-    "stock": 60,
-    "sellerId": 1,
-    "reviews": []
-  },
-  {
-    "id": 3,
-    "name": "Smartphone X",
-    "price": 1048500,
-    "rating": 4.8,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe38c2b422f.webp",
-    "categoryId": 2,
-    "description": "A cutting-edge smartphone with 5G support and a stunning display.",
-    "stock": 50,
-    "sellerId": 1,
-    "reviews": [
-      { "id": 1, "userId": 1, "rating": 5, "comment": "Amazing phone!", "date": "2025-04-20" },
-      { "id": 2, "userId": 2, "rating": 4.5, "comment": "Great value for money.", "date": "2025-04-21" }
-    ]
-  },
-  {
-    "id": 4,
-    "name": "Laptop Pro",
-    "price": 1948500,
-    "rating": 4.7,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3a4b3a47d.webp",
-    "categoryId": 2,
-    "description": "High-performance laptop for professionals.",
-    "stock": 30,
-    "sellerId": 1,
-    "reviews": [
-      { "id": 3, "userId": 3, "rating": 4.8, "comment": "Perfect for work!", "date": "2025-04-22" }
-    ]
-  },
-  {
-    "id": 5,
-    "name": "Wireless Headphones",
-    "price": 298500,
-    "rating": 4.6,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3c328521a.webp",
-    "categoryId": 2,
-    "description": "Noise-canceling headphones with long battery life.",
-    "stock": 100,
-    "sellerId": 2,
-    "reviews": []
-  },
-  {
-    "id": 6,
-    "name": "Smart Watch",
-    "price": 448500,
-    "rating": 4.5,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe378f6bdf7.webp",
-    "categoryId": 2,
-    "description": "Track your fitness with this stylish smart watch.",
-    "stock": 80,
-    "sellerId": 2,
-    "reviews": []
-  },
-  {
-    "id": 7,
-    "name": "Gaming Console",
-    "price": 748500,
-    "rating": 4.9,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe35401ae7c.webp",
-    "categoryId": 2,
-    "description": "Next-gen gaming console for immersive gameplay.",
-    "stock": 20,
-    "sellerId": 1,
-    "reviews": []
-  },
-  {
-    "id": 8,
-    "name": "Designer Jacket",
-    "price": 223500,
-    "rating": 4.4,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp",
-    "categoryId": 1,
-    "description": "Stylish jacket for all seasons.",
-    "stock": 60,
-    "sellerId": 3,
-    "reviews": []
-  },
-  {
-    "id": 9,
-    "name": "Running Shoes",
-    "price": 133500,
-    "rating": 4.3,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3897bc174.webp",
-    "categoryId": 5,
-    "description": "Lightweight running shoes for athletes.",
-    "stock": 90,
-    "sellerId": 4,
-    "reviews": []
-  },
-  {
-    "id": 10,
-    "name": "Car Accessory Kit",
-    "price": 88500,
-    "rating": 4.2,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3a207ba51.webp",
-    "categoryId": 3,
-    "description": "Essential accessories for your car.",
-    "stock": 40,
-    "sellerId": 2,
-    "reviews": []
-  },
-  {
-    "id": 11,
-    "name": "Vintage Collectible",
-    "price": 448500,
-    "rating": 4.7,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb37cec1288.webp",
-    "categoryId": 4,
-    "description": "Rare vintage item for collectors.",
-    "stock": 10,
-    "sellerId": 3,
-    "reviews": []
-  },
-  {
-    "id": 12,
-    "name": "Garden Tool Set",
-    "price": 118500,
-    "rating": 4.5,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp",
-    "categoryId": 7,
-    "description": "Complete set of tools for gardening.",
-    "stock": 70,
-    "sellerId": 4,
-    "reviews": []
-  },
-  {
-    "id": 13,
-    "name": "Luxury Scarf",
-    "price": 148500,
-    "rating": 4.6,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp",
-    "categoryId": 1,
-    "description": "Elegant scarf for winter fashion.",
-    "stock": 45,
-    "sellerId": 3,
-    "reviews": []
-  },
-  {
-    "id": 14,
-    "name": "Bluetooth Speaker",
-    "price": 193500,
-    "rating": 4.4,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3c328521a.webp",
-    "categoryId": 2,
-    "description": "Portable speaker with excellent sound quality.",
-    "stock": 60,
-    "sellerId": 2,
-    "reviews": []
-  },
-  {
-    "id": 15,
-    "name": "Skincare Set",
-    "price": 133500,
-    "rating": 4.8,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp",
-    "categoryId": 6,
-    "description": "Complete skincare routine for glowing skin.",
-    "stock": 50,
-    "sellerId": 4,
-    "reviews": []
-  },
-  {
-    "id": 16,
-    "name": "Yoga Mat",
-    "price": 58500,
-    "rating": 4.5,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3897bc174.webp",
-    "categoryId": 5,
-    "description": "Non-slip yoga mat for fitness enthusiasts.",
-    "stock": 80,
-    "sellerId": 4,
-    "reviews": []
-  },
-  {
-    "id": 17,
-    "name": "Motorcycle Helmet",
-    "price": 298500,
-    "rating": 4.7,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3a207ba51.webp",
-    "categoryId": 3,
-    "description": "Safety-first helmet for motorbike riders.",
-    "stock": 25,
-    "sellerId": 2,
-    "reviews": []
-  },
-  {
-    "id": 18,
-    "name": "Antique Coin Set",
-    "price": 748500,
-    "rating": 4.9,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb37cec1288.webp",
-    "categoryId": 4,
-    "description": "Rare coin collection for enthusiasts.",
-    "stock": 5,
-    "sellerId": 3,
-    "reviews": []
-  },
-  {
-    "id": 19,
-    "name": "Perfume Gift Set",
-    "price": 223500,
-    "rating": 4.6,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp",
-    "categoryId": 6,
-    "description": "Luxury fragrances for men and women.",
-    "stock": 35,
-    "sellerId": 4,
-    "reviews": []
-  },
-  {
-    "id": 20,
-    "name": "Denim Jeans",
-    "price": 118500,
-    "rating": 4.3,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp",
-    "categoryId": 1,
-    "description": "Classic denim jeans for casual wear.",
-    "stock": 70,
-    "sellerId": 3,
-    "reviews": []
-  },
-  {
-    "id": 21,
-    "name": "Indoor Plant Kit",
-    "price": 88500,
-    "rating": 4.4,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp",
-    "categoryId": 7,
-    "description": "Everything you need to start indoor gardening.",
-    "stock": 40,
-    "sellerId": 4,
-    "reviews": []
-  },
-  {
-    "id": 22,
-    "name": "Fitness Tracker",
-    "price": 148500,
-    "rating": 4.5,
-    "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe378f6bdf7.webp",
-    "categoryId": 2,
-    "description": "Track your steps and heart rate with ease.",
-    "stock": 65,
-    "sellerId": 2,
-    "reviews": []
-  }
-],
-    "deals": [
-      { "id": 1, "name": "50% Off Electronics", "image": "/assets/images/deal1.jpg" },
-      { "id": 2, "name": "Fashion Clearance", "image": "/assets/images/deal2.jpg" },
-      { "id": 3, "name": "Home Essentials", "image": "/assets/images/deal3.jpg" },
-      { "id": 4, "name": "Sports Gear Sale", "image": "/assets/images/deal4.jpg" }
-    ],
-    "stores": [
-      {
-        "id": 1,
-        "name": "HYNOLYN HEALTH SERVICES",
-        "image": "/assets/images/store1.jpg",
-        "productCount": 5,
-        "rating": 4.8,
-        "reviewCount": 0,
-        "products": [
-          { "id": 1, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe38c2b422f.webp", "price": 28000 },
-          { "id": 2, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3a4b3a47d.webp", "price": 32900 },
-          { "id": 5, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-12-67fa706257013.webp", "price": 24000 }
-        ]
-      },
-      {
-        "id": 2,
-        "name": "Foremade Products",
-        "image": "/assets/images/store2.jpg",
-        "productCount": 8,
-        "rating": 4.5,
-        "reviewCount": 0,
-        "products": [
-          { "id": 3, "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3897bc174.webp", "price": 65000 },
-          { "id": 4, "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp", "price": 45000 },
-          { "id": 6, "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3a207ba51.webp", "price": 500000 }
-        ]
-      },
-      {
-        "id": 3,
-        "name": "HYNOLYN HEALTH SERVICES",
-        "image": "/assets/images/store3.jpg",
-        "productCount": 5,
-        "rating": 4.6,
-        "reviewCount": 0,
-        "products": [
-          { "id": 1, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe35401ae7c.webp", "price": 28000 },
-          { "id": 2, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe378f6bdf7.webp", "price": 32900 },
-          { "id": 7, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp", "price": 24000 }
-        ]
-      },
-      {
-        "id": 4,
-        "name": "Appfur Store",
-        "image": "/assets/images/store4.jpg",
-        "productCount": 5,
-        "rating": 4.7,
-        "reviewCount": 0,
-        "products": [
-          { "id": 3, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb35d9ba8b2.webp", "price": 16600 },
-          { "id": 8, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe38c2b422f.webp", "price": 21000 },
-          { "id": 10, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3a4b3a47d.webp", "price": 32000 }
-        ]
-      }
-    ],
-    "users": [
-      {
-        "id": 1,
-        "email": "user1@example.com",
-        "password": "hashedpassword1",
-        "name": "John Doe",
-        "role": "buyer",
-        "address": "123 Main St, City, Country",
-        "createdAt": "2025-04-20"
-      },
-      {
-        "id": 2,
-        "email": "user2@example.com",
-        "password": "hashedpassword2",
-        "name": "Jane Smith",
-        "role": "buyer",
-        "address": "456 Oak St, City, Country",
-        "createdAt": "2025-04-21"
-      },
-      {
-        "id": 3,
-        "email": "seller1@example.com",
-        "password": "hashedpassword3",
-        "name": "TechTrend Seller",
-        "role": "seller",
-        "address": "789 Pine St, City, Country",
-        "createdAt": "2025-04-22"
-      },
-      {
-        "id": 4,
-        "email": "seller2@example.com",
-        "password": "hashedpassword4",
-        "name": "Fashion Hub Seller",
-        "role": "seller",
-        "address": "101 Elm St, City, Country",
-        "createdAt": "2025-04-23"
-      }
-    ],
-    "cart": [
-      {
-        "id": 1,
-        "userId": 1,
-        "items": [
-          { "productId": 1, "quantity": 2 },
-          { "productId": 3, "quantity": 1 }
-        ]
-      },
-      {
-        "id": 2,
-        "userId": 2,
-        "items": [
-          { "productId": 6, "quantity": 1 }
-        ]
-      }
-    ],
-    "orders": [
-      {
-        "id": 1,
-        "userId": 1,
-        "sellerId": 1,
-        "items": [
-          { "productId": 2, "quantity": 1, "price": 1299 }
-        ],
-        "total": 1299,
-        "status": "shipped",
-        "createdAt": "2025-04-22",
-        "shippingAddress": "123 Main St, City, Country"
-      },
-      {
-        "id": 2,
-        "userId": 2,
-        "sellerId": 3,
-        "items": [
-          { "productId": 6, "quantity": 2, "price": 149 }
-        ],
-        "total": 298,
-        "status": "processing",
-        "createdAt": "2025-04-23",
-        "shippingAddress": "456 Oak St, City, Country"
-      }
-    ],
-    "sellers": [
-      {
-        "id": 1,
-        "userId": 3,
-        "storeName": "TechTrend Innovations",
-        "description": "Leading tech products provider.",
-        "rating": 4.8
-      },
-      {
-        "id": 2,
-        "userId": 4,
-        "storeName": "Fashion Hub",
-        "description": "Trendy fashion for all.",
-        "rating": 4.5
-      },
-      {
-        "id": 3,
-        "userId": 4,
-        "storeName": "Sports Emporium",
-        "description": "Your sports gear destination.",
-        "rating": 4.6
-      },
-      {
-        "id": 4,
-        "userId": 4,
-        "storeName": "Home Depot",
-        "description": "Everything for your home.",
-        "rating": 4.7
-      }
-    ]
+  "categories": [
+    { "id": 1, "name": "Fashion", "icon": "bx-closet", "path": "/fashion" },
+    { "id": 2, "name": "Electronics", "icon": "bx-chip", "path": "/electronics" },
+    { "id": 3, "name": "Motors", "icon": "bx-car", "path": "/motors" },
+    { "id": 4, "name": "Collectibles", "icon": "bx-collection", "path": "/collectibles" },
+    { "id": 5, "name": "Sports", "icon": "bx-football", "path": "/sports" },
+    { "id": 6, "name": "Health & Beauty", "icon": "bx-heart-circle", "path": "/health-beauty" },
+    { "id": 7, "name": "Home & Garden", "icon": "bx-home-heart", "path": "/home-garden" },
+    { "id": 8, "name": "Deals", "icon": "bx-bolt-circle", "path": "/deals" },
+    { "id": 9, "name": "Local", "icon": "bx-map", "path": "/local" },
+    { "id": 10, "name": "Selling", "icon": "bx-camera", "path": "/sell" }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "Colon Cleanser Tea",
+      "price": 16500,
+      "rating": 5.0,
+      "image": "https://example.com/images/colon-cleanser-tea.jpg",
+      "categoryId": 6,
+      "description": "Natural tea for detox and colon health.",
+      "stock": 50,
+      "sellerId": 1,
+      "reviews": []
+    },
+    {
+      "id": 2,
+      "name": "Foremade Vitamin C",
+      "price": 16000,
+      "rating": 5.0,
+      "image": "https://example.com/images/foremade-vitamin-c.jpg",
+      "categoryId": 6,
+      "description": "Vitamin C supplement for immune support.",
+      "stock": 60,
+      "sellerId": 1,
+      "reviews": []
+    },
+    {
+      "id": 3,
+      "name": "Smartphone X",
+      "price": 1048500,
+      "rating": 4.8,
+      "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3550315f2.webp",
+      "categoryId": 2,
+      "description": "A cutting-edge smartphone with 5G support and a stunning display.",
+      "stock": 50,
+      "sellerId": 1,
+      "reviews": [
+        { "id": 1, "userId": 1, "rating": 5, "comment": "Amazing phone!", "date": "2025-04-20" },
+        { "id": 2, "userId": 2, "rating": 4.5, "comment": "Great value for money.", "date": "2025-04-21" }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Laptop Pro",
+      "price": 1948500,
+      "rating": 4.7,
+      "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb37cec1288.webp",
+      "categoryId": 2,
+      "description": "High-performance laptop for professionals.",
+      "stock": 30,
+      "sellerId": 1,
+      "reviews": [
+        { "id": 3, "userId": 3, "rating": 4.8, "comment": "Perfect for work!", "date": "2025-04-22" }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Wireless Headphones",
+      "price": 298500,
+      "rating": 4.6,
+      "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3897bc174.webp",
+      "categoryId": 2,
+      "description": "Noise-canceling headphones with long battery life.",
+      "stock": 100,
+      "sellerId": 2,
+      "reviews": []
+    },
+    {
+      "id": 6,
+      "name": "Smart Watch",
+      "price": 448500,
+      "rating": 4.5,
+      "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp",
+      "categoryId": 2,
+      "description": "Track your fitness with this stylish smart watch.",
+      "stock": 80,
+      "sellerId": 2,
+      "reviews": []
+    },
+    {
+      "id": 7,
+      "name": "Gaming Console",
+      "price": 748500,
+      "rating": 4.9,
+      "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3a207ba51.webp",
+      "categoryId": 2,
+      "description": "Next-gen gaming console for immersive gameplay.",
+      "stock": 20,
+      "sellerId": 1,
+      "reviews": []
+    },
+    {
+      "id": 8,
+      "name": "Designer Jacket",
+      "price": 223500,
+      "rating": 4.4,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp",
+      "categoryId": 1,
+      "description": "Stylish jacket for all seasons.",
+      "stock": 60,
+      "sellerId": 3,
+      "reviews": []
+    },
+    {
+      "id": 9,
+      "name": "Running Shoes",
+      "price": 133500,
+      "rating": 4.3,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3897bc174.webp",
+      "categoryId": 5,
+      "description": "Lightweight running shoes for athletes.",
+      "stock": 90,
+      "sellerId": 4,
+      "reviews": []
+    },
+    {
+      "id": 10,
+      "name": "Car Accessory Kit",
+      "price": 88500,
+      "rating": 4.2,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3a207ba51.webp",
+      "categoryId": 3,
+      "description": "Essential accessories for your car.",
+      "stock": 40,
+      "sellerId": 2,
+      "reviews": []
+    },
+    {
+      "id": 11,
+      "name": "Vintage Collectible",
+      "price": 448500,
+      "rating": 4.7,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb37cec1288.webp",
+      "categoryId": 4,
+      "description": "Rare vintage item for collectors.",
+      "stock": 10,
+      "sellerId": 3,
+      "reviews": []
+    },
+    {
+      "id": 12,
+      "name": "Garden Tool Set",
+      "price": 118500,
+      "rating": 4.5,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp",
+      "categoryId": 7,
+      "description": "Complete set of tools for gardening.",
+      "stock": 70,
+      "sellerId": 4,
+      "reviews": []
+    },
+    {
+      "id": 13,
+      "name": "Luxury Scarf",
+      "price": 148500,
+      "rating": 4.6,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp",
+      "categoryId": 1,
+      "description": "Elegant scarf for winter fashion.",
+      "stock": 45,
+      "sellerId": 3,
+      "reviews": []
+    },
+    {
+      "id": 14,
+      "name": "Bluetooth Speaker",
+      "price": 193500,
+      "rating": 4.4,
+      "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3550315f2.webp",
+      "categoryId": 2,
+      "description": "Portable speaker with excellent sound quality.",
+      "stock": 60,
+      "sellerId": 2,
+      "reviews": []
+    },
+    {
+      "id": 15,
+      "name": "Skincare Set",
+      "price": 133500,
+      "rating": 4.8,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp",
+      "categoryId": 6,
+      "description": "Complete skincare routine for glowing skin.",
+      "stock": 50,
+      "sellerId": 4,
+      "reviews": []
+    },
+    {
+      "id": 16,
+      "name": "Yoga Mat",
+      "price": 58500,
+      "rating": 4.5,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3897bc174.webp",
+      "categoryId": 5,
+      "description": "Non-slip yoga mat for fitness enthusiasts.",
+      "stock": 80,
+      "sellerId": 4,
+      "reviews": []
+    },
+    {
+      "id": 17,
+      "name": "Motorcycle Helmet",
+      "price": 298500,
+      "rating": 4.7,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3a207ba51.webp",
+      "categoryId": 3,
+      "description": "Safety-first helmet for motorbike riders.",
+      "stock": 25,
+      "sellerId": 2,
+      "reviews": []
+    },
+    {
+      "id": 18,
+      "name": "Antique Coin Set",
+      "price": 748500,
+      "rating": 4.9,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb37cec1288.webp",
+      "categoryId": 4,
+      "description": "Rare coin collection for enthusiasts.",
+      "stock": 5,
+      "sellerId": 3,
+      "reviews": []
+    },
+    {
+      "id": 19,
+      "name": "Perfume Gift Set",
+      "price": 223500,
+      "rating": 4.6,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp",
+      "categoryId": 6,
+      "description": "Luxury fragrances for men and women.",
+      "stock": 35,
+      "sellerId": 4,
+      "reviews": []
+    },
+    {
+      "id": 20,
+      "name": "Denim Jeans",
+      "price": 118500,
+      "rating": 4.3,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp",
+      "categoryId": 1,
+      "description": "Classic denim jeans for casual wear.",
+      "stock": 70,
+      "sellerId": 3,
+      "reviews": []
+    },
+    {
+      "id": 21,
+      "name": "Indoor Plant Kit",
+      "price": 88500,
+      "rating": 4.4,
+      "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp",
+      "categoryId": 7,
+      "description": "Everything you need to start indoor gardening.",
+      "stock": 40,
+      "sellerId": 4,
+      "reviews": []
+    },
+    {
+      "id": 22,
+      "name": "Fitness Tracker",
+      "price": 148500,
+      "rating": 4.5,
+      "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb37cec1288.webp",
+      "categoryId": 2,
+      "description": "Track your steps and heart rate with ease.",
+      "stock": 65,
+      "sellerId": 2,
+      "reviews": []
+    }
+  ],
+  "deals": [
+    { "id": 1, "name": "50% Off Electronics", "image": "/assets/images/deal1.jpg" },
+    { "id": 2, "name": "Fashion Clearance", "image": "/assets/images/deal2.jpg" },
+    { "id": 3, "name": "Home Essentials", "image": "/assets/images/deal3.jpg" },
+    { "id": 4, "name": "Sports Gear Sale", "image": "/assets/images/deal4.jpg" }
+  ],
+  "stores": [
+    {
+      "id": 1,
+      "name": "TechTrend Innovations",
+      "image": "/assets/images/store1.jpg",
+      "productCount": 5,
+      "rating": 4.8,
+      "reviewCount": 0,
+      "products": [
+        { "id": 1, "image": "https://example.com/images/colon-cleanser-tea.jpg", "price": 16500 },
+        { "id": 2, "image": "https://example.com/images/foremade-vitamin-c.jpg", "price": 16000 },
+        { "id": 3, "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3550315f2.webp", "price": 1048500 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Fashion Hub",
+      "image": "/assets/images/store2.jpg",
+      "productCount": 6,
+      "rating": 4.5,
+      "reviewCount": 0,
+      "products": [
+        { "id": 5, "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3897bc174.webp", "price": 298500 },
+        { "id": 6, "image": "http://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp", "price": 448500 },
+        { "id": 10, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3a207ba51.webp", "price": 88500 }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Sports Emporium",
+      "image": "/assets/images/store3.jpg",
+      "productCount": 5,
+      "rating": 4.6,
+      "reviewCount": 0,
+      "products": [
+        { "id": 8, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp", "price": 223500 },
+        { "id": 11, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb37cec1288.webp", "price": 448500 },
+        { "id": 13, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp", "price": 148500 }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Home Depot",
+      "image": "/assets/images/store4.jpg",
+      "productCount": 6,
+      "rating": 4.7,
+      "reviewCount": 0,
+      "products": [
+        { "id": 9, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3897bc174.webp", "price": 133500 },
+        { "id": 12, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp", "price": 118500 },
+        { "id": 15, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp", "price": 133500 }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "email": "user1@example.com",
+      "password": "hashedpassword1",
+      "name": "John Doe",
+      "role": "buyer",
+      "address": "123 Main St, City, Country",
+      "createdAt": "2025-04-20"
+    },
+    {
+      "id": 2,
+      "email": "user2@example.com",
+      "password": "hashedpassword2",
+      "name": "Jane Smith",
+      "role": "buyer",
+      "address": "456 Oak St, City, Country",
+      "createdAt": "2025-04-21"
+    },
+    {
+      "id": 3,
+      "email": "seller1@example.com",
+      "password": "hashedpassword3",
+      "name": "TechTrend Seller",
+      "role": "seller",
+      "address": "789 Pine St, City, Country",
+      "createdAt": "2025-04-22"
+    },
+    {
+      "id": 4,
+      "email": "seller2@example.com",
+      "password": "hashedpassword4",
+      "name": "Fashion Hub Seller",
+      "role": "seller",
+      "address": "101 Elm St, City, Country",
+      "createdAt": "2025-04-23"
+    }
+  ],
+  "cart": [
+    {
+      "id": 1,
+      "userId": 1,
+      "items": [
+        { "productId": 1, "quantity": 2 },
+        { "productId": 3, "quantity": 1 }
+      ]
+    },
+    {
+      "id": 2,
+      "userId": 2,
+      "items": [
+        { "productId": 6, "quantity": 1 }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "id": 1,
+      "userId": 1,
+      "sellerId": 1,
+      "items": [
+        { "productId": 2, "quantity": 1, "price": 16000 }
+      ],
+      "total": 16000,
+      "status": "shipped",
+      "createdAt": "2025-04-22",
+      "shippingAddress": "123 Main St, City, Country"
+    },
+    {
+      "id": 2,
+      "userId": 2,
+      "sellerId": 2,
+      "items": [
+        { "productId": 6, "quantity": 2, "price": 448500 }
+      ],
+      "total": 897000,
+      "status": "processing",
+      "createdAt": "2025-04-23",
+      "shippingAddress": "456 Oak St, City, Country"
+    }
+  ],
+  "sellers": [
+    {
+      "id": 1,
+      "userId": 3,
+      "storeName": "TechTrend Innovations",
+      "description": "Leading tech products provider.",
+      "rating": 4.8
+    },
+    {
+      "id": 2,
+      "userId": 4,
+      "storeName": "Fashion Hub",
+      "description": "Trendy fashion for all.",
+      "rating": 4.5
+    },
+    {
+      "id": 3,
+      "userId": 4,
+      "storeName": "Sports Emporium",
+      "description": "Your sports gear destination.",
+      "rating": 4.6
+    },
+    {
+      "id": 4,
+      "userId": 4,
+      "storeName": "Home Depot",
+      "description": "Everything for your home.",
+      "rating": 4.7
+    }
+  ]
 }
