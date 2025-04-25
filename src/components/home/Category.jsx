@@ -19,7 +19,7 @@ const Category = () => {
       <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">
         Top Categories
       </h2>        
-      {/* <SkeletonLoader type="categories" /> */}
+      <SkeletonLoader type="categories" />
       </section>
     );
   }

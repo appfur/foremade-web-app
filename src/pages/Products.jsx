@@ -4,7 +4,6 @@ import ProductFilter from '../components/product/ProductFilter';
 import db from '../db.json';
 
 const Products = () => {
-  // Memoize initialProducts to prevent re-computation on every render
   const initialProducts = useMemo(() => {
     const products = Array.isArray(db.products) ? db.products : [];
     console.log('Initial products from db.json:', products);
@@ -13,16 +12,13 @@ const Products = () => {
 
   const [filteredProducts, setFilteredProducts] = useState(initialProducts);
 
-  // Log filtered products for debugging
   useEffect(() => {
     console.log('Filtered products passed to ProductList:', filteredProducts);
   }, [filteredProducts]);
 
-  // Handle filter changes from ProductFilter
   const handleFilterChange = ({ priceRange, selectedCategories, sortOption, searchTerm }) => {
     let updatedProducts = [...initialProducts];
 
-    // Apply filters
     updatedProducts = updatedProducts.filter((product) => {
       const withinPriceRange = product.price >= priceRange[0] && product.price <= priceRange[1];
       const inSelectedCategories =
