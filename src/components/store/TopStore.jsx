@@ -45,9 +45,9 @@ const TopStores = () => {
   if (loading) {
     return (
       <section className="p-4 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">
+            <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
               Top Stores
             </h2>
             <div className="flex items-center gap-2">
@@ -63,10 +63,10 @@ const TopStores = () => {
   }
 
   return (
-    <section className="p-4 bg-white">
+    <section className="bg-white">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">
+          <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
             Top Stores
           </h2>
           <div className="flex items-center gap-2">

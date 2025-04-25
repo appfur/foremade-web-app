@@ -16,15 +16,17 @@ const Categories = () => {
   if (loading) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">Top Categories</h2>
-        <SkeletonLoader type="categories" />
+      <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">
+        Top Categories
+      </h2>        
+      <SkeletonLoader type="categories" />
       </section>
     );
   }
 
   return (
     <section className="container mx-auto px-4 py-8">
-      <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">Top Categories</h2>
+      <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">Top Categories</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {/* Cut the Price Card */}
         <div className="sm:col-span-2 bg-[#E0F4FF] text-black rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center">

@@ -33,15 +33,23 @@ const RecommendedForYou = () => {
   if (loading) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-2 sm:mb-0">
+        <div className="flex-col items-center justify-between mb-4">
+          <h2 className="text-lg text-center sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-4">
             Recommended For You
           </h2>
-          <div className="flex items-center justify-center gap-4 sm:gap-6">
+          {/* Desktop Skeleton (Text) */}
+          <div className="hidden sm:flex items-center justify-center gap-4 sm:gap-6">
             <div className="h-5 bg-gray-200 rounded w-24"></div>
             <div className="h-5 bg-gray-200 rounded w-24"></div>
             <div className="h-5 bg-gray-200 rounded w-24"></div>
             <div className="h-5 bg-gray-200 rounded w-16"></div>
+          </div>
+          {/* Mobile Skeleton (Icons) */}
+          <div className="flex sm:hidden items-center justify-center gap-4">
+            <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+            <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+            <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+            <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
           </div>
         </div>
         <SkeletonLoader type="recommended" count={4} />
@@ -51,11 +59,12 @@ const RecommendedForYou = () => {
 
   return (
     <section className="container mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-2 sm:mb-0">
+      <div className="flex-col items-center justify-between mb-4">
+        <h2 className="text-lg text-center sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-4">
           Recommended For You
         </h2>
-        <div className="flex items-center justify-center gap-4 sm:gap-6">
+        {/* Desktop Tabs (Text) */}
+        <div className="hidden sm:flex items-center justify-center gap-4 sm:gap-6">
           <button
             className={`text-sm ${
               activeTab === 'featured' ? 'text-blue-600 font-semibold' : 'text-gray-600'
@@ -84,8 +93,38 @@ const RecommendedForYou = () => {
             View All
           </Link>
         </div>
+        {/* Mobile Tabs (Icons) */}
+        <div className="flex sm:hidden items-center justify-center gap-4">
+          <button
+            className={`text-xl ${
+              activeTab === 'featured' ? 'text-blue-600' : 'text-gray-600'
+            } hover:text-blue-600`}
+            onClick={() => setActiveTab('featured')}
+          >
+            <i className="bx bx-star"></i>
+          </button>
+          <button
+            className={`text-xl ${
+              activeTab === 'bestSelling' ? 'text-blue-600' : 'text-gray-600'
+            } hover:text-blue-600`}
+            onClick={() => setActiveTab('bestSelling')}
+          >
+            <i className="bx bx-fire"></i>
+          </button>
+          <button
+            className={`text-xl ${
+              activeTab === 'latest' ? 'text-blue-600' : 'text-gray-600'
+            } hover:text-blue-600`}
+            onClick={() => setActiveTab('latest')}
+          >
+            <i className="bx bx-time"></i>
+          </button>
+          <Link to="/products" className="text-blue-600 text-xl hover:text-blue-600">
+            <i className="bx bx-right-arrow-alt"></i>
+          </Link>
+        </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {products.map((product) => (
           <Link key={product.id} to={`/product/${product.id}`}>
             <img

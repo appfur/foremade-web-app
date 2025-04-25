@@ -10,11 +10,8 @@ const Home = () => {
       <Carousel />
       <TopStores />
       <Category />
-      <div className="container mx-auto p-4">
-        <h2 className="text-lg font-bold mb-4">Recommended for you</h2>
         <RecommendedForYou />
         {/* <ProductList /> */}
-      </div>
     </div>
   );
 };

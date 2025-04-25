@@ -107,7 +107,7 @@ const SkeletonLoader = ({ count = 4, type = 'default' }) => {
               <div className="w-full h-32 bg-gray-300 rounded-md"></div>
             </div>
           </div>
-          <div className="hidden sm:block bg-gray-200 rounded-lg p-4 sm:p-6 flex flex-col justify-between animate-pulse">
+          <div className="max-md:hidden sm:block bg-gray-200 rounded-lg p-4 sm:p-6 flex flex-col justify-between animate-pulse">
             <div>
               <div className="h-5 bg-gray-300 rounded w-1/2 mb-2"></div>
               <div className="h-4 bg-gray-300 rounded w-3/4 mb-4"></div>
@@ -143,7 +143,7 @@ const SkeletonLoader = ({ count = 4, type = 'default' }) => {
               <div className="w-20 sm:w-24 h-16 bg-gray-300 rounded-md"></div>
             </div>
           </div>
-          <div className="hidden sm:block bg-gray-200 rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between animate-pulse">
+          <div className="max-md:hidden sm:block bg-gray-200 rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between animate-pulse">
             <div>
               <div className="h-5 bg-gray-300 rounded w-1/2 mb-2"></div>
               <div className="h-8 bg-gray-300 rounded w-24"></div>

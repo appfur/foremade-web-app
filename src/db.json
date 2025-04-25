@@ -32,7 +32,7 @@
         "name": "Laptop Pro",
         "price": 1299,
         "rating": 4.7,
-        "image": "/assets/images/product2.jpg",
+        "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3a4b3a47d.webp",
         "categoryId": 2,
         "description": "High-performance laptop for professionals.",
         "stock": 30,
