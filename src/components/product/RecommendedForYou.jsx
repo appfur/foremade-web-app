@@ -12,7 +12,7 @@ const RecommendedForYou = () => {
     const fetchProducts = () => {
       try {
         setTimeout(() => {
-          const productData = Array.isArray(db.products) ? db.products.slice(0, 4) : [];
+          const productData = Array.isArray(db.products) ? db.products.slice(0, 10) : [];
           setProducts(productData);
           setLoading(false);
         }, 1500); // 1.5-second delay
@@ -53,6 +53,7 @@ const RecommendedForYou = () => {
           </div>
         </div>
         <SkeletonLoader type="recommended" count={4} />
+        <SkeletonLoader type="recommended" count={4} />
       </section>
     );
   }
@@ -64,7 +65,7 @@ const RecommendedForYou = () => {
           Recommended For You
         </h2>
         {/* Desktop Tabs (Text) */}
-        <div className="hidden sm:flex items-center justify-center gap-4 sm:gap-6">
+        <div className="hidden sm:flex items-center justify-center gap-4 sm:gap-6 mb-10">
           <button
             className={`text-sm ${
               activeTab === 'featured' ? 'text-blue-600 font-semibold' : 'text-gray-600'
@@ -124,7 +125,7 @@ const RecommendedForYou = () => {
           </Link>
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         {products.map((product) => (
           <Link key={product.id} to={`/product/${product.id}`}>
             <img
@@ -149,6 +150,7 @@ const RecommendedForYou = () => {
             <p className="text-sm font-bold text-gray-800">{formatPrice(product.price)}</p>
           </Link>
         ))}
+        
       </div>
     </section>
   );

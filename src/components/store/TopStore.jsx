@@ -89,7 +89,7 @@ const TopStores = () => {
         </div>
         <div
           ref={scrollRef}
-          className="sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 sm:gap-4 flex overflow-x-auto scrollbar-hide"
+          className="sm:grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 sm:gap-4 flex overflow-x-auto scrollbar-hide"
         >
           {stores.map((store) => (
             <Link
