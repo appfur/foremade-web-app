@@ -33,7 +33,7 @@ const ProductList = () => {
       </div>
     );
   }
-
+  
   if (error) return <p className="text-red-500 text-center">{error}</p>;
 
   return (

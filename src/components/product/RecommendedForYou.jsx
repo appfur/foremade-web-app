@@ -116,7 +116,7 @@ const RecommendedForYou = () => {
             } hover:text-blue-600`}
             onClick={() => setActiveTab('bestSelling')}
           >
-            <i class='bx bxs-hot'></i>
+            <i className='bx bxs-hot'></i>
           </button>
           <button
             className={`text-xl ${
