@@ -9,7 +9,7 @@ export default function BuyerBanner() {
               Buy Quality Products At Your Comfort 
             </h2>
             <p className="text-xs md:text-sm xl:text-lg text-gray-200">
-                Join us and start selling your products to a wider audience. 
+                Join milloins of buyers and get the best deals on your favorite products. 
             </p>
             <button className="p-2 px-6 max-md:p-1 max-md:px-5 bg-blue-300 mt-4 rounded-lg hover:bg-blue-600 transition-all hover:text-white">Sell Now</button>
         </div>
