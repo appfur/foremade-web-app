@@ -1,6 +1,7 @@
 import Carousel from '../components/home/Carousel';
 import Category from '../components/home/Category';
-import ProductList from '../components/product/ProductList';
+import RecommendedForYou from '../components/product/RecommendedForYou';
+// import ProductList from '../components/product/ProductList';
 import TopStores from '../components/store/TopStore';
 
 const Home = () => {
@@ -11,7 +12,8 @@ const Home = () => {
       <Category />
       <div className="container mx-auto p-4">
         <h2 className="text-lg font-bold mb-4">Recommended for you</h2>
-        <ProductList />
+        <RecommendedForYou />
+        {/* <ProductList /> */}
       </div>
     </div>
   );

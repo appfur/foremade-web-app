@@ -153,9 +153,9 @@
         "rating": 4.8,
         "reviewCount": 0,
         "products": [
-          { "id": 1, "image": "/assets/images/product1.jpg", "price": 28000 },
-          { "id": 2, "image": "/assets/images/product2.jpg", "price": 32900 },
-          { "id": 5, "image": "/assets/images/product5.jpg", "price": 24000 }
+          { "id": 1, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe38c2b422f.webp", "price": 28000 },
+          { "id": 2, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3a4b3a47d.webp", "price": 32900 },
+          { "id": 5, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-12-67fa706257013.webp", "price": 24000 }
         ]
       },
       {
@@ -166,9 +166,9 @@
         "rating": 4.5,
         "reviewCount": 0,
         "products": [
-          { "id": 3, "image": "/assets/images/product3.jpg", "price": 16600 },
-          { "id": 4, "image": "/assets/images/product4.jpg", "price": 21000 },
-          { "id": 6, "image": "/assets/images/product6.jpg", "price": 32000 }
+          { "id": 3, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp", "price": 16600 },
+          { "id": 4, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb35d9ba8b2.webp", "price": 21000 },
+          { "id": 6, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe38c2b422f.webp", "price": 32000 }
         ]
       },
       {
@@ -179,9 +179,9 @@
         "rating": 4.6,
         "reviewCount": 0,
         "products": [
-          { "id": 1, "image": "/assets/images/product1.jpg", "price": 28000 },
-          { "id": 2, "image": "/assets/images/product2.jpg", "price": 32900 },
-          { "id": 7, "image": "/assets/images/product7.jpg", "price": 24000 }
+          { "id": 1, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3a4b3a47d.webp", "price": 28000 },
+          { "id": 2, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-12-67fa706257013.webp", "price": 32900 },
+          { "id": 7, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb3684bcd5b.webp", "price": 24000 }
         ]
       },
       {
@@ -192,9 +192,9 @@
         "rating": 4.7,
         "reviewCount": 0,
         "products": [
-          { "id": 3, "image": "/assets/images/product3.jpg", "price": 16600 },
-          { "id": 8, "image": "/assets/images/product8.jpg", "price": 21000 },
-          { "id": 10, "image": "/assets/images/product10.jpg", "price": 32000 }
+          { "id": 3, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb35d9ba8b2.webp", "price": 16600 },
+          { "id": 8, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe38c2b422f.webp", "price": 21000 },
+          { "id": 10, "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-15-67fe3a4b3a47d.webp", "price": 32000 }
         ]
       }
     ],
@@ -309,4 +309,4 @@
         "rating": 4.7
       }
     ]
-  }
+}

@@ -1,8 +1,31 @@
+import { useState, useEffect } from 'react';
+import SkeletonLoader from '../common/SkeletonLoader';
+
 const Categories = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate a loading delay
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500); // 1.5-second delay to match TopStores
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="container mx-auto px-4 py-8">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">Top Categories</h2>
+        <SkeletonLoader type="categories" />
+      </section>
+    );
+  }
+
   return (
     <section className="container mx-auto px-4 py-8">
-        <h2 className="text-lg sm:text-lg md:text-xl font-bold text-gray-800 mb-4">Categories</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">Top Categories</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {/* Cut the Price Card */}
         <div className="sm:col-span-2 bg-[#E0F4FF] text-black rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center">
           <div className="flex-1">
@@ -25,7 +48,7 @@ const Categories = () => {
         </div>
 
         {/* Happy Club Card */}
-        <div className="bg-[#D1FAE5] rounded-lg p-4 sm:p-6 flex flex-col justify-between max-md:hidden">
+        <div className="max-md:hidden bg-[#D1FAE5] rounded-lg p-4 sm:p-6 flex flex-col justify-between">
           <div>
             <h3 className="text-base sm:text-lg md:text-xl font-bold text-teal-800 mb-2">Happy Club</h3>
             <p className="text-sm sm:text-xs text-teal-800 mb-4">Collect coupons from stores and apply to get special discount</p>
@@ -45,7 +68,7 @@ const Categories = () => {
         </div>
 
         {/* Style Meets Function Card */}
-        <div className="bg-[#EDE9FE] text-black rounded-lg p-5 sm:p-6 flex sm:flex-row items-center justify-between">
+        <div className="bg-[#EDE9FE] text-black rounded-lg p-4 sm:p-6 flex sm:flex-row items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg md:text-xl font-bold mb-2">Style Meets Function</h3>
             <a
@@ -65,7 +88,7 @@ const Categories = () => {
         </div>
 
         {/* Capture the Magic Card */}
-        <div className="bg-[#FFE5E5] text-black rounded-lg p-5 sm:p-6 flex sm:flex-row items-center justify-between">
+        <div className="bg-[#FFE5E5] text-black rounded-lg p-4 sm:p-6 flex sm:flex-row items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg md:text-xl font-bold mb-2">Capture the Magic Around</h3>
             <a
@@ -85,7 +108,7 @@ const Categories = () => {
         </div>
 
         {/* Health & Wellness Card */}
-        <div className="bg-[#E0F4FF] text-black rounded-lg p-4 sm:p-6 flex sm:flex-row items-center justify-between max-md:hidden">
+        <div className="max-md:hidden bg-[#E0F4FF] text-black rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg md:text-xl font-bold mb-2">Health & Wellness</h3>
             <a

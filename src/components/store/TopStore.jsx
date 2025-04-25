@@ -11,12 +11,11 @@ const TopStores = () => {
   useEffect(() => {
     const fetchStores = () => {
       try {
-        // Simulate a delay to show the skeleton loader
         setTimeout(() => {
           const storeData = Array.isArray(db.stores) ? db.stores : [];
           setStores(storeData);
           setLoading(false);
-        }, 3000); // 1-second delay
+        }, 1500); // 1.5-second delay
       } catch (err) {
         console.error('Error loading stores from db.json:', err);
         setStores([]);
@@ -53,8 +52,8 @@ const TopStores = () => {
             </h2>
             <div className="flex items-center gap-2">
               <div className="h-5 bg-gray-200 rounded w-16"></div>
-              <div className="bg-gray-200 rounded-full p-1 h-8 w-8"></div>
-              <div className="bg-gray-200 rounded-full p-1 h-8 w-8"></div>
+              <div className="bg-gray-200 rounded-full p-1 h-8 w-8 sm:hidden"></div>
+              <div className="bg-gray-200 rounded-full p-1 h-8 w-8 sm:hidden"></div>
             </div>
           </div>
           <SkeletonLoader count={4} />
@@ -76,13 +75,13 @@ const TopStores = () => {
             </Link>
             <button
               onClick={scrollLeft}
-              className="bg-gray-200 rounded-full p-1 hover:bg-gray-300"
+              className="bg-gray-200 rounded-full p-1 hover:bg-gray-300 sm:hidden"
             >
               <i className="bx bx-chevron-left text-xl text-gray-600"></i>
             </button>
             <button
               onClick={scrollRight}
-              className="bg-gray-200 rounded-full p-1 hover:bg-gray-300"
+              className="bg-gray-200 rounded-full p-1 hover:bg-gray-300 sm:hidden"
             >
               <i className="bx bx-chevron-right text-xl text-gray-600"></i>
             </button>
@@ -90,13 +89,13 @@ const TopStores = () => {
         </div>
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide"
+          className="sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 sm:gap-4 flex overflow-x-auto scrollbar-hide"
         >
           {stores.map((store) => (
             <Link
               key={store.id}
               to={`/store/${store.id}`}
-              className="flex-shrink-0 w-80 bg-gray-100 border border-gray-200 rounded-lg p-4 hover:bg-gray-200"
+              className="flex-shrink-0 w-80 sm:w-auto mr-4 sm:mr-0 bg-gray-100 border border-gray-200 rounded-lg p-4 hover:bg-gray-200"
             >
               <div className="flex justify-between items-center mb-2">
                 <div>
