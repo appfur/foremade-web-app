@@ -66,7 +66,7 @@ const Product = () => {
               <img
                 src={product.image || 'https://via.placeholder.com/300'}
                 alt={product.name}
-                className="w-full h-96 object-cover rounded-lg shadow-md"
+                className="w-full h-96 object-cover"
               />
             </div>
             {/* Product Info */}
