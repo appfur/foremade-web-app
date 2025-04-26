@@ -1,10 +1,8 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { UserContext } from '../UserContext';
 import db from '../../db.json';
 
 const Header = () => {
-  const { cart, favorites } = useContext(UserContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -12,7 +10,30 @@ const Header = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cart, setCart] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const location = useLocation();
+
+  // Load cart and favorites from localStorage on mount
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cart');
+    const storedFavorites = localStorage.getItem('favorites');
+    if (storedCart) setCart(JSON.parse(storedCart));
+    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+  }, []);
+
+  // Listen for changes to localStorage (from other components)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedCart = localStorage.getItem('cart');
+      const storedFavorites = localStorage.getItem('favorites');
+      if (storedCart) setCart(JSON.parse(storedCart));
+      if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Load products from db.json
   useEffect(() => {
@@ -39,7 +60,6 @@ const Header = () => {
       return;
     }
 
-    // Case-insensitive alphabetical search
     const filtered = products.filter((product) =>
       product.name.toLowerCase().includes(query.toLowerCase())
     );
@@ -47,24 +67,20 @@ const Header = () => {
     setShowDropdown(true);
   };
 
-  // Handle input focus
   const handleFocus = () => {
     if (searchQuery.trim() !== '' && searchResults.length > 0) {
       setShowDropdown(true);
     }
   };
 
-  // Handle input blur (close dropdown after a delay to allow clicking on results)
   const handleBlur = () => {
     setTimeout(() => {
       setShowDropdown(false);
     }, 200);
   };
 
-  // Calculate total cart items
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-  // Display loading, error, or empty products state
   if (loading) {
     return <div className="p-4 text-gray-600">Loading products...</div>;
   }
@@ -158,7 +174,6 @@ const Header = () => {
 
       {/* Main Bar */}
       <div className="container mx-auto px-4 py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
-        {/* Logo */}
         <div className="flex items-center">
           <Link to="/">
             <img
@@ -169,7 +184,6 @@ const Header = () => {
           </Link>
         </div>
 
-        {/* Search Bar (Desktop/Tablet) */}
         <div className="hidden sm:flex items-center w-full mx-4 relative">
           <div className="flex items-center border-2 border-black rounded-full w-full">
             <div className="relative">
@@ -199,7 +213,6 @@ const Header = () => {
             Search
           </button>
 
-          {/* Search Dropdown (Desktop/Tablet) */}
           {showDropdown && (
             <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-80 overflow-y-auto">
               {searchResults.length > 0 ? (
@@ -231,7 +244,6 @@ const Header = () => {
           )}
         </div>
 
-        {/* Icons (Mobile) */}
         <div className="sm:hidden flex items-center gap-3">
           <Link to="/my-account">
             <i className="bx bx-user text-gray-600 text-xl"></i>
@@ -252,7 +264,6 @@ const Header = () => {
           </button>
         </div>
 
-        {/* Icons (Desktop/Tablet) */}
         <div className="hidden sm:flex items-center gap-3">
           <Link to="/cart" className="flex items-center relative">
             <i className="bx bx-cart-alt text-gray-600 text-xl"></i>
@@ -284,7 +295,6 @@ const Header = () => {
             <i className="bx bx-search text-xl"></i>
           </button>
 
-          {/* Search Dropdown (Mobile) */}
           {showDropdown && (
             <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-80 overflow-y-auto">
               {searchResults.length > 0 ? (

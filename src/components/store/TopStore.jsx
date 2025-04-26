@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import db from '../../db.json';
 import SkeletonLoader from '../common/SkeletonLoader';
 
@@ -7,6 +7,21 @@ const TopStores = () => {
   const scrollRef = useRef(null);
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState([]);
+  const navigate = useNavigate();
+
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem('favorites');
+    if (storedFavorites) {
+      setFavorites(JSON.parse(storedFavorites));
+    }
+  }, []);
+
+  // Save favorites to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }, [favorites]);
 
   useEffect(() => {
     const fetchStores = () => {
@@ -15,7 +30,7 @@ const TopStores = () => {
           const storeData = Array.isArray(db.stores) ? db.stores : [];
           setStores(storeData);
           setLoading(false);
-        }, 1500); // 1.5-second delay
+        }, 1500);
       } catch (err) {
         console.error('Error loading stores from db.json:', err);
         setStores([]);
@@ -37,9 +52,21 @@ const TopStores = () => {
     }
   };
 
-  // Format price in Naira
   const formatPrice = (price) => {
     return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const handleStoreClick = (storeId) => {
+    navigate(`/store/${storeId}`);
+  };
+
+  const toggleFavorite = (productId) => {
+    setFavorites((prevFavorites) => {
+      if (prevFavorites.includes(productId)) {
+        return prevFavorites.filter((id) => id !== productId);
+      }
+      return [...prevFavorites, productId];
+    });
   };
 
   if (loading) {
@@ -56,7 +83,9 @@ const TopStores = () => {
               <div className="bg-gray-200 rounded-full p-1 h-8 w-8 sm:hidden"></div>
             </div>
           </div>
-          <SkeletonLoader count={5} />
+          <div className="sm:grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 sm:gap-4 flex overflow-x-auto scrollbar-hide">
+            <SkeletonLoader type="default" count={4} />
+          </div>
         </div>
       </section>
     );
@@ -67,7 +96,7 @@ const TopStores = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
-             Stores
+            Top Stores
           </h2>
           <div className="flex items-center gap-2">
             <Link to="/stores" className="text-blue-600 text-sm hover:underline">
@@ -92,10 +121,10 @@ const TopStores = () => {
           className="sm:grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 sm:gap-4 flex overflow-x-auto scrollbar-hide"
         >
           {stores.map((store) => (
-            <Link
+            <div
               key={store.id}
-              to={`/store/${store.id}`}
-              className="flex-shrink-0 w-80 sm:w-auto mr-4 sm:mr-0 bg-gray-100 border border-gray-200 rounded-lg p-4 hover:bg-gray-200"
+              className="flex-shrink-0 w-80 sm:w-auto mr-4 sm:mr-0 bg-gray-100 border border-gray-200 rounded-lg p-4 hover:bg-gray-200 cursor-pointer"
+              onClick={() => handleStoreClick(store.id)}
             >
               <div className="flex justify-between items-center mb-2">
                 <div>
@@ -116,22 +145,36 @@ const TopStores = () => {
               </div>
               <div className="flex gap-2">
                 {store.products.map((product, index) => (
-                  <Link
-                    key={index}
-                    to={`/product/${product.id}`}
-                    className="flex flex-col items-center"
-                    onClick={(e) => e.stopPropagation()} // Prevent store link from firing
-                  >
-                    <img
-                      src={product.image}
-                      alt={`Product ${index + 1}`}
-                      className="w-20 h-20 object-cover rounded-md"
-                    />
-                    <p className="text-xs text-gray-600 mt-1">{formatPrice(product.price)}</p>
-                  </Link>
+                  <div key={index} className="flex flex-col items-center relative">
+                    <Link
+                      to={`/product/${product.id}`}
+                      className="flex flex-col items-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <img
+                        src={product.image}
+                        alt={`Product ${index + 1}`}
+                        className="w-20 h-20 object-cover rounded-md"
+                      />
+                      <p className="text-xs text-gray-600 mt-1">{formatPrice(product.price)}</p>
+                    </Link>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(product.id);
+                      }}
+                      className="absolute top-1 right-1 text-xl"
+                    >
+                      <i
+                        className={`bx bx-heart ${
+                          favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
+                        }`}
+                      ></i>
+                    </button>
+                  </div>
                 ))}
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>

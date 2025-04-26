@@ -9,7 +9,25 @@ const Product = () => {
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const [cart, setCart] = useState([]);
+  const [favorites, setFavorites] = useState([]);
 
+  // Load cart and favorites from localStorage on mount
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cart');
+    const storedFavorites = localStorage.getItem('favorites');
+    if (storedCart) setCart(JSON.parse(storedCart));
+    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+  }, []);
+
+  // Save cart and favorites to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }, [cart, favorites]);
+
+  // Load product and similar products
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => {
@@ -32,6 +50,34 @@ const Product = () => {
 
     return () => clearTimeout(timer);
   }, [id]);
+
+  const handleAddToCart = () => {
+    if (product) {
+      setCart((prevCart) => {
+        const existingItem = prevCart.find((item) => item.productId === product.id);
+        if (existingItem) {
+          return prevCart.map((item) =>
+            item.productId === product.id
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          );
+        }
+        return [...prevCart, { productId: product.id, quantity }];
+      });
+      alert(`${product.name} added to cart!`);
+    }
+  };
+
+  const toggleFavorite = () => {
+    if (product) {
+      setFavorites((prevFavorites) => {
+        if (prevFavorites.includes(product.id)) {
+          return prevFavorites.filter((id) => id !== product.id);
+        }
+        return [...prevFavorites, product.id];
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -56,7 +102,7 @@ const Product = () => {
   const seller = db.sellers.find((seller) => seller.id === product.sellerId)?.storeName || 'Unknown Seller';
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-6">
         {/* Main Product Details */}
         <div className="w-full md:w-3/4">
@@ -66,7 +112,7 @@ const Product = () => {
               <img
                 src={product.image || 'https://via.placeholder.com/300'}
                 alt={product.name}
-                className="w-full h-96 object-cover"
+                className="w-full h-96 object-cover rounded-lg"
               />
             </div>
             {/* Product Info */}
@@ -89,23 +135,52 @@ const Product = () => {
                 ))}
                 <span className="text-sm text-gray-600 ml-2">({product.reviews?.length || 0} reviews)</span>
               </div>
-              <p className="text-2xl font-bold text-gray-800 mb-4">{product.price.toLocaleString()} USD</p>
+              <p className="text-2xl font-bold text-gray-800 mb-4">
+                ₦{product.price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
               <p className="text-sm text-gray-700 mb-4">{product.description}</p>
               <p className="text-sm text-gray-600 mb-4">
-                Stock: <span className={product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
+                Stock:{' '}
+                <span className={product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
                   {product.stock > 0 ? `${product.stock} units available` : 'Out of stock'}
                 </span>
               </p>
-              <button
-                className={`w-full text-sm py-3 rounded-lg transition ${
-                  product.stock > 0
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                }`}
-                disabled={product.stock <= 0}
-              >
-                {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
-              </button>
+              <div className="flex items-center mb-4">
+                <label className="mr-2 text-sm text-gray-600">Quantity:</label>
+                <input
+                  type="number"
+                  min="1"
+                  max={product.stock}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-16 p-1 border border-gray-300 rounded"
+                  disabled={product.stock === 0}
+                />
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={handleAddToCart}
+                  className={`w-full text-sm py-3 rounded-lg transition ${
+                    product.stock > 0
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  }`}
+                  disabled={product.stock <= 0}
+                >
+                  {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                </button>
+                <button
+                  onClick={toggleFavorite}
+                  className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-100"
+                >
+                  <i
+                    className={`bx bx-heart text-xl ${
+                      favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
+                    }`}
+                  ></i>
+                  {favorites.includes(product.id) ? 'Remove from Favorites' : 'Add to Favorites'}
+                </button>
+              </div>
             </div>
           </div>
           {/* Description Section */}

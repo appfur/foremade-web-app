@@ -16,34 +16,29 @@ import Orders from './pages/Orders';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 
-// Context import
-import { UserProvider } from './UserContext';
-
 function App() {
   return (
-    <UserProvider>
-      <BrowserRouter>
-          <Header />
-          <main className="min-h-screen">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/bestSelling" element={<BestSelling />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/product/:id" element={<Product />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="*" element={<NotFound />} />
-              {/* // Cart & Other Components */}
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="/watchlist" element={<Watchlist />} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
-          </main>
-          <Footer />
-      </BrowserRouter>
-    </UserProvider>
+    <BrowserRouter>
+      <Header />
+      <main className="min-h-screen">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/bestSelling" element={<BestSelling />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/product/:id" element={<Product />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<NotFound />} />
+          {/* Cart & Other Components */}
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/watchlist" element={<Watchlist />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </main>
+      <Footer />
+    </BrowserRouter>
   );
 }
 

@@ -2,41 +2,41 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import db from '../db.json';
 
-const Watchlist = () => {
-  const [watchlist, setWatchlist] = useState([]);
+const Favorites = () => {
+  const [favorites, setFavorites] = useState([]);
 
-  // Load watchlist from localStorage on mount
+  // Load favorites from localStorage on mount
   useEffect(() => {
-    const storedWatchlist = localStorage.getItem('watchlist');
-    if (storedWatchlist) {
-      setWatchlist(JSON.parse(storedWatchlist));
+    const storedFavorites = localStorage.getItem('favorites');
+    if (storedFavorites) {
+      setFavorites(JSON.parse(storedFavorites));
     }
   }, []);
 
-  // Save watchlist to localStorage whenever it changes
+  // Save favorites to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('watchlist', JSON.stringify(watchlist));
-  }, [watchlist]);
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }, [favorites]);
 
-  const watchlistProducts = watchlist.map((id) => db.products.find((p) => p.id === id));
+  const favoriteProducts = favorites.map((id) => db.products.find((p) => p.id === id));
 
-  const removeFromWatchlist = (productId) => {
-    setWatchlist((prevWatchlist) => prevWatchlist.filter((id) => id !== productId));
+  const removeFromFavorites = (productId) => {
+    setFavorites((prevFavorites) => prevFavorites.filter((id) => id !== productId));
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Your Watchlist</h1>
-      {watchlistProducts.length === 0 ? (
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">Your Favorites</h1>
+      {favoriteProducts.length === 0 ? (
         <p className="text-gray-600">
-          Your watchlist is empty.{' '}
+          You have no favorite products.{' '}
           <Link to="/" className="text-blue-600 hover:underline">
             Continue shopping
           </Link>
         </p>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {watchlistProducts.map((product) => (
+          {favoriteProducts.map((product) => (
             <div key={product.id} className="bg-gray-100 rounded-lg p-4">
               <Link to={`/product/${product.id}`}>
                 <img
@@ -50,10 +50,10 @@ const Watchlist = () => {
                 </p>
               </Link>
               <button
-                onClick={() => removeFromWatchlist(product.id)}
+                onClick={() => removeFromFavorites(product.id)}
                 className="mt-2 text-red-500 hover:text-red-700"
               >
-                <i className="bx bx-bookmark text-xl"></i> Remove
+                <i className="bx bx-heart text-xl"></i> Remove
               </button>
             </div>
           ))}
@@ -63,4 +63,4 @@ const Watchlist = () => {
   );
 };
 
-export default Watchlist;
+export default Favorites;
