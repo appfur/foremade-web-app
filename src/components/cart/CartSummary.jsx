@@ -1,17 +1,61 @@
 import React from 'react';
 
-const CartSummary = ({ totalPrice, handleCheckout }) => {
+const CartSummary = ({ totalPrice, handleCheckout, cartItems, clearCart }) => {
+  const hasStockIssues = cartItems.some((item) => item.quantity > (item.product?.stock || 0));
+  const isCartEmpty = cartItems.length === 0;
+
+  // Calculate breakdown (example: add tax and shipping)
+  const subtotal = totalPrice;
+  const taxRate = 0.075; // 7.5% tax
+  const tax = subtotal * taxRate;
+  const shipping = subtotal > 0 ? 500 : 0; // Flat 500 NGN shipping if cart isn't empty
+  const grandTotal = subtotal + tax + shipping;
+
   return (
-    <div className="mt-6 flex justify-between items-center">
-      <p className="text-lg font-bold text-gray-800">
-        Total: ₦{totalPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </p>
-      <button
-        onClick={handleCheckout}
-        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-      >
-        Checkout
-      </button>
+    <div className="mt-6 p-4 bg-gray-50 rounded-lg shadow-sm">
+      <h2 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h2>
+      <div className="space-y-2 text-sm text-gray-700">
+        <div className="flex justify-between">
+          <span>Subtotal</span>
+          <span>₦{subtotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Tax (7.5%)</span>
+          <span>₦{tax.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Shipping</span>
+          <span>₦{shipping.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+        <div className="flex justify-between font-bold text-gray-800 border-t pt-2">
+          <span>Grand Total</span>
+          <span>₦{grandTotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+      </div>
+      <div className="mt-4 flex gap-3">
+        <button
+          onClick={handleCheckout}
+          className={`flex-1 px-6 py-2 rounded-lg text-white transition ${
+            isCartEmpty || hasStockIssues
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+          disabled={isCartEmpty || hasStockIssues}
+          aria-label="Proceed to checkout"
+        >
+          Checkout
+        </button>
+        <button
+          onClick={clearCart}
+          className={`px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition ${
+            isCartEmpty ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          disabled={isCartEmpty}
+          aria-label="Clear cart"
+        >
+          Clear Cart
+        </button>
+      </div>
     </div>
   );
 };

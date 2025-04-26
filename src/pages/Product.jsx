@@ -5,93 +5,202 @@ import ProductCard from '/src/components/home/ProductCard';
 import SkeletonLoader from '/src/components/common/SkeletonLoader';
 
 const Product = () => {
-  const { id } = useParams(); // Get product ID from URL
+  const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cartLoading, setCartLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [cart, setCart] = useState([]);
   const [favorites, setFavorites] = useState([]);
 
   // Load cart and favorites from localStorage on mount
   useEffect(() => {
-    const storedCart = localStorage.getItem('cart');
-    const storedFavorites = localStorage.getItem('favorites');
-    if (storedCart) setCart(JSON.parse(storedCart));
-    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+    try {
+      setCartLoading(true);
+      const storedCart = localStorage.getItem('cart');
+      const storedFavorites = localStorage.getItem('favorites');
+      console.log('Initial cart load in Product.jsx:', storedCart); // Debug log
+      if (storedCart) {
+        const parsedCart = JSON.parse(storedCart);
+        if (Array.isArray(parsedCart)) {
+          setCart(parsedCart);
+        } else {
+          setCart([]);
+          localStorage.setItem('cart', JSON.stringify([]));
+          setError('Cart data was invalid and has been reset.');
+        }
+      }
+      if (storedFavorites) {
+        const parsedFavorites = JSON.parse(storedFavorites);
+        if (Array.isArray(parsedFavorites)) {
+          setFavorites(parsedFavorites);
+        } else {
+          setFavorites([]);
+          localStorage.setItem('favorites', JSON.stringify([]));
+          setError('Favorites data was invalid and has been reset.');
+        }
+      }
+    } catch (err) {
+      console.error('Error loading cart/favorites from localStorage:', err);
+      setCart([]);
+      setFavorites([]);
+      localStorage.setItem('cart', JSON.stringify([]));
+      localStorage.setItem('favorites', JSON.stringify([]));
+      setError('Failed to load cart or favorites. They have been reset.');
+    } finally {
+      setCartLoading(false);
+    }
+  }, []);
+
+  // Listen for changes to localStorage (e.g., from other tabs)
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      try {
+        if (event.key === 'cart') {
+          const updatedCart = event.newValue ? JSON.parse(event.newValue) : [];
+          console.log('Storage event - Updated cart in Product.jsx:', updatedCart); // Debug log
+          if (Array.isArray(updatedCart)) {
+            setCart(updatedCart);
+          } else {
+            setCart([]);
+            localStorage.setItem('cart', JSON.stringify([]));
+            setError('Cart data was invalid and has been reset.');
+          }
+        }
+        if (event.key === 'favorites') {
+          const updatedFavorites = event.newValue ? JSON.parse(event.newValue) : [];
+          if (Array.isArray(updatedFavorites)) {
+            setFavorites(updatedFavorites);
+          } else {
+            setFavorites([]);
+            localStorage.setItem('favorites', JSON.stringify([]));
+            setError('Favorites data was invalid and has been reset.');
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing updated data from storage event:', err);
+        setCart([]);
+        setFavorites([]);
+        localStorage.setItem('cart', JSON.stringify([]));
+        localStorage.setItem('favorites', JSON.stringify([]));
+        setError('Failed to sync cart or favorites. They have been reset.');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Save cart and favorites to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-    localStorage.setItem('favorites', JSON.stringify(favorites));
+    try {
+      localStorage.setItem('cart', JSON.stringify(cart));
+      console.log('Saved cart to localStorage in Product.jsx:', cart); // Debug log
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+    } catch (err) {
+      console.error('Error saving cart/favorites to localStorage:', err);
+      setError('Failed to save cart or favorites changes. Please ensure localStorage is enabled.');
+    }
   }, [cart, favorites]);
 
   // Load product and similar products
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => {
-      // Find the product by ID
-      const foundProduct = db.products.find((p) => p.id === parseInt(id));
-      if (foundProduct) {
-        setProduct(foundProduct);
-
-        // Find similar products (same category, excluding the current product)
-        const related = db.products
-          .filter((p) => p.categoryId === foundProduct.categoryId && p.id !== foundProduct.id)
-          .slice(0, 4); // Limit to 4 similar products
-        setSimilarProducts(related);
-      } else {
+      try {
+        const foundProduct = db.products.find((p) => p.id === parseInt(id));
+        if (foundProduct) {
+          setProduct(foundProduct);
+          const related = db.products
+            .filter((p) => p.categoryId === foundProduct.categoryId && p.id !== foundProduct.id)
+            .slice(0, 4);
+          setSimilarProducts(related);
+        } else {
+          setProduct(null);
+          setSimilarProducts([]);
+          setError('Product not found.');
+        }
+      } catch (err) {
+        console.error('Error loading product:', err);
         setProduct(null);
         setSimilarProducts([]);
+        setError('Failed to load product.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 1500); // Simulate loading delay
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [id]);
 
   const handleAddToCart = () => {
-    if (product) {
-      setCart((prevCart) => {
-        const existingItem = prevCart.find((item) => item.productId === product.id);
-        if (existingItem) {
-          return prevCart.map((item) =>
+    if (!product) return;
+
+    const stock = product.stock || 0;
+    const existingItem = cart.find((item) => item.productId === product.id);
+    const currentQuantity = existingItem ? existingItem.quantity : 0;
+    const newTotalQuantity = currentQuantity + quantity;
+
+    if (newTotalQuantity > stock) {
+      setMessage(`Cannot add more than ${stock} units of ${product.name}.`);
+      setQuantity(stock - currentQuantity > 0 ? stock - currentQuantity : 1);
+      return;
+    }
+
+    setCart((prevCart) => {
+      const updatedCart = existingItem
+        ? prevCart.map((item) =>
             item.productId === product.id
               ? { ...item, quantity: item.quantity + quantity }
               : item
-          );
-        }
-        return [...prevCart, { productId: product.id, quantity }];
-      });
-      alert(`${product.name} added to cart!`);
-    }
+          )
+        : [...prevCart, { productId: product.id, quantity }];
+      console.log('Updated cart in Product.jsx:', updatedCart); // Debug log
+      return updatedCart;
+    });
+    setMessage(`${product.name} added to cart!`);
+    setQuantity(1);
   };
 
   const toggleFavorite = () => {
-    if (product) {
-      setFavorites((prevFavorites) => {
-        if (prevFavorites.includes(product.id)) {
-          return prevFavorites.filter((id) => id !== product.id);
-        }
-        return [...prevFavorites, product.id];
-      });
-    }
+    if (!product) return;
+    setFavorites((prevFavorites) => {
+      if (prevFavorites.includes(product.id)) {
+        setMessage(`Removed ${product.name} from favorites.`);
+        return prevFavorites.filter((id) => id !== product.id);
+      }
+      setMessage(`Added ${product.name} to favorites!`);
+      return [...prevFavorites, product.id];
+    });
   };
 
-  if (loading) {
+  if (loading || cartLoading) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto px-4 py-8">
         <SkeletonLoader type="productDetail" count={1} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Link to="/products" className="text-blue-600 hover:underline">
+          Back to Products
+        </Link>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="container mx-auto p-4 text-center">
-        <p className="text-red-500">Product not found.</p>
-        <Link to="/products" className="text-blue-500 underline">
+      <div className="container mx-auto px-4 py-8 text-center">
+        <p className="text-red-600">Product not found.</p>
+        <Link to="/products" className="text-blue-600 hover:underline">
           Back to Products
         </Link>
       </div>
@@ -103,6 +212,9 @@ const Product = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {message && (
+        <p className="text-green-600 mb-4">{message}</p>
+      )}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Main Product Details */}
         <div className="w-full md:w-3/4">
