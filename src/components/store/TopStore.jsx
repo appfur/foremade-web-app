@@ -56,7 +56,7 @@ const TopStores = () => {
               <div className="bg-gray-200 rounded-full p-1 h-8 w-8 sm:hidden"></div>
             </div>
           </div>
-          {/* <SkeletonLoader count={4} /> */}
+          <SkeletonLoader count={5} />
         </div>
       </section>
     );
@@ -67,7 +67,7 @@ const TopStores = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
-            Top Stores
+             Stores
           </h2>
           <div className="flex items-center gap-2">
             <Link to="/stores" className="text-blue-600 text-sm hover:underline">
@@ -116,14 +116,19 @@ const TopStores = () => {
               </div>
               <div className="flex gap-2">
                 {store.products.map((product, index) => (
-                  <div key={index} className="flex flex-col items-center">
+                  <Link
+                    key={index}
+                    to={`/product/${product.id}`}
+                    className="flex flex-col items-center"
+                    onClick={(e) => e.stopPropagation()} // Prevent store link from firing
+                  >
                     <img
                       src={product.image}
                       alt={`Product ${index + 1}`}
                       className="w-20 h-20 object-cover rounded-md"
                     />
                     <p className="text-xs text-gray-600 mt-1">{formatPrice(product.price)}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </Link>

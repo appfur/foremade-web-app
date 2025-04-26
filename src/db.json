@@ -103,8 +103,8 @@
     },
     {
       "id": 8,
-      "name": "Designer Jacket",
-      "price": 223500,
+      "name": "Fitbit Versa 4",
+      "price": 45000.00,
       "rating": 4.4,
       "image": "https://foremade.com/storage/app/public/product/thumbnail/2025-04-13-67fb393f83e85.webp",
       "categoryId": 1,
@@ -427,7 +427,7 @@
     {
       "id": 1,
       "userId": 3,
-      "storeName": "TechTrend Innovations",
+      "storeName": "Foremade",
       "description": "Leading tech products provider.",
       "rating": 4.8
     },

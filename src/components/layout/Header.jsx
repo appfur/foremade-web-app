@@ -1,9 +1,76 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import db from '../../db.json'; // Adjust the path based on your file location
 
 const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const location = useLocation();
+
+  // Load products from db.json (no fetch)
+  useEffect(() => {
+    try {
+      setLoading(true);
+      const productData = Array.isArray(db.products) ? db.products : [];
+      setProducts(productData);
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+      console.error('Error loading products:', err);
+    }
+  }, []);
+
+  // Handle search input change
+  const handleSearch = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim() === '') {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    // Case-insensitive alphabetical search
+    const filtered = products.filter((product) =>
+      product.name.toLowerCase().includes(query.toLowerCase())
+    );
+    setSearchResults(filtered);
+    setShowDropdown(true);
+  };
+
+  // Handle input focus
+  const handleFocus = () => {
+    if (searchQuery.trim() !== '' && searchResults.length > 0) {
+      setShowDropdown(true);
+    }
+  };
+
+  // Handle input blur (close dropdown after a delay to allow clicking on results)
+  const handleBlur = () => {
+    setTimeout(() => {
+      setShowDropdown(false);
+    }, 200);
+  };
+
+  // Display loading, error, or empty products state
+  if (loading) {
+    return <div className="p-4 text-gray-600">Loading products...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-600">Error: {error}</div>;
+  }
+
+  if (products.length === 0) {
+    return <div className="p-4 text-gray-600">No products available to search.</div>;
+  }
 
   return (
     <header className="bg-white">
@@ -98,7 +165,7 @@ const Header = () => {
         </div>
 
         {/* Search Bar (Desktop/Tablet) */}
-        <div className="hidden sm:flex items-center w-full mx-4">
+        <div className="hidden sm:flex items-center w-full mx-4 relative">
           <div className="flex items-center border-2 border-black rounded-full w-full">
             <div className="relative">
               <select className="bg-gray-100 py-2 pl-3 pr-8 text-xs focus:outline-none appearance-none rounded-l-full border-r border-gray-300">
@@ -115,6 +182,10 @@ const Header = () => {
                 type="text"
                 placeholder="Search for anything"
                 className="w-full bg-white py-2 pl-10 pr-3 text-xs focus:outline-none placeholder-black border-none rounded-r-full"
+                value={searchQuery}
+                onChange={handleSearch}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
               />
               <i className="bx bx-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 text-sm"></i>
             </div>
@@ -122,6 +193,37 @@ const Header = () => {
           <button className="bg-blue-700 text-white px-6 py-2 rounded-full hover:bg-blue-800 text-xs ml-2">
             Search
           </button>
+
+          {/* Search Dropdown (Desktop/Tablet) */}
+          {showDropdown && (
+            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-80 overflow-y-auto">
+              {searchResults.length > 0 ? (
+                searchResults.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/product/${product.id}`}
+                    className="flex items-center p-2 hover:bg-gray-100"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      setSearchQuery('');
+                    }}
+                  >
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-10 h-10 object-cover rounded mr-2"
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/40?text=Image+Not+Found';
+                      }}
+                    />
+                    <span className="text-sm text-gray-800">{product.name}</span>
+                  </Link>
+                ))
+              ) : (
+                <div className="p-2 text-sm text-gray-600">No results found</div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Icons (Mobile) */}
@@ -153,18 +255,53 @@ const Header = () => {
 
       {/* Search Bar and Buttons (Mobile) */}
       <div className="sm:hidden px-4 py-2">
-        <div className="flex items-center w-full mb-2">
+        <div className="flex items-center w-full mb-2 relative">
           <div className="relative flex-1">
             <input
               type="text"
               placeholder="Search for anything"
               className="w-full text-black border border-gray-300 rounded-l-md p-2 pl-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+              value={searchQuery}
+              onChange={handleSearch}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
             <i className="bx bx-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-600 text-lg"></i>
           </div>
           <button className="bg-blue-600 text-white p-1 rounded-r-md">
             <i className="bx bx-search text-xl"></i>
           </button>
+
+          {/* Search Dropdown (Mobile) */}
+          {showDropdown && (
+            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-80 overflow-y-auto">
+              {searchResults.length > 0 ? (
+                searchResults.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/product/${product.id}`}
+                    className="flex items-center p-2 hover:bg-gray-100"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      setSearchQuery('');
+                    }}
+                  >
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-10 h-10 object-cover rounded mr-2"
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/40?text=Image+Not+Found';
+                      }}
+                    />
+                    <span className="text-sm text-gray-800">{product.name}</span>
+                  </Link>
+                ))
+              ) : (
+                <div className="p-2 text-sm text-gray-600">No results found</div>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide p-2">
           <Link
@@ -240,8 +377,6 @@ const Header = () => {
             <Link to="/saved" className="hover:text-blue-600">
               Health & Beauty
             </Link>
-            
-            {/* /////////////////// */}
             <div className="relative group lg:hidden">
               <button className="hover:text-blue-600 flex items-center">
                 More <i className="bx bx-chevron-down ml-1"></i>
@@ -258,8 +393,6 @@ const Header = () => {
                 </Link>
               </div>
             </div>
-
-            {/* ///////////////// */}
             <Link to="/electronics" className="hover:text-blue-600">
               Foremade Fashion
             </Link>
