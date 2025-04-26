@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import db from '../../db.json'; // Adjust the path based on your file location
+import { UserContext } from '../UserContext';
+import db from '../../db.json';
 
 const Header = () => {
+  const { cart, favorites } = useContext(UserContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -12,7 +14,7 @@ const Header = () => {
   const [error, setError] = useState(null);
   const location = useLocation();
 
-  // Load products from db.json (no fetch)
+  // Load products from db.json
   useEffect(() => {
     try {
       setLoading(true);
@@ -58,6 +60,9 @@ const Header = () => {
       setShowDropdown(false);
     }, 200);
   };
+
+  // Calculate total cart items
+  const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   // Display loading, error, or empty products state
   if (loading) {
@@ -133,7 +138,7 @@ const Header = () => {
                   Orders
                 </Link>
                 <Link to="/favorites" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Favorites
+                  Favorites ({favorites.length})
                 </Link>
                 <Link to="/settings" className="block px-4 py-1 text-xs hover:bg-gray-100">
                   Settings
@@ -233,9 +238,11 @@ const Header = () => {
           </Link>
           <Link to="/cart" className="relative">
             <i className="bx bx-cart-alt text-gray-600 text-xl"></i>
-            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              6
-            </span>
+            {cartItemCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
           </Link>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -247,8 +254,13 @@ const Header = () => {
 
         {/* Icons (Desktop/Tablet) */}
         <div className="hidden sm:flex items-center gap-3">
-          <Link to="/cart" className="flex items-center">
+          <Link to="/cart" className="flex items-center relative">
             <i className="bx bx-cart-alt text-gray-600 text-xl"></i>
+            {cartItemCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
           </Link>
         </div>
       </div>
@@ -467,7 +479,7 @@ const Header = () => {
           </Link>
           <Link to="/favorites" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
             <i className="bx bx-heart text-lg"></i>
-            <span>Favorites</span>
+            <span>Favorites ({favorites.length})</span>
           </Link>
           <Link to="/my-account" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
             <i className="bx bx-user text-lg"></i>
