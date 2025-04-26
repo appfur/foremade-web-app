@@ -82,12 +82,12 @@ const Cart = () => {
     return { ...item, product };
   });
 
-  // Calculate subtotal
+  // Calculate totals
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const uniqueProducts = cart.length;
   const subtotal = cartItems.reduce((total, item) => {
     return total + (item.product ? item.product.price * item.quantity : 0);
   }, 0);
-
-  // Calculate grand total (including tax and shipping)
   const taxRate = 0.075; // 7.5% tax
   const tax = subtotal * taxRate;
   const shipping = subtotal > 0 ? 500 : 0; // Flat 500 NGN shipping
@@ -187,6 +187,16 @@ const Cart = () => {
         </p>
       ) : (
         <div>
+          {/* Cart Stats */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg shadow-sm">
+            <p className="text-sm text-gray-700">
+              Total Items: <span className="font-bold">{totalItems}</span>
+            </p>
+            <p className="text-sm text-gray-700">
+              Unique Products: <span className="font-bold">{uniqueProducts}</span>
+            </p>
+          </div>
+
           {/* Cart Items */}
           <div className="space-y-4 mb-6">
             {cartItems.map((item) => {
@@ -219,16 +229,26 @@ const Cart = () => {
 
               return (
                 <div key={item.productId} className="flex items-center gap-4 p-4 bg-gray-100 rounded-lg">
-                  <img
-                    src={item.product.image || 'https://via.placeholder.com/64'}
-                    alt={item.product.name}
-                    className="w-16 h-16 object-cover rounded"
-                    onError={(e) => (e.target.src = 'https://via.placeholder.com/64')}
-                  />
+                  <Link to={`/product/${item.productId}`}>
+                    <img
+                      src={item.product.image || 'https://via.placeholder.com/64'}
+                      alt={item.product.name}
+                      className="w-16 h-16 object-cover rounded"
+                      onError={(e) => (e.target.src = 'https://via.placeholder.com/64')}
+                    />
+                  </Link>
                   <div className="flex-1">
-                    <h3 className="text-sm font-bold text-gray-800">{item.product.name}</h3>
+                    <Link to={`/product/${item.productId}`} className="text-sm font-bold text-gray-800 hover:underline">
+                      {item.product.name}
+                    </Link>
                     <p className="text-xs text-gray-600">
-                      ₦{(item.product.price * item.quantity).toLocaleString('en-NG', {
+                      Unit Price: ₦{item.product.price.toLocaleString('en-NG', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      Total: ₦{(item.product.price * item.quantity).toLocaleString('en-NG', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -269,7 +289,7 @@ const Cart = () => {
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h2>
             <div className="space-y-2 text-sm text-gray-700">
               <div className="flex justify-between">
-                <span>Subtotal</span>
+                <span>Items ({totalItems})</span>
                 <span>₦{subtotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between">

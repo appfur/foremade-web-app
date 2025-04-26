@@ -20,7 +20,6 @@ const Carousel = () => {
       description: 'Quality and refinable products.',
       button: 'Shop Now',
     },
-    
   ];
   const [current, setCurrent] = useState(0);
   const [prevSlide, setPrevSlide] = useState(null);
@@ -34,7 +33,7 @@ const Carousel = () => {
   }, [current, slides.length]);
 
   return (
-    <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden">
+    <div className="relative max-w-5xl mx-auto h-64 sm:h-80 md:h-96 overflow-hidden px-4 rounded-lg">
       {slides.map((slide, index) => (
         <div
           key={index}
@@ -49,7 +48,7 @@ const Carousel = () => {
           <img
             src={slide.image}
             alt={`Slide ${index}`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-lg"
           />
           <div className="absolute inset-0 flex items-center justify-start p-10 max-md:p-6 bg-black bg-opacity-30">
             <div className="text-white max-w-lg text-left">

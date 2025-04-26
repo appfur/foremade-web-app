@@ -25,13 +25,18 @@ const Product = () => {
       console.log('Initial cart load in Product.jsx:', storedCart); // Debug log
       if (storedCart) {
         const parsedCart = JSON.parse(storedCart);
+        console.log('Parsed initial cart in Product.jsx:', parsedCart); // Debug log
         if (Array.isArray(parsedCart)) {
           setCart(parsedCart);
         } else {
+          console.warn('Cart data invalid, resetting to empty array');
           setCart([]);
           localStorage.setItem('cart', JSON.stringify([]));
           setError('Cart data was invalid and has been reset.');
         }
+      } else {
+        console.log('No cart found in localStorage, setting to empty array');
+        setCart([]);
       }
       if (storedFavorites) {
         const parsedFavorites = JSON.parse(storedFavorites);
@@ -97,8 +102,9 @@ const Product = () => {
   // Save cart and favorites to localStorage whenever they change
   useEffect(() => {
     try {
+      console.log('Attempting to save cart to localStorage:', cart); // Debug log
       localStorage.setItem('cart', JSON.stringify(cart));
-      console.log('Saved cart to localStorage in Product.jsx:', cart); // Debug log
+      console.log('Cart saved to localStorage successfully'); // Debug log
       localStorage.setItem('favorites', JSON.stringify(favorites));
     } catch (err) {
       console.error('Error saving cart/favorites to localStorage:', err);
@@ -112,6 +118,7 @@ const Product = () => {
     const timer = setTimeout(() => {
       try {
         const foundProduct = db.products.find((p) => p.id === parseInt(id));
+        console.log('Found product:', foundProduct); // Debug log
         if (foundProduct) {
           setProduct(foundProduct);
           const related = db.products
@@ -137,16 +144,28 @@ const Product = () => {
   }, [id]);
 
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product) {
+      console.warn('No product to add to cart'); // Debug log
+      return;
+    }
+
+    console.log('Adding product to cart:', { productId: product.id, quantity }); // Debug log
 
     const stock = product.stock || 0;
     const existingItem = cart.find((item) => item.productId === product.id);
     const currentQuantity = existingItem ? existingItem.quantity : 0;
     const newTotalQuantity = currentQuantity + quantity;
 
+    if (stock === 0) {
+      setMessage(`${product.name} is out of stock.`);
+      console.log('Product out of stock'); // Debug log
+      return;
+    }
+
     if (newTotalQuantity > stock) {
       setMessage(`Cannot add more than ${stock} units of ${product.name}.`);
       setQuantity(stock - currentQuantity > 0 ? stock - currentQuantity : 1);
+      console.log('Quantity exceeds stock:', { stock, newTotalQuantity }); // Debug log
       return;
     }
 
@@ -161,7 +180,14 @@ const Product = () => {
       console.log('Updated cart in Product.jsx:', updatedCart); // Debug log
       return updatedCart;
     });
-    setMessage(`${product.name} added to cart!`);
+    setMessage(
+      <span>
+        {product.name} added to cart!{' '}
+        <Link to="/cart" className="text-blue-600 hover:underline">
+          View Cart
+        </Link>
+      </span>
+    );
     setQuantity(1);
   };
 
@@ -264,7 +290,16 @@ const Product = () => {
                   min="1"
                   max={product.stock}
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (isNaN(value) || value < 1) {
+                      setQuantity(1);
+                    } else if (value > product.stock) {
+                      setQuantity(product.stock);
+                    } else {
+                      setQuantity(value);
+                    }
+                  }}
                   className="w-16 p-1 border border-gray-300 rounded"
                   disabled={product.stock === 0}
                 />
@@ -272,7 +307,7 @@ const Product = () => {
               <div className="flex gap-4">
                 <button
                   onClick={handleAddToCart}
-                  className={`w-full text-sm py-3 rounded-lg transition ${
+                  className={`w-full text-sm py-1 rounded-lg transition ${
                     product.stock > 0
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
                       : 'bg-gray-300 text-gray-600 cursor-not-allowed'
