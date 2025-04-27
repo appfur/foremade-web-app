@@ -7,6 +7,7 @@ import { getCart, updateCart } from '/src/utils/cartUtils';
 
 const Product = () => {
   const { id } = useParams();
+  // const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -152,8 +153,8 @@ const Product = () => {
     console.log('Updated cart in Product.jsx:', updatedCart);
     setCartPopup(
       <span>
-        <i className="bx bx-cart text-blue-500 text-lg"></i> {product.name} added to cart!{' '}
-        <Link to="/cart" className="text-blue-300 hover:underline">
+        <i className="bx bx-cart text-blue-500"></i> {product.name} added to cart!{' '}
+        <Link to="/cart" className="text-blue-600 hover:underline">
           View Cart
         </Link>
       </span>
@@ -166,10 +167,9 @@ const Product = () => {
     setFavorites((prevFavorites) => {
       if (prevFavorites.includes(product.id)) {
         setFavoritesPopup(
-          <span className="flex items-center gap-2">
-            <i className="bx bxs-heart text-yellow-400 text-lg animate-pulse"></i>
-            <span className="text-sm">Removed from favorites!</span>
-            <Link to="/favorites" className="text-blue-300 hover:underline text-sm">
+          <span class>
+            <i className="bx bxs-heart text-yellow-500"></i> Removed from favorites.{' '}
+            <Link to="/favorites" className="text-blue-600 hover:underline">
               View Favorites
             </Link>
           </span>
@@ -177,10 +177,9 @@ const Product = () => {
         return prevFavorites.filter((id) => id !== product.id);
       }
       setFavoritesPopup(
-        <span className="flex items-center gap-2">
-          <i className="bx bxs-heart text-red-500 text-lg animate-pulse"></i>
-          <span className="text-sm">Added to favorites!</span>
-          <Link to="/favorites" className="text-blue-300 hover:underline text-sm">
+        <span>
+          <i className="bx bxs-heart text-red-500"></i> Added to favorites!{' '}
+          <Link to="/favorites" className="text-blue-600 hover:underline">
             View Favorites
           </Link>
         </span>
@@ -199,12 +198,12 @@ const Product = () => {
     }
   }, [cartPopup]);
 
-  // Auto-dismiss favorites popup after 2 seconds
+  // Auto-dismiss favorites popup after 3 seconds
   useEffect(() => {
     if (favoritesPopup) {
       const timer = setTimeout(() => {
         setFavoritesPopup(null);
-      }, 2000); // 2 seconds as per your update
+      }, 2000); // 3 seconds
       return () => clearTimeout(timer);
     }
   }, [favoritesPopup]);
@@ -258,7 +257,7 @@ const Product = () => {
       )}
       {/* Favorites Popup */}
       {favoritesPopup && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-red-600 to-pink-500 text-white px-4 py-2 rounded-lg shadow-lg animate-slide-down">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
           <div className="flex items-center gap-2">
             {favoritesPopup}
           </div>
@@ -340,7 +339,7 @@ const Product = () => {
                   }`}
                 >
                   <i
-                    className={`bx bx-heart text-xl ${
+                    className={`bx bxs-heart text-xl ${
                       favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
                     }`}
                   ></i>
