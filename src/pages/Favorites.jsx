@@ -1,61 +1,86 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import db from '../db.json';
+import ProductCard from '/src/components/home/ProductCard';
 
 const Favorites = () => {
   const [favorites, setFavorites] = useState([]);
+  const [favoriteProducts, setFavoriteProducts] = useState([]);
 
-  // Load favorites from localStorage on mount
+  // Load favorites from localStorage on mount and update favoriteProducts
   useEffect(() => {
     const storedFavorites = localStorage.getItem('favorites');
     if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
+      const parsedFavorites = JSON.parse(storedFavorites);
+      if (Array.isArray(parsedFavorites)) {
+        setFavorites(parsedFavorites);
+      } else {
+        setFavorites([]);
+        localStorage.setItem('favorites', JSON.stringify([]));
+      }
+    } else {
+      setFavorites([]);
+      localStorage.setItem('favorites', JSON.stringify([]));
     }
   }, []);
 
-  // Save favorites to localStorage whenever it changes
+  // Update favoriteProducts whenever favorites changes
+  useEffect(() => {
+    const products = favorites
+      .map((id) => db.products.find((p) => p.id === id))
+      .filter((product) => product !== undefined); // Remove undefined entries
+    setFavoriteProducts(products);
+  }, [favorites]);
+
+  // Listen for changes to localStorage for favorites
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (event.key === 'favorites') {
+        try {
+          const updatedFavorites = event.newValue ? JSON.parse(event.newValue) : [];
+          if (Array.isArray(updatedFavorites)) {
+            setFavorites(updatedFavorites);
+          } else {
+            setFavorites([]);
+            localStorage.setItem('favorites', JSON.stringify([]));
+          }
+        } catch (err) {
+          console.error('Error parsing updated favorites from storage event:', err);
+          setFavorites([]);
+          localStorage.setItem('favorites', JSON.stringify([]));
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Save favorites to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('favorites', JSON.stringify(favorites));
   }, [favorites]);
-
-  const favoriteProducts = favorites.map((id) => db.products.find((p) => p.id === id));
-
-  const removeFromFavorites = (productId) => {
-    setFavorites((prevFavorites) => prevFavorites.filter((id) => id !== productId));
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Your Favorites</h1>
       {favoriteProducts.length === 0 ? (
-        <p className="text-gray-600">
-          You have no favorite products.{' '}
-          <Link to="/" className="text-blue-600 hover:underline">
-            Continue shopping
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <i className="bx bx-heart text-4xl text-gray-400 mb-4"></i>
+          <p className="text-gray-600 mb-4">
+            You have no favorite products.
+          </p>
+          <Link
+            to="/"
+            className="text-blue-600 hover:text-blue-400 font-semibold"
+          >
+            Continue Shopping
           </Link>
-        </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {favoriteProducts.map((product) => (
-            <div key={product.id} className="bg-gray-100 rounded-lg p-4">
-              <Link to={`/product/${product.id}`}>
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-40 object-cover rounded-md mb-2"
-                />
-                <h3 className="text-sm font-bold text-gray-800">{product.name}</h3>
-                <p className="text-xs text-gray-600">
-                  ₦{product.price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-              </Link>
-              <button
-                onClick={() => removeFromFavorites(product.id)}
-                className="mt-2 text-red-500 hover:text-red-700"
-              >
-                <i className="bx bx-heart text-xl"></i> Remove
-              </button>
-            </div>
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       )}

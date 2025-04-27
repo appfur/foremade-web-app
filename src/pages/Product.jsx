@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import db from '../db.json';
 import ProductCard from '/src/components/home/ProductCard';
 import SkeletonLoader from '/src/components/common/SkeletonLoader';
 import { getCart, updateCart } from '/src/utils/cartUtils';
+
 const Product = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cartLoading, setCartLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
+  const [cartPopup, setCartPopup] = useState(null);
+  const [favoritesPopup, setFavoritesPopup] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [cart, setCart] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -134,7 +135,7 @@ const Product = () => {
     const newTotalQuantity = currentQuantity + quantity;
 
     if (newTotalQuantity > stock) {
-      setMessage(`Cannot add more than ${stock} units of ${product.name}.`);
+      setCartPopup(`Cannot add more than ${stock} units of ${product.name}.`);
       setQuantity(stock - currentQuantity > 0 ? stock - currentQuantity : 1);
       return;
     }
@@ -149,15 +150,12 @@ const Product = () => {
     setCart(updatedCart);
     updateCart(updatedCart);
     console.log('Updated cart in Product.jsx:', updatedCart);
-    setMessage(
+    setCartPopup(
       <span>
-        {product.name} added to cart!{' '}
-        <button
-          onClick={() => navigate('/cart')}
-          className="text-blue-600 hover:underline"
-        >
+        <i className="bx bx-cart text-blue-500 text-lg"></i> {product.name} added to cart!{' '}
+        <Link to="/cart" className="text-blue-300 hover:underline">
           View Cart
-        </button>
+        </Link>
       </span>
     );
     setQuantity(1);
@@ -167,13 +165,49 @@ const Product = () => {
     if (!product) return;
     setFavorites((prevFavorites) => {
       if (prevFavorites.includes(product.id)) {
-        setMessage(`Removed ${product.name} from favorites.`);
+        setFavoritesPopup(
+          <span className="flex items-center gap-2">
+            <i className="bx bxs-heart text-yellow-400 text-lg animate-pulse"></i>
+            <span className="text-sm">Removed from favorites!</span>
+            <Link to="/favorites" className="text-blue-300 hover:underline text-sm">
+              View Favorites
+            </Link>
+          </span>
+        );
         return prevFavorites.filter((id) => id !== product.id);
       }
-      setMessage(`Added ${product.name} to favorites!`);
+      setFavoritesPopup(
+        <span className="flex items-center gap-2">
+          <i className="bx bxs-heart text-red-500 text-lg animate-pulse"></i>
+          <span className="text-sm">Added to favorites!</span>
+          <Link to="/favorites" className="text-blue-300 hover:underline text-sm">
+            View Favorites
+          </Link>
+        </span>
+      );
       return [...prevFavorites, product.id];
     });
   };
+
+  // Auto-dismiss cart popup after 3 seconds
+  useEffect(() => {
+    if (cartPopup) {
+      const timer = setTimeout(() => {
+        setCartPopup(null);
+      }, 3000); // 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [cartPopup]);
+
+  // Auto-dismiss favorites popup after 2 seconds
+  useEffect(() => {
+    if (favoritesPopup) {
+      const timer = setTimeout(() => {
+        setFavoritesPopup(null);
+      }, 2000); // 2 seconds as per your update
+      return () => clearTimeout(timer);
+    }
+  }, [favoritesPopup]);
 
   if (loading || cartLoading) {
     return (
@@ -209,9 +243,26 @@ const Product = () => {
   const seller = db.sellers.find((seller) => seller.id === product.sellerId)?.storeName || 'Unknown Seller';
 
   return (
-    <div className="container mx-auto p-5">
-      {message && (
-        <p className="text-green-600 mb-4">{message}</p>
+    <div className="relative container mx-auto p-5">
+      {/* Cart Popup */}
+      {cartPopup && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
+          <div className="flex items-center gap-2">
+            {typeof cartPopup === 'string' ? (
+              <span className="text-sm">{cartPopup}</span>
+            ) : (
+              cartPopup
+            )}
+          </div>
+        </div>
+      )}
+      {/* Favorites Popup */}
+      {favoritesPopup && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-red-600 to-pink-500 text-white px-4 py-2 rounded-lg shadow-lg animate-slide-down">
+          <div className="flex items-center gap-2">
+            {favoritesPopup}
+          </div>
+        </div>
       )}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Main Product Details */}
@@ -282,14 +333,18 @@ const Product = () => {
                 </button>
                 <button
                   onClick={toggleFavorite}
-                  className="flex items-center justify-center gap-2 px-2 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-100"
+                  className={`flex items-center justify-center gap-2 px-2 py-1 text-xs border rounded-lg transition ${
+                    favorites.includes(product.id)
+                      ? 'border-red-500 text-red-500 hover:bg-red-50'
+                      : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                  }`}
                 >
                   <i
                     className={`bx bx-heart text-xl ${
                       favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
                     }`}
                   ></i>
-                  {favorites.includes(product.id) ? 'Remove from Favorites' : 'Add to Favorites'}
+                  {favorites.includes(product.id)}
                 </button>
               </div>
             </div>

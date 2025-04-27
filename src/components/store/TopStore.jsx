@@ -44,21 +44,16 @@ const TopStores = () => {
 
   // Auto-scrolling logic
   useEffect(() => {
-    if (loading || isPaused) return;
+    if (loading || !scrollRef.current || isPaused) return;
 
     const scrollInterval = setInterval(() => {
-      if (scrollRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-        const maxScroll = scrollWidth - clientWidth;
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      const maxScroll = scrollWidth - clientWidth;
 
-        // Check if we've reached the end
-        if (scrollLeft >= maxScroll - 1) {
-          // Scroll back to the beginning
-          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          // Scroll right by 300px
-          scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-        }
+      if (scrollLeft >= maxScroll - 1) {
+        scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
       }
     }, 10000); // Every 10 seconds
 
@@ -77,13 +72,13 @@ const TopStores = () => {
 
   const scrollLeft = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
     }
   };
 
   const scrollRight = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
     }
   };
 
@@ -106,13 +101,11 @@ const TopStores = () => {
 
   if (loading) {
     return (
-      <section className="p-4 bg-white">
-        <div className="container mx-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
-              The Galleria
-            </h2>
-            <div className="flex items-center gap-2">
+      <section className="py-8 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg md:text-xl font-bold text-gray-800">Top Stores</h2>
+            <div className="flex items-center gap-3">
               <div className="h-5 bg-gray-200 rounded w-16"></div>
               <div className="bg-gray-200 rounded-full p-1 h-8 w-8 sm:hidden"></div>
               <div className="bg-gray-200 rounded-full p-1 h-8 w-8 sm:hidden"></div>
@@ -127,14 +120,12 @@ const TopStores = () => {
   }
 
   return (
-    <section className="bg-white">
+    <section className="py-8 bg-white">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
-              The Galleria
-            </h2>
-          <div className="flex items-center gap-2">
-            <Link to="/stores" className="text-blue-600 text-sm hover:underline">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-800">Top Stores</h2>
+          <div className="flex items-center gap-3">
+            <Link to="/stores" className="text-blue-600 text-sm hover:text-blue-400">
               View All
             </Link>
             <button
@@ -158,7 +149,7 @@ const TopStores = () => {
           onTouchEnd={handleInteractionEnd}
           onMouseDown={handleInteractionStart}
           onMouseUp={handleInteractionEnd}
-          onMouseLeave={handleInteractionEnd} // Resume if mouse leaves the area
+          onMouseLeave={handleInteractionEnd}
         >
           {stores.length === 0 ? (
             <p className="text-gray-600 p-4">No stores available.</p>
@@ -166,14 +157,11 @@ const TopStores = () => {
             stores.map((store) => (
               <div
                 key={store.id}
-                className="flex-shrink-0 w-80 sm:w-auto mr-4 sm:mr-0 bg-gray-100 border border-gray-200 rounded-lg p-4 hover:bg-gray-200 cursor-pointer snap-start"
+                className="flex-shrink-0 w-80 sm:w-auto mr-4 sm:mr-0 bg-gray-100 border border-gray-200 rounded-lg p-4 hover:bg-gray-200 cursor-pointer snap-start transition-all duration-300"
                 onClick={() => handleStoreClick(store.id)}
               >
-                <div className="flex justify-between items-center mb-2">
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-800">{store.name}</h3>
-                    <p className="text-xs text-gray-600">{store.productCount} Products</p>
-                  </div>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm font-semibold text-gray-800">{store.name}</h3>
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => (
                       <i
@@ -196,7 +184,7 @@ const TopStores = () => {
                       >
                         <img
                           src={product.image}
-                          alt={`Product ${index + 1}`}
+                          alt={product.name}
                           className="w-20 h-20 object-cover rounded-md"
                           onError={(e) => (e.target.src = 'https://via.placeholder.com/80?text=Image+Not+Found')}
                         />
@@ -212,13 +200,12 @@ const TopStores = () => {
                         <i
                           className={`bx bx-heart ${
                             favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
-                          }`}
+                          } hover:text-red-400`}
                         ></i>
                       </button>
                     </div>
                   ))}
                 </div>
-                
               </div>
             ))
           )}
