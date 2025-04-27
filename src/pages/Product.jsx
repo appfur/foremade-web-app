@@ -209,7 +209,7 @@ const Product = () => {
   const seller = db.sellers.find((seller) => seller.id === product.sellerId)?.storeName || 'Unknown Seller';
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto p-5">
       {message && (
         <p className="text-green-600 mb-4">{message}</p>
       )}
@@ -271,7 +271,7 @@ const Product = () => {
               <div className="flex gap-4">
                 <button
                   onClick={handleAddToCart}
-                  className={`w-full text-sm py-3 rounded-lg transition ${
+                  className={`w-full px-2 py-1 text-xs rounded-lg transition ${
                     product.stock > 0
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
                       : 'bg-gray-300 text-gray-600 cursor-not-allowed'
@@ -282,7 +282,7 @@ const Product = () => {
                 </button>
                 <button
                   onClick={toggleFavorite}
-                  className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  className="flex items-center justify-center gap-2 px-2 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-100"
                 >
                   <i
                     className={`bx bx-heart text-xl ${

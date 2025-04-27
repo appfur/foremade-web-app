@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import db from '../../db.json';
+import { getCart } from '/src/utils/cartUtils';
 
 const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -14,25 +15,77 @@ const Header = () => {
   const [favorites, setFavorites] = useState([]);
   const location = useLocation();
 
-  // Load cart and favorites from localStorage on mount
+  // Load cart from cartUtils and favorites from localStorage on mount
   useEffect(() => {
-    const storedCart = localStorage.getItem('cart');
-    const storedFavorites = localStorage.getItem('favorites');
-    if (storedCart) setCart(JSON.parse(storedCart));
-    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+    try {
+      // Load cart from cartUtils
+      const cartItems = getCart();
+      if (Array.isArray(cartItems)) {
+        setCart(cartItems);
+      } else {
+        setCart([]);
+      }
+
+      // Load favorites from localStorage
+      const storedFavorites = localStorage.getItem('favorites');
+      if (storedFavorites) {
+        const parsedFavorites = JSON.parse(storedFavorites);
+        if (Array.isArray(parsedFavorites)) {
+          setFavorites(parsedFavorites);
+        } else {
+          setFavorites([]);
+          localStorage.setItem('favorites', JSON.stringify([]));
+        }
+      } else {
+        setFavorites([]);
+        localStorage.setItem('favorites', JSON.stringify([]));
+      }
+    } catch (err) {
+      console.error('Error loading cart/favorites:', err);
+      setCart([]);
+      setFavorites([]);
+      localStorage.setItem('favorites', JSON.stringify([]));
+      setError('Failed to load cart or favorites.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Listen for changes to localStorage (from other components)
+  // Listen for cart updates via custom event and favorites via localStorage
   useEffect(() => {
-    const handleStorageChange = () => {
-      const storedCart = localStorage.getItem('cart');
-      const storedFavorites = localStorage.getItem('favorites');
-      if (storedCart) setCart(JSON.parse(storedCart));
-      if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+    const handleCartUpdate = () => {
+      const updatedCart = getCart();
+      if (Array.isArray(updatedCart)) {
+        setCart(updatedCart);
+      } else {
+        setCart([]);
+      }
     };
 
+    const handleStorageChange = (event) => {
+      if (event.key === 'favorites') {
+        const storedFavorites = localStorage.getItem('favorites');
+        if (storedFavorites) {
+          const parsedFavorites = JSON.parse(storedFavorites);
+          if (Array.isArray(parsedFavorites)) {
+            setFavorites(parsedFavorites);
+          } else {
+            setFavorites([]);
+            localStorage.setItem('favorites', JSON.stringify([]));
+          }
+        } else {
+          setFavorites([]);
+          localStorage.setItem('favorites', JSON.stringify([]));
+        }
+      }
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Load products from db.json
@@ -41,11 +94,11 @@ const Header = () => {
       setLoading(true);
       const productData = Array.isArray(db.products) ? db.products : [];
       setProducts(productData);
-      setLoading(false);
     } catch (err) {
       setError(err.message);
-      setLoading(false);
       console.error('Error loading products:', err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 

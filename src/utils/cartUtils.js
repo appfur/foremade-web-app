@@ -24,10 +24,16 @@ export const getCart = () => {
 
 export const updateCart = (newItems) => {
   cartState.items = newItems;
+  // Dispatch a custom event to notify listeners of cart updates
+  const event = new Event('cartUpdated');
+  window.dispatchEvent(event);
   return cartState.items;
 };
 
 export const clearCart = () => {
   cartState.items = [];
+  // Dispatch a custom event to notify listeners of cart updates
+  const event = new Event('cartUpdated');
+  window.dispatchEvent(event);
   return cartState.items;
 };

@@ -3,7 +3,7 @@ import { formatPrice } from '../../utils/formatPrice';
 
 const ProductCard = ({ product }) => {
   return (
-    <Link to={`/product/${product.id}`}>
+    <Link to={`/product/${product.id}`} className='rounded-lg borde p-5'>
       <img
         src={product.image || 'https://via.placeholder.com/150'}
         alt={product.name}
