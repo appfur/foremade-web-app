@@ -110,7 +110,7 @@ const TopStores = () => {
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
-              Top Stores
+              The Galleria
             </h2>
             <div className="flex items-center gap-2">
               <div className="h-5 bg-gray-200 rounded w-16"></div>
@@ -130,9 +130,9 @@ const TopStores = () => {
     <section className="bg-white">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
-            Top Stores
-          </h2>
+            <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
+              The Galleria
+            </h2>
           <div className="flex items-center gap-2">
             <Link to="/stores" className="text-blue-600 text-sm hover:underline">
               View All
