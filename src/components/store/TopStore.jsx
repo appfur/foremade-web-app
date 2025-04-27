@@ -8,6 +8,7 @@ const TopStores = () => {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState([]);
+  const [isPaused, setIsPaused] = useState(false);
   const navigate = useNavigate();
 
   // Load favorites from localStorage on mount
@@ -23,22 +24,56 @@ const TopStores = () => {
     localStorage.setItem('favorites', JSON.stringify(favorites));
   }, [favorites]);
 
+  // Fetch stores from db.json
   useEffect(() => {
-    const fetchStores = () => {
+    const fetchStores = async () => {
       try {
-        setTimeout(() => {
-          const storeData = Array.isArray(db.stores) ? db.stores : [];
-          setStores(storeData);
-          setLoading(false);
-        }, 1500);
+        setLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 1500)); // 1.5-second delay
+        const storeData = Array.isArray(db.stores) ? db.stores : [];
+        setStores(storeData);
       } catch (err) {
         console.error('Error loading stores from db.json:', err);
         setStores([]);
+      } finally {
         setLoading(false);
       }
     };
     fetchStores();
   }, []);
+
+  // Auto-scrolling logic
+  useEffect(() => {
+    if (loading || isPaused) return;
+
+    const scrollInterval = setInterval(() => {
+      if (scrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        const maxScroll = scrollWidth - clientWidth;
+
+        // Check if we've reached the end
+        if (scrollLeft >= maxScroll - 1) {
+          // Scroll back to the beginning
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          // Scroll right by 300px
+          scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+        }
+      }
+    }, 10000); // Every 10 seconds
+
+    return () => clearInterval(scrollInterval);
+  }, [loading, isPaused]);
+
+  // Pause auto-scrolling on user interaction
+  const handleInteractionStart = () => {
+    setIsPaused(true);
+  };
+
+  // Resume auto-scrolling when interaction ends
+  const handleInteractionEnd = () => {
+    setIsPaused(false);
+  };
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -75,7 +110,7 @@ const TopStores = () => {
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
-              Stores
+              Top Stores
             </h2>
             <div className="flex items-center gap-2">
               <div className="h-5 bg-gray-200 rounded w-16"></div>
@@ -118,64 +153,75 @@ const TopStores = () => {
         </div>
         <div
           ref={scrollRef}
-          className="sm:grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 sm:gap-4 flex overflow-x-auto scrollbar-hide"
+          className="sm:grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 sm:gap-4 flex overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+          onTouchStart={handleInteractionStart}
+          onTouchEnd={handleInteractionEnd}
+          onMouseDown={handleInteractionStart}
+          onMouseUp={handleInteractionEnd}
+          onMouseLeave={handleInteractionEnd} // Resume if mouse leaves the area
         >
-          {stores.map((store) => (
-            <div
-              key={store.id}
-              className="flex-shrink-0 w-80 sm:w-auto mr-4 sm:mr-0 bg-gray-100 border border-gray-200 rounded-lg p-4 hover:bg-gray-200 cursor-pointer"
-              onClick={() => handleStoreClick(store.id)}
-            >
-              <div className="flex justify-between items-center mb-2">
-                <div>
-                  <h3 className="text-sm font-bold text-gray-800">{store.name}</h3>
-                  <p className="text-xs text-gray-600">{store.productCount} Products</p>
-                </div>
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <i
-                      key={i}
-                      className={`bx bx-star text-yellow-400 text-sm ${
-                        i < Math.floor(store.rating) ? 'bx-star-filled' : ''
-                      }`}
-                    ></i>
-                  ))}
-                  <span className="text-xs text-gray-600 ml-1">({store.reviewCount})</span>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                {store.products.map((product, index) => (
-                  <div key={index} className="flex flex-col items-center relative">
-                    <Link
-                      to={`/product/${product.id}`}
-                      className="flex flex-col items-center"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <img
-                        src={product.image}
-                        alt={`Product ${index + 1}`}
-                        className="w-20 h-20 object-cover rounded-md"
-                      />
-                      <p className="text-xs text-gray-600 mt-1">{formatPrice(product.price)}</p>
-                    </Link>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(product.id);
-                      }}
-                      className="absolute top-1 right-1 text-xl"
-                    >
+          {stores.length === 0 ? (
+            <p className="text-gray-600 p-4">No stores available.</p>
+          ) : (
+            stores.map((store) => (
+              <div
+                key={store.id}
+                className="flex-shrink-0 w-80 sm:w-auto mr-4 sm:mr-0 bg-gray-100 border border-gray-200 rounded-lg p-4 hover:bg-gray-200 cursor-pointer snap-start"
+                onClick={() => handleStoreClick(store.id)}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-800">{store.name}</h3>
+                    <p className="text-xs text-gray-600">{store.productCount} Products</p>
+                  </div>
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
                       <i
-                        className={`bx bx-heart ${
-                          favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
+                        key={i}
+                        className={`bx bx-star text-yellow-400 text-sm ${
+                          i < Math.floor(store.rating) ? 'bx-star-filled' : ''
                         }`}
                       ></i>
-                    </button>
+                    ))}
+                    <span className="text-xs text-gray-600 ml-1">({store.reviews?.length || 0})</span>
                   </div>
-                ))}
+                </div>
+                <div className="flex gap-2">
+                  {store.products.map((product, index) => (
+                    <div key={index} className="flex flex-col items-center relative">
+                      <Link
+                        to={`/product/${product.id}`}
+                        className="flex flex-col items-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <img
+                          src={product.image}
+                          alt={`Product ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded-md"
+                          onError={(e) => (e.target.src = 'https://via.placeholder.com/80?text=Image+Not+Found')}
+                        />
+                        <p className="text-xs text-gray-600 mt-1">{formatPrice(product.price)}</p>
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(product.id);
+                        }}
+                        className="absolute top-1 right-1 text-xl"
+                      >
+                        <i
+                          className={`bx bx-heart ${
+                            favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
+                          }`}
+                        ></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </section>
