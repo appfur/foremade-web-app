@@ -1,393 +1,135 @@
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import db from '../db.json';
-import ProductCard from '/src/components/home/ProductCard';
-import SkeletonLoader from '/src/components/common/SkeletonLoader';
+import { getCart, updateCart } from '/src/utils/cartUtils';
 
 const Product = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // Get the product ID from the URL
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
-  const [similarProducts, setSimilarProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [cartLoading, setCartLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [message, setMessage] = useState(null);
   const [cart, setCart] = useState([]);
-  const [favorites, setFavorites] = useState([]);
 
-  // Load cart and favorites from localStorage on mount
+  // Load product from db.json
   useEffect(() => {
-    try {
-      setCartLoading(true);
-      const storedCart = localStorage.getItem('cart');
-      const storedFavorites = localStorage.getItem('favorites');
-      console.log('Initial cart load in Product.jsx:', storedCart); // Debug log
-      if (storedCart) {
-        const parsedCart = JSON.parse(storedCart);
-        console.log('Parsed initial cart in Product.jsx:', parsedCart); // Debug log
-        if (Array.isArray(parsedCart)) {
-          setCart(parsedCart);
-        } else {
-          console.warn('Cart data invalid, resetting to empty array');
-          setCart([]);
-          localStorage.setItem('cart', JSON.stringify([]));
-          setError('Cart data was invalid and has been reset.');
-        }
-      } else {
-        console.log('No cart found in localStorage, setting to empty array');
-        setCart([]);
-      }
-      if (storedFavorites) {
-        const parsedFavorites = JSON.parse(storedFavorites);
-        if (Array.isArray(parsedFavorites)) {
-          setFavorites(parsedFavorites);
-        } else {
-          setFavorites([]);
-          localStorage.setItem('favorites', JSON.stringify([]));
-          setError('Favorites data was invalid and has been reset.');
-        }
-      }
-    } catch (err) {
-      console.error('Error loading cart/favorites from localStorage:', err);
-      setCart([]);
-      setFavorites([]);
-      localStorage.setItem('cart', JSON.stringify([]));
-      localStorage.setItem('favorites', JSON.stringify([]));
-      setError('Failed to load cart or favorites. They have been reset.');
-    } finally {
-      setCartLoading(false);
+    const productId = parseInt(id);
+    const foundProduct = db.products.find((p) => p.id === productId);
+    if (foundProduct) {
+      setProduct(foundProduct);
+    } else {
+      setProduct(null); // Handle case where product isn't found
     }
-  }, []);
-
-  // Listen for changes to localStorage (e.g., from other tabs)
-  useEffect(() => {
-    const handleStorageChange = (event) => {
-      try {
-        if (event.key === 'cart') {
-          const updatedCart = event.newValue ? JSON.parse(event.newValue) : [];
-          console.log('Storage event - Updated cart in Product.jsx:', updatedCart); // Debug log
-          if (Array.isArray(updatedCart)) {
-            setCart(updatedCart);
-          } else {
-            setCart([]);
-            localStorage.setItem('cart', JSON.stringify([]));
-            setError('Cart data was invalid and has been reset.');
-          }
-        }
-        if (event.key === 'favorites') {
-          const updatedFavorites = event.newValue ? JSON.parse(event.newValue) : [];
-          if (Array.isArray(updatedFavorites)) {
-            setFavorites(updatedFavorites);
-          } else {
-            setFavorites([]);
-            localStorage.setItem('favorites', JSON.stringify([]));
-            setError('Favorites data was invalid and has been reset.');
-          }
-        }
-      } catch (err) {
-        console.error('Error parsing updated data from storage event:', err);
-        setCart([]);
-        setFavorites([]);
-        localStorage.setItem('cart', JSON.stringify([]));
-        localStorage.setItem('favorites', JSON.stringify([]));
-        setError('Failed to sync cart or favorites. They have been reset.');
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // Save cart and favorites to localStorage whenever they change
-  useEffect(() => {
-    try {
-      console.log('Attempting to save cart to localStorage:', cart); // Debug log
-      localStorage.setItem('cart', JSON.stringify(cart));
-      console.log('Cart saved to localStorage successfully'); // Debug log
-      localStorage.setItem('favorites', JSON.stringify(favorites));
-    } catch (err) {
-      console.error('Error saving cart/favorites to localStorage:', err);
-      setError('Failed to save cart or favorites changes. Please ensure localStorage is enabled.');
-    }
-  }, [cart, favorites]);
-
-  // Load product and similar products
-  useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => {
-      try {
-        const foundProduct = db.products.find((p) => p.id === parseInt(id));
-        console.log('Found product:', foundProduct); // Debug log
-        if (foundProduct) {
-          setProduct(foundProduct);
-          const related = db.products
-            .filter((p) => p.categoryId === foundProduct.categoryId && p.id !== foundProduct.id)
-            .slice(0, 4);
-          setSimilarProducts(related);
-        } else {
-          setProduct(null);
-          setSimilarProducts([]);
-          setError('Product not found.');
-        }
-      } catch (err) {
-        console.error('Error loading product:', err);
-        setProduct(null);
-        setSimilarProducts([]);
-        setError('Failed to load product.');
-      } finally {
-        setLoading(false);
-      }
-    }, 1500);
-
-    return () => clearTimeout(timer);
+    console.log('Product ID from URL:', id, 'Parsed ID:', productId);
+    console.log('Found Product:', foundProduct);
   }, [id]);
 
-  const handleAddToCart = () => {
-    if (!product) {
-      console.warn('No product to add to cart'); // Debug log
-      return;
+  // Load cart from cartUtils
+  useEffect(() => {
+    try {
+      const cartItems = getCart();
+      console.log('Loaded cart in Product.jsx:', cartItems);
+      if (Array.isArray(cartItems)) {
+        setCart(cartItems);
+      } else {
+        setCart([]);
+        updateCart([]);
+      }
+    } catch (err) {
+      console.error('Error loading cart in Product.jsx:', err);
+      setCart([]);
+      updateCart([]);
     }
+  }, []);
 
-    console.log('Adding product to cart:', { productId: product.id, quantity }); // Debug log
-
-    const stock = product.stock || 0;
+  const addToCart = () => {
+    if (!product) return;
     const existingItem = cart.find((item) => item.productId === product.id);
-    const currentQuantity = existingItem ? existingItem.quantity : 0;
-    const newTotalQuantity = currentQuantity + quantity;
-
-    if (stock === 0) {
-      setMessage(`${product.name} is out of stock.`);
-      console.log('Product out of stock'); // Debug log
-      return;
-    }
-
-    if (newTotalQuantity > stock) {
-      setMessage(`Cannot add more than ${stock} units of ${product.name}.`);
-      setQuantity(stock - currentQuantity > 0 ? stock - currentQuantity : 1);
-      console.log('Quantity exceeds stock:', { stock, newTotalQuantity }); // Debug log
-      return;
-    }
-
-    setCart((prevCart) => {
-      const updatedCart = existingItem
-        ? prevCart.map((item) =>
-            item.productId === product.id
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          )
-        : [...prevCart, { productId: product.id, quantity }];
-      console.log('Updated cart in Product.jsx:', updatedCart); // Debug log
-      return updatedCart;
-    });
+    const updatedCart = existingItem
+      ? cart.map((item) =>
+          item.productId === product.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        )
+      : [...cart, { productId: product.id, quantity }];
+    setCart(updatedCart);
+    updateCart(updatedCart);
+    console.log('Updated cart in Product.jsx:', updatedCart);
     setMessage(
       <span>
         {product.name} added to cart!{' '}
-        <Link to="/cart" className="text-blue-600 hover:underline">
+        <button
+          onClick={() => navigate('/cart')}
+          className="text-blue-600 hover:underline"
+        >
           View Cart
-        </Link>
+        </button>
       </span>
     );
-    setQuantity(1);
   };
-
-  const toggleFavorite = () => {
-    if (!product) return;
-    setFavorites((prevFavorites) => {
-      if (prevFavorites.includes(product.id)) {
-        setMessage(`Removed ${product.name} from favorites.`);
-        return prevFavorites.filter((id) => id !== product.id);
-      }
-      setMessage(`Added ${product.name} to favorites!`);
-      return [...prevFavorites, product.id];
-    });
-  };
-
-  if (loading || cartLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <SkeletonLoader type="productDetail" count={1} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <p className="text-red-600 mb-4">{error}</p>
-        <Link to="/products" className="text-blue-600 hover:underline">
-          Back to Products
-        </Link>
-      </div>
-    );
-  }
 
   if (!product) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <p className="text-red-600">Product not found.</p>
-        <Link to="/products" className="text-blue-600 hover:underline">
-          Back to Products
-        </Link>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">Product Not Found</h1>
+        <p className="text-gray-600">
+          The product you're looking for doesn't exist.{' '}
+          <Link to="/products" className="text-blue-600 hover:underline">
+            Continue shopping
+          </Link>
+        </p>
       </div>
     );
   }
 
-  const category = db.categories.find((cat) => cat.id === product.categoryId)?.name || 'Unknown';
-  const seller = db.sellers.find((seller) => seller.id === product.sellerId)?.storeName || 'Unknown Seller';
-
   return (
     <div className="container mx-auto px-4 py-8">
-      {message && (
-        <p className="text-green-600 mb-4">{message}</p>
-      )}
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">{product.name}</h1>
+      {message && <p className="text-green-600 mb-4">{message}</p>}
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Main Product Details */}
-        <div className="w-full md:w-3/4">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Product Image */}
-            <div className="md:w-1/2">
-              <img
-                src={product.image || 'https://via.placeholder.com/300'}
-                alt={product.name}
-                className="w-full h-96 object-cover rounded-lg"
-              />
-            </div>
-            {/* Product Info */}
-            <div className="md:w-1/2">
-              <h1 className="text-3xl font-bold text-gray-800 mb-3">{product.name}</h1>
-              <p className="text-sm text-gray-600 mb-2">
-                Category: <span className="font-medium">{category}</span>
-              </p>
-              <p className="text-sm text-gray-600 mb-3">
-                Sold by: <span className="font-medium">{seller}</span>
-              </p>
-              <div className="flex items-center mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <i
-                    key={i}
-                    className={`bx bx-star text-yellow-400 text-lg ${
-                      i < Math.floor(product.rating) ? 'bx-star-filled' : ''
-                    }`}
-                  ></i>
-                ))}
-                <span className="text-sm text-gray-600 ml-2">({product.reviews?.length || 0} reviews)</span>
-              </div>
-              <p className="text-2xl font-bold text-gray-800 mb-4">
-                ₦{product.price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <p className="text-sm text-gray-700 mb-4">{product.description}</p>
-              <p className="text-sm text-gray-600 mb-4">
-                Stock:{' '}
-                <span className={product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
-                  {product.stock > 0 ? `${product.stock} units available` : 'Out of stock'}
-                </span>
-              </p>
-              <div className="flex items-center mb-4">
-                <label className="mr-2 text-sm text-gray-600">Quantity:</label>
-                <input
-                  type="number"
-                  min="1"
-                  max={product.stock}
-                  value={quantity}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (isNaN(value) || value < 1) {
-                      setQuantity(1);
-                    } else if (value > product.stock) {
-                      setQuantity(product.stock);
-                    } else {
-                      setQuantity(value);
-                    }
-                  }}
-                  className="w-16 p-1 border border-gray-300 rounded"
-                  disabled={product.stock === 0}
-                />
-              </div>
-              <div className="flex gap-4">
-                <button
-                  onClick={handleAddToCart}
-                  className={`w-full text-sm py-1 rounded-lg transition ${
-                    product.stock > 0
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                  }`}
-                  disabled={product.stock <= 0}
-                >
-                  {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
-                </button>
-                <button
-                  onClick={toggleFavorite}
-                  className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-100"
-                >
-                  <i
-                    className={`bx bx-heart text-xl ${
-                      favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
-                    }`}
-                  ></i>
-                  {favorites.includes(product.id) ? 'Remove from Favorites' : 'Add to Favorites'}
-                </button>
-              </div>
-            </div>
-          </div>
-          {/* Description Section */}
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">Product Description</h2>
-            <p className="text-sm text-gray-700 leading-relaxed">{product.description}</p>
-          </div>
-          {/* Reviews Section */}
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">Customer Reviews</h2>
-            {product.reviews && product.reviews.length > 0 ? (
-              product.reviews.map((review) => (
-                <div key={review.id} className="border-b border-gray-200 py-3">
-                  <div className="flex items-center mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <i
-                        key={i}
-                        className={`bx bx-star text-yellow-400 text-sm ${
-                          i < Math.floor(review.rating) ? 'bx-star-filled' : ''
-                        }`}
-                      ></i>
-                    ))}
-                    <span className="text-sm text-gray-600 ml-2">({review.rating})</span>
-                  </div>
-                  <p className="text-sm text-gray-700 mb-1">{review.comment}</p>
-                  <p className="text-xs text-gray-500">Posted on {review.date}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-600">No reviews yet. Be the first to review this product!</p>
-            )}
-          </div>
+        <div className="md:w-1/2">
+          <img
+            src={product.image || 'https://via.placeholder.com/300'}
+            alt={product.name}
+            className="w-full h-auto object-cover rounded-lg"
+            onError={(e) => (e.target.src = 'https://via.placeholder.com/300')}
+          />
         </div>
-        {/* Similar Products (Desktop: Sidebar, Mobile: Below) */}
-        <div className="w-full md:w-1/4 max-md:hidden">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
-          <div className="flex flex-col gap-4 md:border-l md:pl-4">
-            {similarProducts.length > 0 ? (
-              similarProducts.map((similarProduct) => (
-                <div key={similarProduct.id} className="md:w-full">
-                  <ProductCard product={similarProduct} />
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-600">No similar products found.</p>
-            )}
+        <div className="md:w-1/2">
+          <p className="text-gray-600 mb-4">{product.description}</p>
+          <p className="text-lg font-semibold text-gray-800 mb-4">
+            ₦{product.price.toLocaleString('en-NG', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
+          <p className="text-gray-600 mb-4">
+            Stock:{' '}
+            <span className={product.stock === 0 ? 'text-red-600' : 'text-green-600'}>
+              {product.stock === 0 ? 'Out of stock' : `${product.stock} units available`}
+            </span>
+          </p>
+          <div className="flex items-center gap-4 mb-4">
+            <input
+              type="number"
+              min="1"
+              max={product.stock}
+              value={quantity}
+              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+              className="w-16 p-1 border border-gray-300 rounded text-center"
+              disabled={product.stock === 0}
+            />
+            <button
+              onClick={addToCart}
+              className={`px-6 py-2 rounded-lg text-white transition ${
+                product.stock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+              disabled={product.stock === 0}
+            >
+              Add to Cart
+            </button>
           </div>
-        </div>
-      </div>
-      {/* Similar Products for Mobile (Below Product Details) */}
-      <div className="md:hidden lg:hidden xl:hidden mt-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {similarProducts.length > 0 ? (
-            similarProducts.map((similarProduct) => (
-              <ProductCard key={similarProduct.id} product={similarProduct} />
-            ))
-          ) : (
-            <p className="text-sm text-gray-600 col-span-2">No similar products found.</p>
-          )}
         </div>
       </div>
     </div>
