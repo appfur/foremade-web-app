@@ -44,6 +44,7 @@ export default function TrendingGadgets() {
         </div>
       ) : trendingProducts.length === 0 ? (
         <p className="text-gray-600">No trending gadgets found.</p>
+        
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {trendingProducts.map((product) => (
