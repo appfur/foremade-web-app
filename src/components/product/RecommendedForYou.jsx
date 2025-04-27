@@ -1,46 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import db from '../../db.json';
 import SkeletonLoader from '../common/SkeletonLoader';
+import FeaturedProducts from './FeaturedProducts';
 import BestSelling from './BestSelling';
+import LatestProducts from './LatestProducts';
 
 const RecommendedForYou = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('featured');
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProducts = () => {
-      try {
-        setTimeout(() => {
-          const productData = Array.isArray(db.products) ? db.products.slice(0, 8) : [];
-          setProducts(productData);
-          setLoading(false);
-        }, 1500); // 1.5-second delay
-      } catch (err) {
-        console.error('Error loading products from db.json:', err);
-        setProducts([]);
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
-
-  // Format price in Naira
-  const formatPrice = (price) => {
-    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  // Sort products for "Latest Products" (e.g., by id descending)
-  const getLatestProducts = () => {
-    return [...products].sort((a, b) => b.id - a.id);
-  };
+  // Simulate loading delay to match child components
+  setTimeout(() => {
+    setLoading(false);
+  }, 1500);
 
   if (loading) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <div className="flex-col items-center justify-between mb-4">
-          <h2 className="text-lg text-center sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-4">
+        <div className="flex flex-col items-center justify-between mb-4">
+          <h2 className="text-lg text-center sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">
             Recommended For You
           </h2>
           {/* Desktop Skeleton (Text) */}
@@ -66,8 +44,8 @@ const RecommendedForYou = () => {
 
   return (
     <section className="container mx-auto px-4 py-8">
-      <div className="flex-col items-center justify-between mb-4">
-        <h2 className="text-lg text-center sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-4">
+      <div className="flex flex-col items-center justify-between mb-4">
+        <h2 className="text-lg text-center sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">
           Recommended For You
         </h2>
         {/* Desktop Tabs (Text) */}
@@ -101,7 +79,7 @@ const RecommendedForYou = () => {
           </Link>
         </div>
         {/* Mobile Tabs (Icons) */}
-        <div className="flex sm:hidden items-center justify-center gap-4">
+        <div className="flex sm:hidden items-center justify-center gap-4 mb-10">
           <button
             className={`text-xl ${
               activeTab === 'featured' ? 'text-blue-600' : 'text-gray-600'
@@ -116,7 +94,7 @@ const RecommendedForYou = () => {
             } hover:text-blue-600`}
             onClick={() => setActiveTab('bestSelling')}
           >
-            <i className='bx bxs-hot'></i>
+            <i className="bx bxs-hot"></i>
           </button>
           <button
             className={`text-xl ${
@@ -133,65 +111,11 @@ const RecommendedForYou = () => {
       </div>
 
       {/* Content based on active tab */}
-      {activeTab === 'featured' && (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          {products.map((product) => (
-            <Link key={product.id} to={`/product/${product.id}`}>
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-md mb-2"
-              />
-              <div className="flex items-center mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <i
-                    key={i}
-                    className={`bx bx-star text-yellow-400 text-sm ${
-                      i < Math.floor(product.rating) ? 'bx-star-filled' : ''
-                    }`}
-                  ></i>
-                ))}
-                <span className="text-xs text-gray-600 ml-1">({product.reviewCount || 0})</span>
-              </div>
-              <h3 className="text-sm font-bold text-gray-800 mb-1 uppercase truncate">
-                {product.name}
-              </h3>
-              <p className="text-sm font-bold text-gray-800">{formatPrice(product.price)}</p>
-            </Link>
-          ))}
-        </div>
-      )}
+      {activeTab === 'featured' && <FeaturedProducts />}
 
       {activeTab === 'bestSelling' && <BestSelling />}
 
-      {activeTab === 'latest' && (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          {getLatestProducts().map((product) => (
-            <Link key={product.id} to={`/product/${product.id}`}>
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-md mb-2"
-              />
-              <div className="flex items-center mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <i
-                    key={i}
-                    className={`bx bx-star text-yellow-400 text-sm ${
-                      i < Math.floor(product.rating) ? 'bx-star-filled' : ''
-                    }`}
-                  ></i>
-                ))}
-                <span className="text-xs text-gray-600 ml-1">({product.reviewCount || 0})</span>
-              </div>
-              <h3 className="text-sm font-bold text-gray-800 mb-1 uppercase truncate">
-                {product.name}
-              </h3>
-              <p className="text-sm font-bold text-gray-800">{formatPrice(product.price)}</p>
-            </Link>
-          ))}
-        </div>
-      )}
+      {activeTab === 'latest' && <LatestProducts />}
     </section>
   );
 };

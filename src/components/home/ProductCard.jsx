@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 const ProductCard = ({ product }) => {
   return (
     <Link to={`/product/${product.id}`} className="block">
-      <div className="border rounded-lg p-4">
+      <div className="border rounded-lg max-md:p-4 p-8">
         <img
           src={product.image || 'https://via.placeholder.com/150'}
           alt={product.name}

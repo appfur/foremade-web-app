@@ -218,7 +218,7 @@ const Product = () => {
         <div className="w-full md:w-3/4">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Product Image */}
-            <div className="md:w-1/2">
+            <div className="md:w-1/2 p-10">
               <img
                 src={product.image || 'https://via.placeholder.com/300'}
                 alt={product.name}
