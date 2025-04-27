@@ -7,11 +7,10 @@ import { getCart, updateCart } from '/src/utils/cartUtils';
 
 const Product = () => {
   const { id } = useParams();
-  // const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [cartLoading, setCartLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true); // New state for cart/favorites loading
   const [error, setError] = useState(null);
   const [cartPopup, setCartPopup] = useState(null);
   const [favoritesPopup, setFavoritesPopup] = useState(null);
@@ -21,14 +20,20 @@ const Product = () => {
 
   // Load cart from cartUtils and favorites from localStorage on mount
   useEffect(() => {
+    setDataLoading(true);
     try {
-      setCartLoading(true);
+      // Check if localStorage is accessible
+      if (!window.localStorage) {
+        throw new Error('localStorage is not available in this browser.');
+      }
+
       // Load cart from cartUtils
       const cartItems = getCart();
       console.log('Loaded cart in Product.jsx:', cartItems);
       if (Array.isArray(cartItems)) {
         setCart(cartItems);
       } else {
+        console.warn('Cart data invalid, resetting to empty array.');
         setCart([]);
         updateCart([]);
       }
@@ -40,6 +45,7 @@ const Product = () => {
         if (Array.isArray(parsedFavorites)) {
           setFavorites(parsedFavorites);
         } else {
+          console.warn('Favorites data invalid, resetting to empty array.');
           setFavorites([]);
           localStorage.setItem('favorites', JSON.stringify([]));
           setError('Favorites data was invalid and has been reset.');
@@ -49,14 +55,14 @@ const Product = () => {
         localStorage.setItem('favorites', JSON.stringify([]));
       }
     } catch (err) {
-      console.error('Error loading cart/favorites:', err);
+      console.error('Error loading cart/favorites:', err.message);
       setCart([]);
       setFavorites([]);
       updateCart([]);
       localStorage.setItem('favorites', JSON.stringify([]));
-      setError('Failed to load cart or favorites. They have been reset.');
+      setError('Failed to load cart or favorites: ' + err.message);
     } finally {
-      setCartLoading(false);
+      setDataLoading(false);
     }
   }, []);
 
@@ -69,6 +75,7 @@ const Product = () => {
           if (Array.isArray(updatedFavorites)) {
             setFavorites(updatedFavorites);
           } else {
+            console.warn('Favorites data invalid in storage event, resetting.');
             setFavorites([]);
             localStorage.setItem('favorites', JSON.stringify([]));
             setError('Favorites data was invalid and has been reset.');
@@ -77,7 +84,7 @@ const Product = () => {
           console.error('Error parsing updated favorites from storage event:', err);
           setFavorites([]);
           localStorage.setItem('favorites', JSON.stringify([]));
-          setError('Failed to sync favorites. They have been reset.');
+          setError('Failed to sync favorites: ' + err.message);
         }
       }
     };
@@ -92,7 +99,7 @@ const Product = () => {
       localStorage.setItem('favorites', JSON.stringify(favorites));
     } catch (err) {
       console.error('Error saving favorites to localStorage:', err);
-      setError('Failed to save favorites changes. Please ensure localStorage is enabled.');
+      setError('Failed to save favorites changes: ' + err.message);
     }
   }, [favorites]);
 
@@ -118,7 +125,7 @@ const Product = () => {
         console.error('Error loading product:', err);
         setProduct(null);
         setSimilarProducts([]);
-        setError('Failed to load product.');
+        setError('Failed to load product: ' + err.message);
       } finally {
         setLoading(false);
       }
@@ -149,16 +156,21 @@ const Product = () => {
         )
       : [...cart, { productId: product.id, quantity }];
     setCart(updatedCart);
-    updateCart(updatedCart);
-    console.log('Updated cart in Product.jsx:', updatedCart);
-    setCartPopup(
-      <span>
-        <i className="bx bx-cart text-blue-500"></i> {product.name} added to cart!{' '}
-        <Link to="/cart" className="text-blue-600 hover:underline">
-          View Cart
-        </Link>
-      </span>
-    );
+    try {
+      updateCart(updatedCart);
+      console.log('Updated cart in Product.jsx:', updatedCart);
+      setCartPopup(
+        <span>
+          <i className="bx bx-cart text-blue-500"></i> {product.name} added to cart!{' '}
+          <Link to="/cart" className="text-blue-600 hover:underline">
+            View Cart
+          </Link>
+        </span>
+      );
+    } catch (err) {
+      console.error('Error updating cart:', err);
+      setError('Failed to update cart: ' + err.message);
+    }
     setQuantity(1);
   };
 
@@ -167,7 +179,7 @@ const Product = () => {
     setFavorites((prevFavorites) => {
       if (prevFavorites.includes(product.id)) {
         setFavoritesPopup(
-          <span class>
+          <span>
             <i className="bx bxs-heart text-yellow-500"></i> Removed from favorites.{' '}
             <Link to="/favorites" className="text-blue-600 hover:underline">
               View Favorites
@@ -203,12 +215,12 @@ const Product = () => {
     if (favoritesPopup) {
       const timer = setTimeout(() => {
         setFavoritesPopup(null);
-      }, 2000); // 3 seconds
+      }, 2000); // 2 seconds
       return () => clearTimeout(timer);
     }
   }, [favoritesPopup]);
 
-  if (loading || cartLoading) {
+  if (loading || dataLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <SkeletonLoader type="productDetail" count={1} />
@@ -258,9 +270,7 @@ const Product = () => {
       {/* Favorites Popup */}
       {favoritesPopup && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
-          <div className="flex items-center gap-2">
-            {favoritesPopup}
-          </div>
+          <div className="flex items-center gap-2">{favoritesPopup}</div>
         </div>
       )}
       <div className="flex flex-col md:flex-row gap-6">
@@ -294,7 +304,9 @@ const Product = () => {
                     }`}
                   ></i>
                 ))}
-                <span className="text-sm text-gray-600 ml-2">({product.reviews?.length || 0} reviews)</span>
+                <span className="text-sm text-gray-600 ml-2">
+                  ({product.reviews?.length || 0} reviews)
+                </span>
               </div>
               <p className="text-2xl font-bold text-gray-800 mb-4">
                 ₦{product.price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -343,7 +355,7 @@ const Product = () => {
                       favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
                     }`}
                   ></i>
-                  {favorites.includes(product.id)}
+                  {favorites.includes(product.id) ? 'Remove from Favorites' : 'Add to Favorites'}
                 </button>
               </div>
             </div>
