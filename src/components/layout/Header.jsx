@@ -10,6 +10,7 @@ const Header = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true); // Added for cart/favorites loading
   const [error, setError] = useState(null);
   const [cart, setCart] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -17,6 +18,7 @@ const Header = () => {
 
   // Load cart from cartUtils and favorites from localStorage on mount
   useEffect(() => {
+    setDataLoading(true);
     try {
       // Load cart from cartUtils
       const cartItems = getCart();
@@ -47,7 +49,7 @@ const Header = () => {
       localStorage.setItem('favorites', JSON.stringify([]));
       setError('Failed to load cart or favorites.');
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   }, []);
 
@@ -64,16 +66,22 @@ const Header = () => {
 
     const handleStorageChange = (event) => {
       if (event.key === 'favorites') {
-        const storedFavorites = localStorage.getItem('favorites');
-        if (storedFavorites) {
-          const parsedFavorites = JSON.parse(storedFavorites);
-          if (Array.isArray(parsedFavorites)) {
-            setFavorites(parsedFavorites);
+        try {
+          const storedFavorites = localStorage.getItem('favorites');
+          if (storedFavorites) {
+            const parsedFavorites = JSON.parse(storedFavorites);
+            if (Array.isArray(parsedFavorites)) {
+              setFavorites(parsedFavorites);
+            } else {
+              setFavorites([]);
+              localStorage.setItem('favorites', JSON.stringify([]));
+            }
           } else {
             setFavorites([]);
             localStorage.setItem('favorites', JSON.stringify([]));
           }
-        } else {
+        } catch (err) {
+          console.error('Error parsing favorites from storage event:', err);
           setFavorites([]);
           localStorage.setItem('favorites', JSON.stringify([]));
         }
@@ -132,10 +140,12 @@ const Header = () => {
     }, 200);
   };
 
+  // Calculate cart and favorites counts
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const favoritesCount = favorites.length;
 
-  if (loading) {
-    return <div className="p-4 text-gray-600">Loading products...</div>;
+  if (loading || dataLoading) {
+    return <div className="p-4 text-gray-600">Loading...</div>;
   }
 
   if (error) {
@@ -207,7 +217,7 @@ const Header = () => {
                   Orders
                 </Link>
                 <Link to="/favorites" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Favorites ({favorites.length})
+                  Favorites ({favoritesCount})
                 </Link>
                 <Link to="/settings" className="block px-4 py-1 text-xs hover:bg-gray-100">
                   Settings
@@ -301,6 +311,14 @@ const Header = () => {
           <Link to="/my-account">
             <i className="bx bx-user text-gray-600 text-xl"></i>
           </Link>
+          <Link to="/favorites" className="relative">
+            <i className="bx bx-heart text-gray-600 text-xl"></i>
+            {favoritesCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {favoritesCount}
+              </span>
+            )}
+          </Link>
           <Link to="/cart" className="relative">
             <i className="bx bx-cart-alt text-gray-600 text-xl"></i>
             {cartItemCount > 0 && (
@@ -318,6 +336,14 @@ const Header = () => {
         </div>
 
         <div className="hidden sm:flex items-center gap-3">
+          <Link to="/favorites" className="flex items-center relative">
+            <i className="bx bx-heart text-gray-600 text-xl"></i>
+            {favoritesCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {favoritesCount}
+              </span>
+            )}
+          </Link>
           <Link to="/cart" className="flex items-center relative">
             <i className="bx bx-cart-alt text-gray-600 text-xl"></i>
             {cartItemCount > 0 && (
@@ -542,7 +568,7 @@ const Header = () => {
           </Link>
           <Link to="/favorites" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
             <i className="bx bx-heart text-lg"></i>
-            <span>Favorites ({favorites.length})</span>
+            <span>Favorites ({favoritesCount})</span>
           </Link>
           <Link to="/my-account" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
             <i className="bx bx-user text-lg"></i>

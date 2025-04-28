@@ -29,7 +29,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="relative">
-      <Link to={`/product/${product.id}`} className="block text-center">
+      <Link to={`/product/${product.id}`} className="flex-col items-center text-center justify-center">
         <div className="border rounded-lg max-md:p-4 p-6">
           <img
             src={product.image || 'https://via.placeholder.com/150'}
