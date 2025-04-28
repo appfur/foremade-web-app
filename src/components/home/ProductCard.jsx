@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import Help from '../common/Help';
 
 const ProductCard = ({ product }) => {
   const [favorites, setFavorites] = useState([]);
@@ -55,16 +56,19 @@ const ProductCard = ({ product }) => {
           <p className="text-sm text-gray-500 mt-1">Stock: {product.stock} units</p>
         </div>
       </Link>
-      <button
-        onClick={(e) => toggleFavorite(e, product.id)}
-        className="absolute top-2 right-2 text-xl"
-      >
-        <i
-          className={`bx bx-heart ${
-            favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
-          } hover:text-red-400`}
-        ></i>
-      </button>
+      <div className="flex justify-between items-center">
+        <button
+          onClick={(e) => toggleFavorite(e, product.id)}
+          className="absolute top-2 right-2 text-xl"
+        >
+          <i
+            className={`bx bx-heart ${
+              favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
+            }`}
+          ></i>
+        </button>
+         <Help />
+      </div>
     </div>
   );
 };
