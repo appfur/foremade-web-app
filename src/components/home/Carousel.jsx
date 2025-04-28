@@ -33,7 +33,7 @@ const Carousel = () => {
   }, [current, slides.length]);
 
   return (
-    <div className="relative mx-4 sm:max-w-5xl md:max-w-7xl lg:max-w-7xl xl:max-w-7xl md:mx-auto h-[350px] sm:h-96 md:h-[500px] overflow-hidden px-4 rounded-lg">
+    <div className="relative mx-auto h-[250px] sm:h-[300px] md:h-[400px] lg:h-[450px] xl:h-[500px] w-full max-w-[90%] sm:max-w-[85%] md:max-w-[80%] lg:max-w-[1200px] xl:max-w-[1400px] px-4 sm:px-6 md:px-8 overflow-hidden rounded-lg">
       {slides.map((slide, index) => (
         <div
           key={index}
@@ -50,13 +50,15 @@ const Carousel = () => {
             alt={`Slide ${index}`}
             className="w-full h-full object-cover rounded-lg"
           />
-          <div className="absolute inset-0 flex items-center justify-start p-10 max-md:p-6 bg-black bg-opacity-30">
-            <div className="text-white max-w-lg text-left">
-              <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-2">
+          <div className="absolute inset-0 flex items-center justify-start p-4 sm:p-6 md:p-8 lg:p-10 bg-black bg-opacity-30">
+            <div className="text-white max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg text-left">
+              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold mb-2">
                 {slide.text}
               </h2>
-              <p className="text-sm sm:text-xs mb-4">{slide.description}</p>
-              <button className="bg-white border-none transition-all hover:text-white text-gray-800 px-8 py-3 rounded-full border border-gray-300 hover:bg-blue-300 text-sm sm:text-xs">
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4">
+                {slide.description}
+              </p>
+              <button className="bg-white border-none transition-all hover:text-white text-gray-800 px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 md:py-3 rounded-full border border-gray-300 hover:bg-blue-300 text-xs sm:text-sm md:text-base">
                 {slide.button}
               </button>
             </div>
