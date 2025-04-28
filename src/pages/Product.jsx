@@ -311,7 +311,6 @@ const Product = () => {
               <p className="text-2xl font-bold text-gray-800 mb-4">
                 ₦{product.price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
-              {/* <p className="text-sm text-gray-700 mb-4">{product.description}</p> */}
               <p className="text-sm text-gray-600 mb-4">
                 Stock:{' '}
                 <span className={product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
