@@ -3,7 +3,7 @@ import React from 'react'
 export default function BuyerBanner() {
   return (
     <>
-      <div className="flex items-center justify-evenly max-md:justify-between bg-blue-500 mt-14">
+      <div className="flex m-20 rounded-lg sm:m-0 md:m-0 lg:m-16 xl:m-20 items-center justify-evenly max-md:justify-between bg-blue-500 mt-14">
         <div className="flex-col m-6">
             <h2 className="text-[20px] sm:text-lg md:text-xl lg:text-3xl font-bold text-white">
               Buy Quality Products At Your Comfort 
