@@ -56,18 +56,18 @@ const ProductCard = ({ product }) => {
           <p className="text-sm text-gray-500 mt-1">Stock: {product.stock} units</p>
         </div>
       </Link>
-      <div className="flex justify-between items-center">
-        <button
-          onClick={(e) => toggleFavorite(e, product.id)}
-          className="absolute top-2 right-2 text-xl"
-        >
-          <i
-            className={`bx bx-heart ${
-              favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
-            }`}
-          ></i>
-        </button>
-         <Help />
+      <button
+        onClick={(e) => toggleFavorite(e, product.id)}
+        className="absolute top-2 right-2 text-xl"
+      >
+        <i
+          className={`bx bx-heart ${
+            favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
+          }`}
+        ></i>
+      </button>
+      <div className="absolute top-2 left-2">
+        <Help />
       </div>
     </div>
   );
