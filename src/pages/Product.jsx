@@ -10,24 +10,23 @@ const Product = () => {
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dataLoading, setDataLoading] = useState(true); // New state for cart/favorites loading
+  const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cartPopup, setCartPopup] = useState(null);
   const [favoritesPopup, setFavoritesPopup] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [cart, setCart] = useState([]);
   const [favorites, setFavorites] = useState([]);
+  const [showFullDescription, setShowFullDescription] = useState(false); // New state for description toggle
 
   // Load cart from cartUtils and favorites from localStorage on mount
   useEffect(() => {
     setDataLoading(true);
     try {
-      // Check if localStorage is accessible
       if (!window.localStorage) {
         throw new Error('localStorage is not available in this browser.');
       }
 
-      // Load cart from cartUtils
       const cartItems = getCart();
       console.log('Loaded cart in Product.jsx:', cartItems);
       if (Array.isArray(cartItems)) {
@@ -38,7 +37,6 @@ const Product = () => {
         updateCart([]);
       }
 
-      // Load favorites from localStorage
       const storedFavorites = localStorage.getItem('favorites');
       if (storedFavorites) {
         const parsedFavorites = JSON.parse(storedFavorites);
@@ -205,7 +203,7 @@ const Product = () => {
     if (cartPopup) {
       const timer = setTimeout(() => {
         setCartPopup(null);
-      }, 3000); // 3 seconds
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [cartPopup]);
@@ -215,7 +213,7 @@ const Product = () => {
     if (favoritesPopup) {
       const timer = setTimeout(() => {
         setFavoritesPopup(null);
-      }, 2000); // 2 seconds
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [favoritesPopup]);
@@ -252,6 +250,14 @@ const Product = () => {
 
   const category = db.categories.find((cat) => cat.id === product.categoryId)?.name || 'Unknown';
   const seller = db.sellers.find((seller) => seller.id === product.sellerId)?.storeName || 'Unknown Seller';
+
+  // Truncate description to first 100 characters for preview
+  const DESCRIPTION_LIMIT = 100;
+  const truncatedDescription =
+    product.description.length > DESCRIPTION_LIMIT
+      ? `${product.description.substring(0, DESCRIPTION_LIMIT)}...`
+      : product.description;
+  const shouldShowToggle = product.description.length > DESCRIPTION_LIMIT;
 
   return (
     <div className="relative container mx-auto p-5">
@@ -362,7 +368,17 @@ const Product = () => {
           {/* Description Section */}
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Product Description</h2>
-            <p className="text-sm text-gray-700 leading-relaxed">{product.description}</p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {showFullDescription ? product.description : truncatedDescription}
+            </p>
+            {shouldShowToggle && (
+              <button
+                onClick={() => setShowFullDescription(!showFullDescription)}
+                className="mt-2 text-blue-600 hover:underline text-sm"
+              >
+                {showFullDescription ? 'Show Less' : 'See More'}
+              </button>
+            )}
           </div>
           {/* Reviews Section */}
           <div className="mt-8">
