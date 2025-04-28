@@ -29,23 +29,23 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="relative">
-      <Link to={`/product/${product.id}`} className="block">
-        <div className="border rounded-lg max-md:p-4 p-8">
+      <Link to={`/product/${product.id}`} className="block text-center">
+        <div className="border rounded-lg max-md:p-4 p-6">
           <img
             src={product.image || 'https://via.placeholder.com/150'}
             alt={product.name}
-            className="w-full h-48 object-cover rounded mb-2"
+            className="w-full h-48 max-md:h-36 max-md:w-32 object-cover rounded mb-2"
             onError={(e) => (e.target.src = 'https://via.placeholder.com/150')}
           />
           <h3 className="text-sm font-semibold text-gray-800">{product.name}</h3>
           <p className="text-gray-600">
             ₦{product.price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
-          <div className="flex items-center mt-1">
+          <div className="flex items-center text-center justify-center mt-1">
             {[...Array(5)].map((_, i) => (
               <i
                 key={i}
-                className={`bx bx-star text-yellow-400 text-sm ${
+                className={`bx bx-star text-yellow-400 text-sm text-center ${
                   i < Math.floor(product.rating) ? 'bx-star-filled' : ''
                 }`}
               ></i>
