@@ -50,7 +50,7 @@ const Help = () => {
 
       {/* Popup (Shown when isOpen is true) */}
       {isOpen && (
-        <div className="absolute top-10 right-0 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+        <div className="absolute bg-white border border-gray-200 rounded-lg shadow-lg z-10">
           <div className="flex flex-col">
             {/* Help Option */}
             <button
