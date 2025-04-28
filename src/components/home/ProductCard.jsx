@@ -29,12 +29,12 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="relative">
-      <Link to={`/product/${product.id}`} className="flex-col items-center text-center justify-center">
-        <div className="border rounded-lg max-md:p-4 p-5 grid items-center text-center justify-center">
+      <Link to={`/product/${product.id}`} className="flex-col">
+        <div className="border rounded-lg max-md:p-4 p-5 grid justify-center text-center">
           <img
             src={product.image || 'https://via.placeholder.com/150'}
             alt={product.name}
-            className="h-40 w-40 max-md:h-36 max-md:w-32 object-cover rounded mb-2"
+            className="h-40 w-[200px] max-md:h-36 max-md:w-[160px] object-cover rounded mb-2"
             onError={(e) => (e.target.src = 'https://via.placeholder.com/150')}
           />
           <h3 className="text-sm font-semibold text-gray-800">{product.name}</h3>
