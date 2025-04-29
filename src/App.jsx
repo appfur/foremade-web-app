@@ -15,6 +15,7 @@ import Watchlist from './pages/Watchlist';
 import Orders from './pages/Orders';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Register from './auth/Register';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<Product />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="*" element={<NotFound />} />
           {/* Cart & Other Components */}
           <Route path="/cart" element={<Cart />} />
