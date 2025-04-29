@@ -1,7 +1,25 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from './firebase'; // Adjust path if needed (e.g., '../firebase')
+import { auth } from '../firebase'; // Adjust path if needed (e.g., '../firebase')
 import { Link, useNavigate } from 'react-router-dom';
+
+// Helper function to map Firebase errors to user-friendly messages
+const getFriendlyErrorMessage = (error) => {
+  switch (error.code) {
+    case 'auth/network-request-failed':
+      return 'Check your network connection and try again.';
+    case 'auth/invalid-credential':
+      return 'Invalid email or password. Please try again.';
+    case 'auth/user-not-found':
+      return 'No account found with this email. Please sign up.';
+    case 'auth/wrong-password':
+      return 'Incorrect password. Please try again.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    default:
+      return 'An unexpected error occurred. Please try again later.';
+  }
+};
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -19,7 +37,7 @@ export default function Login() {
       console.log("User logged in successfully:", userCredential.user);
       navigate('/'); // Redirect to homepage
     } catch (err) {
-      setError(err.message);
+      setError(getFriendlyErrorMessage(err)); // Use friendly error message
     }
   };
 
@@ -63,6 +81,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter email or phone number"
+                  autoComplete="off" // Prevent autofill
                   required
                 />
               </div>
@@ -79,6 +98,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Ex: 6+ Character"
+                  autoComplete="current-password" // Prevent autofill for password
                   required
                 />
                 <span className="absolute right-3 top-12 text-gray-500 cursor-pointer">
