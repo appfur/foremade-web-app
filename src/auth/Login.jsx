@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase'; // Adjust path if needed (e.g., '../firebase')
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth, db } from '../firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Link, useNavigate } from 'react-router-dom';
 
 // Helper function to map Firebase errors to user-friendly messages
@@ -16,6 +17,10 @@ const getFriendlyErrorMessage = (error) => {
       return 'Incorrect password. Please try again.';
     case 'auth/invalid-email':
       return 'Please enter a valid email address.';
+    case 'auth/popup-closed-by-user':
+      return 'Google sign-in was cancelled. Please try again.';
+    case 'auth/account-exists-with-different-credential':
+      return 'An account already exists with this email. Please sign in using your previous method.';
     default:
       return 'An unexpected error occurred. Please try again later.';
   }
@@ -28,6 +33,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Handle email/password login
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -37,21 +43,47 @@ export default function Login() {
       console.log("User logged in successfully:", userCredential.user);
       navigate('/'); // Redirect to homepage
     } catch (err) {
-      setError(getFriendlyErrorMessage(err)); // Use friendly error message
+      setError(getFriendlyErrorMessage(err));
+    }
+  };
+
+  // Handle Google Sign-In
+  const handleGoogleSignIn = async () => {
+    setError('');
+
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if user already exists in Firestore
+      const userDoc = doc(db, 'users', user.uid);
+      const userSnapshot = await getDoc(userDoc);
+
+      if (!userSnapshot.exists()) {
+        // New user, save their data to Firestore
+        await setDoc(userDoc, {
+          email: user.email,
+          name: user.displayName || 'Google User',
+          address: '',
+          createdAt: new Date().toISOString(),
+          uid: user.uid
+        });
+        console.log("User registered with Google successfully");
+      }
+
+      console.log("User signed in with Google successfully");
+      navigate('/'); // Redirect to homepage
+    } catch (err) {
+      setError(getFriendlyErrorMessage(err));
     }
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+    <div className="flex items-center justify-center p-4">
       <div className="w-full max-w-4xl">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-600">Foremade</h1>
-        </div>
-
-        {/* Main Content */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">Login</h2>
+        <div className="p-6 rounded-lg bg-gray-50">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">Sign In</h2>
           <p className="text-gray-600 mb-6">
             Login to your account. Do not have account?{' '}
             <Link to="/register" className="text-blue-600 hover:underline">
@@ -65,11 +97,8 @@ export default function Login() {
             </div>
           )}
 
-          {/* Form and Social Login Container */}
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Form */}
             <form onSubmit={handleLogin}>
-              {/* Email/Phone Field */}
               <div className="mb-4">
                 <label htmlFor="email" className="block text-gray-700 mb-2">
                   Email / Phone
@@ -81,12 +110,10 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter email or phone number"
-                  autoComplete="off" // Prevent autofill
+                  autoComplete="off"
                   required
                 />
               </div>
-
-              {/* Password Field */}
               <div className="mb-4 relative">
                 <label htmlFor="password" className="block text-gray-700 mb-2">
                   Password
@@ -98,15 +125,13 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Ex: 6+ Character"
-                  autoComplete="current-password" // Prevent autofill for password
+                  autoComplete="current-password"
                   required
                 />
                 <span className="absolute right-3 top-12 text-gray-500 cursor-pointer">
                   👁️
                 </span>
               </div>
-
-              {/* Remember Me and Forgot Password */}
               <div className="flex justify-between items-center mb-6">
                 <label className="flex items-center text-gray-700">
                   <input
@@ -121,8 +146,6 @@ export default function Login() {
                   Forgot Password?
                 </Link>
               </div>
-
-              {/* Login Button */}
               <button
                 type="submit"
                 className="w-full bg-blue-900 text-white p-3 rounded-lg hover:bg-blue-800 transition duration-200"
@@ -130,11 +153,12 @@ export default function Login() {
                 Login
               </button>
             </form>
-
-            {/* Social Login */}
             <div className="flex flex-col justify-center items-center md:border-l md:pl-6">
               <p className="text-gray-600 mb-4">Or continue with</p>
-              <button className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center mb-4 hover:bg-gray-100 transition duration-200">
+              <button
+                onClick={handleGoogleSignIn}
+                className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center mb-4 hover:bg-gray-100 transition duration-200"
+              >
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"
