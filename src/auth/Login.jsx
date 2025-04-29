@@ -129,7 +129,7 @@ export default function Login() {
                   required
                 />
                 <span className="absolute right-3 top-12 text-gray-500 cursor-pointer">
-                  👁️
+                <i className='bx bxs-low-vision'></i>
                 </span>
               </div>
               <div className="flex justify-between items-center mb-6">
