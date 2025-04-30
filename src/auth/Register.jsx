@@ -95,6 +95,8 @@ export default function Register() {
       handleNavigation();
     } catch (err) {
       console.error('Registration error:', err);
+      console.log('Error code:', err.code);
+      console.log('Error message:', err.message);
       const errorMessage = getFriendlyErrorMessage(err);
       if (errorMessage.includes('email')) {
         setEmailError(errorMessage);
@@ -144,6 +146,8 @@ export default function Register() {
       handleNavigation();
     } catch (err) {
       console.error('Google Sign-In error:', err);
+      console.log('Error code:', err.code);
+      console.log('Error message:', err.message);
       setEmailError(getFriendlyErrorMessage(err));
     }
   };
