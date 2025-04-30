@@ -13,7 +13,6 @@ export default function Profile() {
   const [uploadError, setUploadError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [theme, setTheme] = useState('light');
   const [userData, setUserData] = useState(null);
 
   // Mock data for counts (since we're not fetching from Firestore)
@@ -108,10 +107,6 @@ export default function Profile() {
     }
   };
 
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
-
   // Format the createdAt date for display
   const formatDate = (isoString) => {
     if (!isoString) return 'Not available';
@@ -153,37 +148,29 @@ export default function Profile() {
   }
 
   return (
-    <div className={`container mx-auto px-4 py-8 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800'}`}>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={toggleTheme}
-          className={`px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}
-        >
-          Toggle {theme === 'light' ? 'Dark' : 'Light'} Mode
-        </button>
-      </div>
+    <div className="container mx-auto px-4 py-8 bg-gray-100 text-gray-800">
       <div className="flex flex-col md:flex-row gap-6">
-        <Sidebar userData={userData} orderCount={mockOrderCount} wishlistCount={mockWishlistCount} theme={theme} />
+        <Sidebar userData={userData} orderCount={mockOrderCount} wishlistCount={mockWishlistCount} />
         <div className="md:w-3/4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className={`rounded-lg p-4 text-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="rounded-lg p-4 text-center bg-white">
               <p className="text-gray-400">Orders</p>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>{mockOrderCount}</p>
+              <p className="text-lg font-semibold text-gray-800">{mockOrderCount}</p>
             </div>
-            <div className={`rounded-lg p-4 text-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="rounded-lg p-4 text-center bg-white">
               <p className="text-gray-400">Wish List</p>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>{mockWishlistCount}</p>
+              <p className="text-lg font-semibold text-gray-800">{mockWishlistCount}</p>
             </div>
-            <div className={`rounded-lg p-4 text-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="rounded-lg p-4 text-center bg-white">
               <p className="text-gray-400">Wallet</p>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>₦{mockWalletBalance.toFixed(2)}</p>
+              <p className="text-lg font-semibold text-gray-800">₦{mockWalletBalance.toFixed(2)}</p>
             </div>
-            <div className={`rounded-lg p-4 text-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="rounded-lg p-4 text-center bg-white">
               <p className="text-gray-400">Loyalty Points</p>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>{mockLoyaltyPoints} 🌟</p>
+              <p className="text-lg font-semibold text-gray-800">{mockLoyaltyPoints} 🌟</p>
             </div>
           </div>
-          <div className={`rounded-lg p-6 mb-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+          <div className="rounded-lg p-6 mb-6 bg-white">
             <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
             <div className="flex items-center gap-4">
               <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
@@ -196,7 +183,7 @@ export default function Profile() {
                 )}
               </div>
               <div className="flex flex-col gap-2">
-                <label className={`cursor-pointer ${theme === 'dark' ? 'text-blue-300 hover:underline' : 'text-blue-600 hover:underline'}`}>
+                <label className="cursor-pointer text-blue-600 hover:underline">
                   Choose Image
                   <input
                     type="file"
@@ -210,7 +197,7 @@ export default function Profile() {
                     <button
                       onClick={handleImageUpload}
                       disabled={uploading}
-                      className={`px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'} ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
+                      className={`px-4 py-2 rounded-lg bg-blue-500 text-white ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
                     >
                       {uploading ? 'Uploading...' : 'Upload'}
                     </button>
@@ -220,7 +207,7 @@ export default function Profile() {
                         setProfileImage(null);
                         setUploadError('');
                       }}
-                      className={`px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-gray-600 text-white' : 'bg-gray-300 text-gray-800'} hover:bg-gray-400`}
+                      className="px-4 py-2 rounded-lg bg-gray-300 text-gray-800 hover:bg-gray-400"
                     >
                       Cancel
                     </button>
@@ -240,12 +227,12 @@ export default function Profile() {
               </div>
             </div>
           </div>
-          <div className={`rounded-lg p-6 mb-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+          <div className="rounded-lg p-6 mb-6 bg-white">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Personal Details</h3>
               <Link
                 to="/edit"
-                className={`flex items-center px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-gray-700 text-blue-300' : 'bg-blue-100 text-blue-600'} ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-blue-200'} transition duration-200`}
+                className="flex items-center px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition duration-200"
               >
                 Edit Profile
                 <span className="ml-2">✏️</span>
@@ -254,42 +241,42 @@ export default function Profile() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-gray-400">First Name</p>
-                <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{userData.name.split(' ')[0]}</p>
+                <p className="font-semibold text-gray-800">{userData.name.split(' ')[0]}</p>
               </div>
               <div>
                 <p className="text-gray-400">Last Name</p>
-                <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{userData.name.split(' ').slice(1).join(' ') || '-'}</p>
+                <p className="font-semibold text-gray-800">{userData.name.split(' ').slice(1).join(' ') || '-'}</p>
               </div>
               <div>
                 <p className="text-gray-400">Email</p>
-                <p className={`font-semibold flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                <p className="font-semibold flex items-center text-gray-800">
                   {userData.email}
                   <span className="ml-2 text-green-500">✅</span>
                 </p>
               </div>
               <div>
                 <p className="text-gray-400">Date Joined</p>
-                <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{formatDate(userData.createdAt)}</p>
+                <p className="font-semibold text-gray-800">{formatDate(userData.createdAt)}</p>
               </div>
               <div>
                 <p className="text-gray-400">Address</p>
-                <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{userData.address}</p>
+                <p className="font-semibold text-gray-800">{userData.address}</p>
               </div>
             </div>
           </div>
-          <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+          <div className="rounded-lg p-6 bg-white">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">My Addresses</h3>
               <Link
                 to="/profile/add-address"
-                className={`flex items-center px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-gray-700 text-blue-300' : 'bg-blue-100 text-blue-600'} ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-blue-200'} transition duration-200`}
+                className="flex items-center px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition duration-200"
               >
                 Add Address
                 <span className="ml-2">📍</span>
               </Link>
             </div>
             <div className="text-center">
-              <div className={`inline-block p-4 rounded-full mb-2 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+              <div className="inline-block p-4 rounded-full mb-2 bg-gray-100">
                 <span className="text-2xl">📍</span>
               </div>
               <p className="text-gray-400">No address found!</p>

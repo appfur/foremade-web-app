@@ -10,12 +10,14 @@ import Product from './pages/Product';
 
 // Cart & Other Components
 import Cart from './pages/Cart';
-import Favorites from './pages/Favorites';
+import Favorites from './pages/Favorites'; // Assuming this is your Wishlist
 import Watchlist from './pages/Watchlist';
 import Orders from './pages/Orders';
 import Profile from './profile/Profile';
 import Settings from './pages/Settings';
 import Register from './auth/Register';
+import Wallet from './profile/Wallet';
+import Loyalty from './profile/Loyalty';
 
 function App() {
   return (
@@ -32,7 +34,6 @@ function App() {
           <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<Product />} />
 
-          <Route path="*" element={<NotFound />} />
           {/* Cart & Other Components */}
           <Route path="/cart" element={<Cart />} />
           <Route path="/favorites" element={<Favorites />} />
@@ -40,6 +41,12 @@ function App() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
+          {/* Routes for Sidebar links */}
+          <Route path="/wishlist" element={<Favorites />} /> {/* Map /wishlist to Favorites */}
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/loyalty" element={<Loyalty />} />
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />

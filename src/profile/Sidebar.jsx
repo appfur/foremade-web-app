@@ -1,9 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { auth } from '../firebase';
 
-export default function Sidebar({ userData, orderCount, wishlistCount, theme }) {
+export default function Sidebar({ userData, orderCount, wishlistCount }) {
+  const location = useLocation();
+
   return (
-    <div className={`md:w-1/4 ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} rounded-lg p-6`}>
+    <div className="md:w-1/4 bg-white text-gray-800 rounded-lg p-6">
       <div className="flex flex-col items-center mb-6">
         <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden mb-4">
           {userData.profileImage ? (
@@ -18,37 +21,57 @@ export default function Sidebar({ userData, orderCount, wishlistCount, theme }) 
       <nav className="space-y-4">
         <Link
           to="/profile"
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-gray-700 text-blue-300' : 'bg-blue-100 text-blue-600'} ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-blue-200'} transition duration-200`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition duration-200 ${
+            location.pathname === '/profile'
+              ? 'bg-blue-100 text-blue-600'
+              : 'hover:bg-gray-100 text-gray-800'
+          }`}
         >
           <span>👤</span> My Profile
         </Link>
         <Link
           to="/orders"
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-100'} ${theme === 'dark' ? 'text-white' : 'text-gray-800'} transition duration-200`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition duration-200 ${
+            location.pathname === '/orders'
+              ? 'bg-blue-100 text-blue-600'
+              : 'hover:bg-gray-100 text-gray-800'
+          }`}
         >
           <span>📦</span> My Orders <span className="ml-auto text-gray-400">{orderCount}</span>
         </Link>
         <Link
           to="/wishlist"
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-100'} ${theme === 'dark' ? 'text-white' : 'text-gray-800'} transition duration-200`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition duration-200 ${
+            location.pathname === '/wishlist'
+              ? 'bg-blue-100 text-blue-600'
+              : 'hover:bg-gray-100 text-gray-800'
+          }`}
         >
           <span>❤️</span> Wish List <span className="ml-auto text-gray-400">{wishlistCount}</span>
         </Link>
         <Link
           to="/wallet"
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-100'} ${theme === 'dark' ? 'text-white' : 'text-gray-800'} transition duration-200`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition duration-200 ${
+            location.pathname === '/wallet'
+              ? 'bg-blue-100 text-blue-600'
+              : 'hover:bg-gray-100 text-gray-800'
+          }`}
         >
           <span>💳</span> Wallet
         </Link>
         <Link
           to="/loyalty"
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-100'} ${theme === 'dark' ? 'text-white' : 'text-gray-800'} transition duration-200`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition duration-200 ${
+            location.pathname === '/loyalty'
+              ? 'bg-blue-100 text-blue-600'
+              : 'hover:bg-gray-100 text-gray-800'
+          }`}
         >
           <span>🌟</span> Loyalty Points
         </Link>
         <button
-        //   onClick={() => auth.signOut()}
-          className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-red-600 text-white' : 'bg-red-500 text-white'} ${theme === 'dark' ? 'hover:bg-red-700' : 'hover:bg-red-600'} transition duration-200`}
+          onClick={() => auth.signOut()}
+          className="w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition duration-200"
         >
           <span>🚪</span> Sign Out
         </button>

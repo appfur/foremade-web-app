@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { auth } from '../firebase'; // Only import Firebase Auth
+import { auth } from '../firebase';
 import { Link } from 'react-router-dom';
-import Sidebar from '../profile/Sidebar.jsx';
+import Sidebar from './Sidebar';
 import Spinner from '../components/common/Spinner';
 
-export default function Orders() {
+export default function Wallet() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAuthError, setIsAuthError] = useState(false);
   const [userData, setUserData] = useState(null);
 
-  // Mock data for counts (since we're not fetching from Firestore)
+  // Mock data for counts
   const mockOrderCount = 5;
   const mockWishlistCount = 3;
 
@@ -18,20 +18,18 @@ export default function Orders() {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setLoading(true);
       if (!user) {
-        setError('Please sign in to view your orders.');
+        setError('Please sign in to view your wallet.');
         setIsAuthError(true);
         setLoading(false);
         return;
       }
 
-      // Load additional user data from local storage
       const storedUserData = localStorage.getItem('userData');
       let additionalData = {};
       if (storedUserData) {
         additionalData = JSON.parse(storedUserData);
       }
 
-      // Fetch name and email from Firebase Auth, merge with local storage data
       setUserData({
         email: user.email,
         name: user.displayName || 'User',
@@ -82,13 +80,13 @@ export default function Orders() {
         <div className="md:w-3/4">
           <div className="rounded-lg p-6 bg-white">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">My Orders</h3>
+              <h3 className="text-lg font-semibold">Wallet</h3>
             </div>
             <div className="text-center">
               <div className="inline-block p-4 rounded-full mb-2 bg-gray-100">
-                <span className="text-2xl">📦</span>
+                <span className="text-2xl">💳</span>
               </div>
-              <p className="text-gray-400">No orders found!</p>
+              <p className="text-gray-400">Wallet functionality coming soon!</p>
             </div>
           </div>
         </div>
