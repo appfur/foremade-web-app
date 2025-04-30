@@ -14,7 +14,7 @@ export default function Profile() {
   const [uploadError, setUploadError] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  console.log(profileImage)
+  // console.log(profileImage)
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
