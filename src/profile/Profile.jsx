@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { auth } from '../firebase'; // Only import Firebase Auth
 import { Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Spinner from '../components/common/Spinner';
 
 export default function Profile() {
-  const [loading, setLoading] = useState(false); // Set to false since no data fetching
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAuthError, setIsAuthError] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
@@ -13,18 +14,46 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [theme, setTheme] = useState('light');
+  const [userData, setUserData] = useState(null);
 
-  // Mock data (no Firebase fetching)
-  const mockUserData = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "123-456-7890",
-    profileImage: null, // No profile image by default
-  };
+  // Mock data for counts (since we're not fetching from Firestore)
   const mockOrderCount = 5;
   const mockWishlistCount = 3;
   const mockWalletBalance = 100.50;
   const mockLoyaltyPoints = 250;
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setLoading(true);
+      if (!user) {
+        setError('Please sign in to view your profile.');
+        setIsAuthError(true);
+        setLoading(false);
+        return;
+      }
+
+      // Load user data from local storage
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData) {
+        const parsedData = JSON.parse(storedUserData);
+        setUserData({
+          email: user.email, // Use the authenticated user's email
+          name: parsedData.name || 'User', // Fallback if name isn't available
+          profileImage: parsedData.profileImage || null,
+        });
+      } else {
+        // Fallback if no data in local storage
+        setUserData({
+          email: user.email,
+          name: user.displayName || 'User',
+          profileImage: null,
+        });
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -59,10 +88,15 @@ export default function Profile() {
         if (progress >= 100) clearInterval(interval);
       }, 200);
 
-      // Simulate image upload (since we're not using Firebase Storage)
+      // Simulate image upload by saving to local storage
+      const newImageUrl = URL.createObjectURL(profileImage);
       setTimeout(() => {
-        const mockDownloadURL = URL.createObjectURL(profileImage);
-        setUserData((prev) => ({ ...prev, profileImage: mockDownloadURL }));
+        setUserData((prev) => {
+          const updatedData = { ...prev, profileImage: newImageUrl };
+          // Update local storage with new image URL
+          localStorage.setItem('userData', JSON.stringify(updatedData));
+          return updatedData;
+        });
         setProfileImage(null);
         setImagePreview(null);
         setUploadProgress(0);
@@ -78,13 +112,6 @@ export default function Profile() {
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
-
-  // Use mock data directly
-  const [userData, setUserData] = useState(mockUserData);
-  const orderCount = mockOrderCount;
-  const wishlistCount = mockWishlistCount;
-  const walletBalance = mockWalletBalance;
-  const loyaltyPoints = mockLoyaltyPoints;
 
   if (loading) {
     return (
@@ -105,7 +132,7 @@ export default function Profile() {
           </Link>
         ) : (
           <button
-            onClick={() => setError('')} // Reset error for retry
+            onClick={() => setError('')}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
             Retry
@@ -126,24 +153,24 @@ export default function Profile() {
         </button>
       </div>
       <div className="flex flex-col md:flex-row gap-6">
-        <Sidebar userData={userData} orderCount={orderCount} wishlistCount={wishlistCount} theme={theme} />
+        <Sidebar userData={userData} orderCount={mockOrderCount} wishlistCount={mockWishlistCount} theme={theme} />
         <div className="md:w-3/4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className={`rounded-lg p-4 text-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
               <p className="text-gray-400">Orders</p>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>{orderCount}</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>{mockOrderCount}</p>
             </div>
             <div className={`rounded-lg p-4 text-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
               <p className="text-gray-400">Wish List</p>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>{wishlistCount}</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>{mockWishlistCount}</p>
             </div>
             <div className={`rounded-lg p-4 text-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
               <p className="text-gray-400">Wallet</p>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>₦{walletBalance.toFixed(2)}</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>₦{mockWalletBalance.toFixed(2)}</p>
             </div>
             <div className={`rounded-lg p-4 text-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
               <p className="text-gray-400">Loyalty Points</p>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>{loyaltyPoints} 🌟</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-gray-800'}`}>{mockLoyaltyPoints} 🌟</p>
             </div>
           </div>
           <div className={`rounded-lg p-6 mb-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
