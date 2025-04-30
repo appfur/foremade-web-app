@@ -10,15 +10,15 @@ const getFriendlyErrorMessage = (error) => {
     case 'auth/network-request-failed':
       return 'Check your network connection and try again.';
     case 'auth/email-already-in-use':
-      return 'This email is already in use. Please use a different email or sign in.';
+      return 'This email is already in use. Please log in instead.';
     case 'auth/weak-password':
-      return 'Password is too weak. It should be at least 6 characters long.';
+      return 'Password is too weak.';
     case 'auth/invalid-email':
       return 'Please enter a valid email address.';
     case 'auth/popup-closed-by-user':
       return 'Google sign-in was cancelled. Please try again.';
     case 'auth/account-exists-with-different-credential':
-      return 'An account already exists with this email. Please sign in using your previous method.';
+      return 'An account already exists with this email.';
     default:
       return 'An unexpected error occurred. Please try again later.';
   }
@@ -38,6 +38,13 @@ export default function Register() {
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  // Function to handle navigation after signup
+  const handleNavigation = () => {
+    console.log('Attempting to navigate to /login');
+    navigate('/login', { replace: true });
+    console.log('Navigation should have completed');
   };
 
   // Handle email/password registration
@@ -66,8 +73,10 @@ export default function Register() {
     if (hasError) return;
 
     try {
+      console.log('Starting email/password registration...');
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      console.log('User created successfully:', user.uid);
 
       await setDoc(doc(db, 'users', user.uid), {
         email: email,
@@ -76,11 +85,14 @@ export default function Register() {
         createdAt: new Date().toISOString(),
         uid: user.uid
       });
+      console.log('User document created in Firestore');
 
-      setSuccessMessage('Registration successful! Redirecting to login...');
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000); // Redirect after 2 seconds to show the success message
+      const firstName = name.split(' ')[0];
+      setSuccessMessage(`Welcome, ${firstName}! Registration successful!`);
+      console.log('Showing success alert...');
+      window.alert(`Welcome, ${firstName}! Your registration was successful! You will now be redirected to the login page.`);
+      console.log('Alert should have been shown, navigating to login...');
+      handleNavigation();
     } catch (err) {
       console.error('Registration error:', err);
       const errorMessage = getFriendlyErrorMessage(err);
@@ -103,8 +115,10 @@ export default function Register() {
 
     const provider = new GoogleAuthProvider();
     try {
+      console.log('Starting Google Sign-In...');
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      console.log('Google Sign-In successful:', user.uid);
 
       const userDoc = doc(db, 'users', user.uid);
       const userSnapshot = await getDoc(userDoc);
@@ -117,12 +131,17 @@ export default function Register() {
           createdAt: new Date().toISOString(),
           uid: user.uid
         });
+        console.log('User document created in Firestore for Google user');
+      } else {
+        console.log('User document already exists in Firestore');
       }
 
-      setSuccessMessage('Google Sign-In successful! Redirecting to login...');
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+      const displayName = user.displayName || 'Google User';
+      setSuccessMessage(`Welcome, ${displayName}! Google Sign-In successful!`);
+      console.log('Showing success alert...');
+      window.alert(`Welcome, ${displayName}! Google Sign-In successful! You will now be redirected to the login page.`);
+      console.log('Alert should have been shown, navigating to login...');
+      handleNavigation();
     } catch (err) {
       console.error('Google Sign-In error:', err);
       setEmailError(getFriendlyErrorMessage(err));
@@ -152,7 +171,7 @@ export default function Register() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
-                    nameError ? 'border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.5)]' : successMessage ? 'border-green-500 shadow-[0_0_5px_rgba(0,255,0,0.5)]' : 'border-gray-300'
+                    nameError ? 'border-red-500' : successMessage ? 'border-green-500' : 'border-gray-300'
                   }`}
                   autoComplete="off"
                   required
@@ -166,7 +185,7 @@ export default function Register() {
                   Full Name
                 </label>
                 {nameError && (
-                  <p className="text-red-600 text-sm mt-1">{nameError}</p>
+                  <p className="text-red-600 text-[9px] mt-1">{nameError}</p>
                 )}
               </div>
 
@@ -178,7 +197,7 @@ export default function Register() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
-                    emailError ? 'border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.5)]' : successMessage ? 'border-green-500 shadow-[0_0_5px_rgba(0,255,0,0.5)]' : 'border-gray-300'
+                    emailError ? 'border-red-500' : successMessage ? 'border-green-500' : 'border-gray-300'
                   }`}
                   autoComplete="off"
                   required
@@ -192,7 +211,14 @@ export default function Register() {
                   Email
                 </label>
                 {emailError && (
-                  <p className="text-red-600 text-sm mt-1">{emailError}</p>
+                  <p className="text-red-600 text-sm mt-1">
+                    {emailError}{' '}
+                    {emailError.includes('already in use') && (
+                      <Link to="/login" className="text-blue-600 hover:underline">
+                        Click here to login
+                      </Link>
+                    )}
+                  </p>
                 )}
               </div>
 
@@ -204,7 +230,7 @@ export default function Register() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
-                    passwordError ? 'border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.5)]' : successMessage ? 'border-green-500 shadow-[0_0_5px_rgba(0,255,0,0.5)]' : 'border-gray-300'
+                    passwordError ? 'border-red-500' : successMessage ? 'border-green-500' : 'border-gray-300'
                   }`}
                   autoComplete="new-password"
                   required
