@@ -32,23 +32,20 @@ export default function Profile() {
         return;
       }
 
-      // Load user data from local storage
+      // Load profile image from local storage
       const storedUserData = localStorage.getItem('userData');
+      let profileImageUrl = null;
       if (storedUserData) {
         const parsedData = JSON.parse(storedUserData);
-        setUserData({
-          email: user.email, // Use the authenticated user's email
-          name: parsedData.name || 'User', // Fallback if name isn't available
-          profileImage: parsedData.profileImage || null,
-        });
-      } else {
-        // Fallback if no data in local storage
-        setUserData({
-          email: user.email,
-          name: user.displayName || 'User',
-          profileImage: null,
-        });
+        profileImageUrl = parsedData.profileImage || null;
       }
+
+      // Fetch name and email from Firebase Auth
+      setUserData({
+        email: user.email,
+        name: user.displayName || 'User', // Fetch name from Firebase Auth
+        profileImage: profileImageUrl,
+      });
       setLoading(false);
     });
 
