@@ -89,6 +89,7 @@ export default function Profile() {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <Spinner />
+        <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
