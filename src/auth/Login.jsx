@@ -41,7 +41,7 @@ export default function Login() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("User logged in successfully:", userCredential.user);
-      navigate('/'); // Redirect to homepage
+      navigate('/profile'); // Changed to redirect to profile page
     } catch (err) {
       setError(getFriendlyErrorMessage(err));
     }
@@ -73,17 +73,19 @@ export default function Login() {
       }
 
       console.log("User signed in with Google successfully");
-      navigate('/'); // Redirect to homepage
+      navigate('/profile'); // Changed to redirect to profile page
     } catch (err) {
       setError(getFriendlyErrorMessage(err));
     }
   };
 
   return (
-    <div className="flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
-        <div className="p-6 rounded-lg bg-gray-50">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">Sign In</h2>
+    <div className="bg-white flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl">
+        <div className="text-center mb-8">
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">Login</h2>
           <p className="text-gray-600 mb-6">
             Login to your account. Do not have account?{' '}
             <Link to="/register" className="text-blue-600 hover:underline">
@@ -129,7 +131,7 @@ export default function Login() {
                   required
                 />
                 <span className="absolute right-3 top-12 text-gray-500 cursor-pointer">
-                <i className='bx bxs-low-vision'></i>
+                  👁️
                 </span>
               </div>
               <div className="flex justify-between items-center mb-6">
