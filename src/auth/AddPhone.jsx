@@ -6,4 +6,5 @@ export default function AddPhone() {
       A Page that shows before the user adds login 
     </div>
   )
+  
 }
