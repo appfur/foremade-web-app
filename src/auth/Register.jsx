@@ -136,7 +136,7 @@ export default function Register() {
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <h2 className="text-2xl font-semibold text-gray-800 mb-2">Sign Up</h2>
           <p className="text-gray-600 mb-6">
-            Create a new account. Already have an account?{' '}
+            Already have an account?{' '}
             <Link to="/login" className="text-blue-600 hover:underline">
               Login
             </Link>

@@ -4,13 +4,17 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Link } from 'react-router-dom';
 
+import Spinner from '../components/common/Spinner';
+
 export default function Profile() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [profileImage, setProfileImage] = useState(null);
   const [uploadError, setUploadError] = useState('');
-  
+  const [uploading, setUploading] = useState(false);
+
+  console.log(profileImage)
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -28,6 +32,7 @@ export default function Profile() {
         }
       } catch (err) {
         setError('Failed to load profile data. Please try again later.');
+        console.log(err)
       } finally {
         setLoading(false);
       }
@@ -51,10 +56,12 @@ export default function Profile() {
     }
 
     try {
+      setUploading(true);
       setUploadError('');
       const user = auth.currentUser;
       if (!user) {
         setUploadError('You must be signed in to upload an image.');
+        setUploading(false);
         return;
       }
 
@@ -69,16 +76,19 @@ export default function Profile() {
 
       // Update local state
       setUserData((prev) => ({ ...prev, profileImage: downloadURL }));
+      setProfileImage(null); // Reset file input
     } catch (err) {
-      console.log(err)
+      console.error('Image upload error:', err);
       setUploadError('Failed to upload image. Please try again.');
+    } finally {
+      setUploading(false);
     }
   };
 
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <p className="text-gray-600">Loading...</p>
+        <Spinner />
       </div>
     );
   }
@@ -98,26 +108,39 @@ export default function Profile() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-6">
         {/* Sidebar */}
-        <div className="md:w-1/4 bg-white rounded-lg shadow-md p-6">
+        <div className="md:w-1/4 bg-white rounded-lg p-6">
           <div className="flex flex-col items-center mb-6">
             <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-2 overflow-hidden">
               {userData.profileImage ? (
-                <img src={userData.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                <img
+                  src={userData.profileImage}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
               ) : (
                 <span className="text-gray-500 text-2xl">👤</span>
               )}
             </div>
-            <label className="cursor-pointer text-blue-600 hover:underline mb-2">
-              Upload Profile Picture
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </label>
-            {uploadError && (
-              <p className="text-red-600 text-sm mb-2">{uploadError}</p>
+            {uploading ? (
+              <div className="flex justify-center items-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-4 border-blue-500"></div>
+              </div>
+            ) : (
+              <>
+                <label className="cursor-pointer text-blue-600 hover:underline mb-2">
+                  Upload Profile Picture
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+                {uploadError && (
+                  <p className="text-red-600 text-sm mb-2">{uploadError}</p>
+                )}
+              </>
             )}
             <h2 className="text-lg font-semibold text-gray-800">{userData.name}</h2>
             <p className="text-sm text-gray-600">
@@ -180,30 +203,30 @@ export default function Profile() {
         <div className="md:w-3/4">
           {/* Stats Section */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow-md p-4 text-center">
+            <div className="bg-white rounded-lg p-4 text-center">
               <p className="text-gray-600">Orders</p>
               <p className="text-lg font-semibold text-gray-800">0</p>
             </div>
-            <div className="bg-white rounded-lg shadow-md p-4 text-center">
+            <div className="bg-white rounded-lg p-4 text-center">
               <p className="text-gray-600">Wish List</p>
               <p className="text-lg font-semibold text-gray-800">0</p>
             </div>
-            <div className="bg-white rounded-lg shadow-md p-4 text-center">
+            <div className="bg-white rounded-lg p-4 text-center">
               <p className="text-gray-600">Wallet</p>
               <p className="text-lg font-semibold text-gray-800">₦0.0</p>
             </div>
-            <div className="bg-white rounded-lg shadow-md p-4 text-center">
+            <div className="bg-white rounded-lg p-4 text-center">
               <p className="text-gray-600">Loyalty Point</p>
               <p className="text-lg font-semibold text-gray-800">🌟</p>
             </div>
           </div>
 
           {/* Personal Details Section */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="bg-white rounded-lg p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-800">Personal Details</h3>
               <Link
-                to="/profile/edit"
+                to="/edit"
                 className="flex items-center px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition duration-200"
               >
                 Edit Profile
@@ -234,7 +257,7 @@ export default function Profile() {
           </div>
 
           {/* My Addresses Section */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-800">My Addresses</h3>
               <Link
