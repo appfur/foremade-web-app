@@ -13,7 +13,7 @@ import Cart from './pages/Cart';
 import Favorites from './pages/Favorites';
 import Watchlist from './pages/Watchlist';
 import Orders from './pages/Orders';
-import Profile from './pages/Profile';
+import Profile from './profile/Profile';
 import Settings from './pages/Settings';
 import Register from './auth/Register';
 

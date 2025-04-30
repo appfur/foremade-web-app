@@ -20,9 +20,9 @@ const getFriendlyErrorMessage = (error) => {
     case 'auth/popup-closed-by-user':
       return 'Google sign-in was cancelled. Please try again.';
     case 'auth/account-exists-with-different-credential':
-      return 'An account already exists with this email. Please sign in using your previous method.';
+      return 'An account already exists with this email.';
     default:
-      return 'An unexpected error occurred. Please try again later.';
+      return 'An error occurred. Please try again later.';
   }
 };
 
@@ -142,7 +142,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
-                    emailError ? 'border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.5)]' : successMessage ? 'border-green-500 shadow-[0_0_5px_rgba(0,255,0,0.5)]' : 'border-gray-300'
+                    emailError ? 'border-red-500' : successMessage ? 'border-green-500' : 'border-gray-300'
                   }`}
                   autoComplete="off"
                   required
@@ -156,7 +156,7 @@ export default function Login() {
                   Email
                 </label>
                 {emailError && (
-                  <p className="text-red-600 text-sm mt-1">{emailError}</p>
+                  <p className="text-red-600 text-[10px] mt-1">{emailError}</p>
                 )}
               </div>
 
@@ -168,7 +168,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
-                    passwordError ? 'border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.5)]' : successMessage ? 'border-green-500 shadow-[0_0_5px_rgba(0,255,0,0.5)]' : 'border-gray-300'
+                    passwordError ? 'border-red-500' : successMessage ? 'border-green-500' : 'border-gray-300'
                   }`}
                   autoComplete="current-password"
                   required
@@ -185,7 +185,7 @@ export default function Login() {
                   👁️
                 </span>
                 {passwordError && (
-                  <p className="text-red-600 text-sm mt-1">{passwordError}</p>
+                  <p className="text-red-600 text-[10px] mt-1">{passwordError}</p>
                 )}
               </div>
 
@@ -207,7 +207,7 @@ export default function Login() {
 
               {/* Success Message */}
               {successMessage && (
-                <p className="text-green-600 text-sm mb-4">{successMessage}</p>
+                <p className="text-green-600 text-[10px] mb-4">{successMessage}</p>
               )}
 
               <button

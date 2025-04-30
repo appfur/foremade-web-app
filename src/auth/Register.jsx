@@ -189,7 +189,7 @@ export default function Register() {
                   Full Name
                 </label>
                 {nameError && (
-                  <p className="text-red-600 text-[9px] mt-1">{nameError}</p>
+                  <p className="text-red-600 text-[10px] mt-1">{nameError}</p>
                 )}
               </div>
 
@@ -215,7 +215,7 @@ export default function Register() {
                   Email
                 </label>
                 {emailError && (
-                  <p className="text-red-600 text-sm mt-1">
+                  <p className="text-red-600 text-[10px] mt-1">
                     {emailError}{' '}
                     {emailError.includes('already in use') && (
                       <Link to="/login" className="text-blue-600 hover:underline">
@@ -251,13 +251,13 @@ export default function Register() {
                   👁️
                 </span>
                 {passwordError && (
-                  <p className="text-red-600 text-sm mt-1">{passwordError}</p>
+                  <p className="text-red-600 text-[10px] mt-1">{passwordError}</p>
                 )}
               </div>
 
               {/* Success Message */}
               {successMessage && (
-                <p className="text-green-600 text-sm mb-4">{successMessage}</p>
+                <p className="text-green-600 text-[10px] mb-4">{successMessage}</p>
               )}
 
               <button
