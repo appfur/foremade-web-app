@@ -28,13 +28,42 @@ export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
+
+  // Validate email format
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   // Handle email/password registration
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError('');
+    setNameError('');
+    setEmailError('');
+    setPasswordError('');
+    setSuccessMessage('');
+
+    // Client-side validation
+    let hasError = false;
+    if (!name.trim()) {
+      setNameError('Full name is required.');
+      hasError = true;
+    }
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address.');
+      hasError = true;
+    }
+    if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long.');
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -48,28 +77,39 @@ export default function Register() {
         uid: user.uid
       });
 
-      console.log("User registered successfully");
-      navigate('/login');
+      setSuccessMessage('Registration successful! Redirecting to login...');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000); // Redirect after 2 seconds to show the success message
     } catch (err) {
-      setError(getFriendlyErrorMessage(err));
+      console.error('Registration error:', err);
+      const errorMessage = getFriendlyErrorMessage(err);
+      if (errorMessage.includes('email')) {
+        setEmailError(errorMessage);
+      } else if (errorMessage.includes('password')) {
+        setPasswordError(errorMessage);
+      } else {
+        setNameError(errorMessage); // Fallback to name field for general errors
+      }
     }
   };
 
   // Handle Google Sign-In
   const handleGoogleSignIn = async () => {
-    setError('');
+    setNameError('');
+    setEmailError('');
+    setPasswordError('');
+    setSuccessMessage('');
 
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Check if user already exists in Firestore
       const userDoc = doc(db, 'users', user.uid);
       const userSnapshot = await getDoc(userDoc);
 
       if (!userSnapshot.exists()) {
-        // New user, save their data to Firestore
         await setDoc(userDoc, {
           email: user.email,
           name: user.displayName || 'Google User',
@@ -77,22 +117,22 @@ export default function Register() {
           createdAt: new Date().toISOString(),
           uid: user.uid
         });
-        console.log("User registered with Google successfully");
-      } else {
-        console.log("User already exists, redirecting to login");
       }
 
-      navigate('/login');
+      setSuccessMessage('Google Sign-In successful! Redirecting to login...');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } catch (err) {
-      setError(getFriendlyErrorMessage(err));
+      console.error('Google Sign-In error:', err);
+      setEmailError(getFriendlyErrorMessage(err));
     }
   };
 
   return (
     <div className="bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-5xl">
-        <div className="text-center mb-8">
-        </div>
+        <div className="text-center mb-8"></div>
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <h2 className="text-2xl font-semibold text-gray-800 mb-2">Sign Up</h2>
           <p className="text-gray-600 mb-6">
@@ -102,62 +142,94 @@ export default function Register() {
             </Link>
           </p>
 
-          {error && (
-            <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-              {error}
-            </div>
-          )}
-
           <div className="grid md:grid-cols-2 gap-6">
             <form onSubmit={handleRegister}>
-              <div className="mb-4">
-                <label htmlFor="name" className="block text-gray-700 mb-2">
-                  Full Name
-                </label>
+              {/* Full Name Field */}
+              <div className="mb-4 relative">
                 <input
                   type="text"
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter your full name"
+                  className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
+                    nameError ? 'border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.5)]' : successMessage ? 'border-green-500 shadow-[0_0_5px_rgba(0,255,0,0.5)]' : 'border-gray-300'
+                  }`}
                   autoComplete="off"
                   required
                 />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-gray-700 mb-2">
-                  Email / Phone
+                <label
+                  htmlFor="name"
+                  className={`absolute left-3 top-3 text-gray-500 transition-all duration-300 transform origin-left pointer-events-none peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1 ${
+                    name ? '-translate-y-6 scale-75 text-blue-500 bg-white px-1' : ''
+                  }`}
+                >
+                  Full Name
                 </label>
+                {nameError && (
+                  <p className="text-red-600 text-sm mt-1">{nameError}</p>
+                )}
+              </div>
+
+              {/* Email Field */}
+              <div className="mb-4 relative">
                 <input
-                  type="text"
+                  type="email"
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter email or phone number"
+                  className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
+                    emailError ? 'border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.5)]' : successMessage ? 'border-green-500 shadow-[0_0_5px_rgba(0,255,0,0.5)]' : 'border-gray-300'
+                  }`}
                   autoComplete="off"
                   required
                 />
-              </div>
-              <div className="mb-4 relative">
-                <label htmlFor="password" className="block text-gray-700 mb-2">
-                  Password
+                <label
+                  htmlFor="email"
+                  className={`absolute left-3 top-3 text-gray-500 transition-all duration-300 transform origin-left pointer-events-none peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1 ${
+                    email ? '-translate-y-6 scale-75 text-blue-500 bg-white px-1' : ''
+                  }`}
+                >
+                  Email
                 </label>
+                {emailError && (
+                  <p className="text-red-600 text-sm mt-1">{emailError}</p>
+                )}
+              </div>
+
+              {/* Password Field */}
+              <div className="mb-4 relative">
                 <input
                   type="password"
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ex: 6+ Character"
+                  className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
+                    passwordError ? 'border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.5)]' : successMessage ? 'border-green-500 shadow-[0_0_5px_rgba(0,255,0,0.5)]' : 'border-gray-300'
+                  }`}
                   autoComplete="new-password"
                   required
                 />
-                <span className="absolute right-3 top-12 text-gray-500 cursor-pointer">
+                <label
+                  htmlFor="password"
+                  className={`absolute left-3 top-3 text-gray-500 transition-all duration-300 transform origin-left pointer-events-none peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1 ${
+                    password ? '-translate-y-6 scale-75 text-blue-500 bg-white px-1' : ''
+                  }`}
+                >
+                  Password (6+ Characters)
+                </label>
+                <span className="absolute right-3 top-3 text-gray-500 cursor-pointer">
                   👁️
                 </span>
+                {passwordError && (
+                  <p className="text-red-600 text-sm mt-1">{passwordError}</p>
+                )}
               </div>
+
+              {/* Success Message */}
+              {successMessage && (
+                <p className="text-green-600 text-sm mb-4">{successMessage}</p>
+              )}
+
               <button
                 type="submit"
                 className="w-full bg-blue-900 text-white p-3 rounded-lg hover:bg-blue-800 transition duration-200"
@@ -165,6 +237,8 @@ export default function Register() {
                 Sign Up
               </button>
             </form>
+
+            {/* Google/Facebook Sign-In Section */}
             <div className="flex flex-col justify-center items-center md:border-l md:pl-6">
               <p className="text-gray-600 mb-4">Or continue with</p>
               <button
