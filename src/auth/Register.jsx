@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth, db } from '../firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from 'firebase/auth';
+import { auth } from '../firebase';
 import { Link, useNavigate } from 'react-router-dom';
 
 // Helper function to map Firebase errors to user-friendly messages
@@ -78,14 +77,19 @@ export default function Register() {
       const user = userCredential.user;
       console.log('User created successfully:', user.uid);
 
-      await setDoc(doc(db, 'users', user.uid), {
+      // Update user profile with name
+      await updateProfile(user, { displayName: name });
+
+      // Save user data to local storage (instead of Firestore)
+      const userData = {
         email: email,
         name: name,
         address: '',
         createdAt: new Date().toISOString(),
-        uid: user.uid
-      });
-      console.log('User document created in Firestore');
+        uid: user.uid,
+      };
+      localStorage.setItem('userData', JSON.stringify(userData));
+      console.log('User data saved to local storage:', userData);
 
       const firstName = name.split(' ')[0];
       setSuccessMessage(`Welcome, ${firstName}! Registration successful!`);
@@ -122,20 +126,22 @@ export default function Register() {
       const user = result.user;
       console.log('Google Sign-In successful:', user.uid);
 
-      const userDoc = doc(db, 'users', user.uid);
-      const userSnapshot = await getDoc(userDoc);
-
-      if (!userSnapshot.exists()) {
-        await setDoc(userDoc, {
+      // Check if user data exists in local storage
+      const storedUserData = localStorage.getItem('userData');
+      let userData;
+      if (!storedUserData) {
+        userData = {
           email: user.email,
           name: user.displayName || 'Google User',
           address: '',
           createdAt: new Date().toISOString(),
-          uid: user.uid
-        });
-        console.log('User document created in Firestore for Google user');
+          uid: user.uid,
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        console.log('User data saved to local storage for Google user:', userData);
       } else {
-        console.log('User document already exists in Firestore');
+        userData = JSON.parse(storedUserData);
+        console.log('User data already exists in local storage:', userData);
       }
 
       const displayName = user.displayName || 'Google User';

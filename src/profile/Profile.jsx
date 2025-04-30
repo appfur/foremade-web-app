@@ -32,19 +32,21 @@ export default function Profile() {
         return;
       }
 
-      // Load profile image from local storage
+      // Load additional user data from local storage
       const storedUserData = localStorage.getItem('userData');
-      let profileImageUrl = null;
+      let additionalData = {};
       if (storedUserData) {
-        const parsedData = JSON.parse(storedUserData);
-        profileImageUrl = parsedData.profileImage || null;
+        additionalData = JSON.parse(storedUserData);
       }
 
-      // Fetch name and email from Firebase Auth
+      // Fetch name and email from Firebase Auth, merge with local storage data
       setUserData({
         email: user.email,
         name: user.displayName || 'User', // Fetch name from Firebase Auth
-        profileImage: profileImageUrl,
+        profileImage: additionalData.profileImage || null,
+        createdAt: additionalData.createdAt || null, // Date joined
+        address: additionalData.address || 'Not provided',
+        uid: user.uid,
       });
       setLoading(false);
     });
@@ -108,6 +110,17 @@ export default function Profile() {
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  // Format the createdAt date for display
+  const formatDate = (isoString) => {
+    if (!isoString) return 'Not available';
+    const date = new Date(isoString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   if (loading) {
@@ -248,15 +261,19 @@ export default function Profile() {
                 <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{userData.name.split(' ').slice(1).join(' ') || '-'}</p>
               </div>
               <div>
-                <p className="text-gray-400">Phone</p>
-                <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{userData.phone || 'Not provided'}</p>
-              </div>
-              <div>
                 <p className="text-gray-400">Email</p>
                 <p className={`font-semibold flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                   {userData.email}
                   <span className="ml-2 text-green-500">✅</span>
                 </p>
+              </div>
+              <div>
+                <p className="text-gray-400">Date Joined</p>
+                <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{formatDate(userData.createdAt)}</p>
+              </div>
+              <div>
+                <p className="text-gray-400">Address</p>
+                <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{userData.address}</p>
               </div>
             </div>
           </div>
