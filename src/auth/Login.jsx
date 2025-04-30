@@ -120,7 +120,7 @@ export default function Login() {
   };
 
   return (
-    <div className="h-screen bg-white flex items-center justify-center p-4">
+    <div className="bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-5xl">
         <div className="text-center mb-8"></div>
         <div className="bg-white p-6 rounded-lg shadow-md">

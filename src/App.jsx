@@ -21,7 +21,7 @@ function App() {
   return (
     <BrowserRouter>
       <Header />
-      <main className="min--screen">
+      <main className="min-h-screen">
         <Routes>
           {/* Authentication */}
           <Route path="/login" element={<Login />} />
