@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth, db, storage } from '../firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Link } from 'react-router-dom';
 
 export default function Profile() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
+  const [uploadError, setUploadError] = useState('');
+  
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       try {
-        const user = auth.currentUser;
         if (user) {
           const userDoc = doc(db, 'users', user.uid);
           const userSnapshot = await getDoc(userDoc);
@@ -25,14 +28,52 @@ export default function Profile() {
         }
       } catch (err) {
         setError('Failed to load profile data. Please try again later.');
-        console.log(err)
       } finally {
         setLoading(false);
       }
-    };
+    });
 
-    fetchUserData();
+    return () => unsubscribe();
   }, []);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please upload a valid image file.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setUploadError('Image size must be less than 5MB.');
+      return;
+    }
+
+    try {
+      setUploadError('');
+      const user = auth.currentUser;
+      if (!user) {
+        setUploadError('You must be signed in to upload an image.');
+        return;
+      }
+
+      // Upload image to Firebase Storage
+      const storageRef = ref(storage, `profile_pictures/${user.uid}/${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // Update Firestore with the image URL
+      const userDoc = doc(db, 'users', user.uid);
+      await updateDoc(userDoc, { profileImage: downloadURL });
+
+      // Update local state
+      setUserData((prev) => ({ ...prev, profileImage: downloadURL }));
+    } catch (err) {
+      console.log(err)
+      setUploadError('Failed to upload image. Please try again.');
+    }
+  };
 
   if (loading) {
     return (
@@ -59,9 +100,25 @@ export default function Profile() {
         {/* Sidebar */}
         <div className="md:w-1/4 bg-white rounded-lg shadow-md p-6">
           <div className="flex flex-col items-center mb-6">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-2">
-              <span className="text-gray-500 text-2xl">👤</span>
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-2 overflow-hidden">
+              {userData.profileImage ? (
+                <img src={userData.profileImage} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-gray-500 text-2xl">👤</span>
+              )}
             </div>
+            <label className="cursor-pointer text-blue-600 hover:underline mb-2">
+              Upload Profile Picture
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </label>
+            {uploadError && (
+              <p className="text-red-600 text-sm mb-2">{uploadError}</p>
+            )}
             <h2 className="text-lg font-semibold text-gray-800">{userData.name}</h2>
             <p className="text-sm text-gray-600">
               Joined 29 Apr. 2025

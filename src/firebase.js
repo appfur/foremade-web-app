@@ -1,8 +1,8 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"; // Add Firestore
-import { getAuth } from "firebase/auth"; // Add Authentication
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage'; // Add this import
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCRWR2Z2xlmcGBSVHEbbkIm9nL_qpTGSno",
   authDomain: "foremade-backend.firebaseapp.com",
@@ -12,12 +12,9 @@ const firebaseConfig = {
   appId: "1:957543574407:web:315572254cc0ba6b80c122"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app); // Initialize Firestore
-const auth = getAuth(app); // Initialize Authentication
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app); // Initialize and export storage
 
-// console.log("Firebase initialized", app, db, auth);
-
-// Export the initialized services
-export { app, db, auth };
+export { auth, db, storage }; // Export storage
