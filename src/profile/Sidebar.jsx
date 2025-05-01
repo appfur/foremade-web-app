@@ -6,7 +6,7 @@ export default function Sidebar({ userData, orderCount, wishlistCount }) {
   const location = useLocation();
 
   return (
-    <div className="md:w-1/4 bg-white text-gray-800 rounded-lg p-6">
+    <div className="md:w-1/4 bg-gray-50 text-gray-800 rounded-lg p-6">
       <div className="flex flex-col items-center mb-6">
         <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden mb-4">
           {userData.profileImage ? (

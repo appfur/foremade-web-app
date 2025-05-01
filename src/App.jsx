@@ -7,10 +7,12 @@ import Login from './auth/Login';
 import NotFound from './pages/NotFound';
 import BestSelling from './components/product/BestSelling';
 import Product from './pages/Product';
+import AddPhone from './auth/AddPhone'; // Import the new AddPhone component
+import ProtectedRoute from './auth/ProtectedRoute'; // Import ProtectedRoute
 
 // Cart & Other Components
 import Cart from './pages/Cart';
-import Favorites from './pages/Favorites'; // Assuming this is your Wishlist
+import Favorites from './pages/Favorites';
 import Watchlist from './pages/Watchlist';
 import Orders from './pages/Orders';
 import Profile from './profile/Profile';
@@ -25,26 +27,90 @@ function App() {
       <Header />
       <main className="min-h-screen">
         <Routes>
-          {/* Authentication */}
+          {/* Unprotected Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/add-phone" element={<AddPhone />} />
 
+          {/* Public Routes (accessible without auth) */}
           <Route path="/" element={<Home />} />
           <Route path="/bestSelling" element={<BestSelling />} />
           <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<Product />} />
 
-          {/* Cart & Other Components */}
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/watchlist" element={<Watchlist />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
-          {/* Routes for Sidebar links */}
-          <Route path="/wishlist" element={<Favorites />} /> {/* Map /wishlist to Favorites */}
-          <Route path="/wallet" element={<Wallet />} />
-          <Route path="/loyalty" element={<Loyalty />} />
+          {/* Protected Routes */}
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/favorites"
+            element={
+              <ProtectedRoute>
+                <Favorites />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/watchlist"
+            element={
+              <ProtectedRoute>
+                <Watchlist />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <Favorites />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wallet"
+            element={
+              <ProtectedRoute>
+                <Wallet />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loyalty"
+            element={
+              <ProtectedRoute>
+                <Loyalty />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

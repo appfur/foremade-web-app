@@ -148,29 +148,29 @@ export default function Profile() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-gray-100 text-gray-800">
+    <div className="container mx-auto px-4 py-8 text-gray-800">
       <div className="flex flex-col md:flex-row gap-6">
         <Sidebar userData={userData} orderCount={mockOrderCount} wishlistCount={mockWishlistCount} />
         <div className="md:w-3/4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="rounded-lg p-4 text-center bg-white">
+            <div className="rounded-lg p-4 text-center bg-gray-50">
               <p className="text-gray-400">Orders</p>
               <p className="text-lg font-semibold text-gray-800">{mockOrderCount}</p>
             </div>
-            <div className="rounded-lg p-4 text-center bg-white">
+            <div className="rounded-lg p-4 text-center bg-gray-50">
               <p className="text-gray-400">Wish List</p>
               <p className="text-lg font-semibold text-gray-800">{mockWishlistCount}</p>
             </div>
-            <div className="rounded-lg p-4 text-center bg-white">
+            <div className="rounded-lg p-4 text-center bg-gray-50">
               <p className="text-gray-400">Wallet</p>
               <p className="text-lg font-semibold text-gray-800">₦{mockWalletBalance.toFixed(2)}</p>
             </div>
-            <div className="rounded-lg p-4 text-center bg-white">
+            <div className="rounded-lg p-4 text-center bg-gray-50">
               <p className="text-gray-400">Loyalty Points</p>
               <p className="text-lg font-semibold text-gray-800">{mockLoyaltyPoints} 🌟</p>
             </div>
           </div>
-          <div className="rounded-lg p-6 mb-6 bg-white">
+          <div className="rounded-lg p-6 mb-6 bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
             <div className="flex items-center gap-4">
               <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
@@ -227,7 +227,7 @@ export default function Profile() {
               </div>
             </div>
           </div>
-          <div className="rounded-lg p-6 mb-6 bg-white">
+          <div className="rounded-lg p-6 mb-6 bg-gray-50">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Personal Details</h3>
               <Link
@@ -240,31 +240,31 @@ export default function Profile() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-gray-400">First Name</p>
+                <p className="text-slate-400">First Name</p>
                 <p className="font-semibold text-gray-800">{userData.name.split(' ')[0]}</p>
               </div>
               <div>
-                <p className="text-gray-400">Last Name</p>
+                <p className="text-slate-400">Last Name</p>
                 <p className="font-semibold text-gray-800">{userData.name.split(' ').slice(1).join(' ') || '-'}</p>
               </div>
               <div>
-                <p className="text-gray-400">Email</p>
+                <p className="text-slate-400">Email</p>
                 <p className="font-semibold flex items-center text-gray-800">
                   {userData.email}
                   <span className="ml-2 text-green-500">✅</span>
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">Date Joined</p>
+                <p className="text-slate-400">Date Joined</p>
                 <p className="font-semibold text-gray-800">{formatDate(userData.createdAt)}</p>
               </div>
               <div>
-                <p className="text-gray-400">Address</p>
+                <p className="text-slate-400">Address</p>
                 <p className="font-semibold text-gray-800">{userData.address}</p>
               </div>
             </div>
           </div>
-          <div className="rounded-lg p-6 bg-white">
+          <div className="rounded-lg p-6 bg-gray-50">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">My Addresses</h3>
               <Link
