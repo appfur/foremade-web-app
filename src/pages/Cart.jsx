@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import db from '../db.json';
 import { getCart, updateCart, clearCart } from '/src/utils/cartUtils.js';
+import PaystackCheckout from '../components/checkout/PaystackCheckout';
 
 const Cart = () => {
   const [cart, setCart] = useState([]);
@@ -311,6 +312,7 @@ const Cart = () => {
                 >
                   Checkout
                 </button>
+                <PaystackCheckout />
                 <button
                   onClick={handleClearCart}
                   className={`px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition ${
