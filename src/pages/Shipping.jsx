@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // For redirection
-import { auth } from './firebase'; // Import auth from your firebase.js
+import { auth } from '../firebase'; // Import auth from your firebase.js
 import { onAuthStateChanged } from 'firebase/auth';
-import countries from './countries'; // Adjust path as needed
-import countryCodes from './countryCodes'; // Adjust path as needed
+import countries from '../components/common/countries'; 
+import countryCodes from '../components/common/countryCodes';
 
 export default function Shipping() {
   const navigate = useNavigate(); // For redirecting to login page
