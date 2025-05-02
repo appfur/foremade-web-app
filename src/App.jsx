@@ -20,6 +20,7 @@ import Settings from './pages/Settings';
 import Register from './auth/Register';
 import Wallet from './profile/Wallet';
 import Loyalty from './profile/Loyalty';
+import Shipping from './pages/Shipping';
 
 function App() {
   return (
@@ -108,6 +109,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Loyalty />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shipping"
+            element={
+              <ProtectedRoute>
+                <Shipping />
               </ProtectedRoute>
             }
           />
