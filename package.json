@@ -15,7 +15,6 @@
     "firebase": "^11.6.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-paystack": "^6.0.0",
     "react-router-dom": "^7.5.0",
     "stripe": "^18.1.0"
   },
