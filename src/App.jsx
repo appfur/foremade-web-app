@@ -21,6 +21,7 @@ import Register from './auth/Register';
 import Wallet from './profile/Wallet';
 import Loyalty from './profile/Loyalty';
 import Shipping from './pages/Shipping';
+import Checkout from './components/checkout/Checkout';
 
 function App() {
   return (
@@ -113,13 +114,21 @@ function App() {
             }
           />
           <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+          {/* <Route
             path="/shipping"
             element={
               <ProtectedRoute>
                 <Shipping />
               </ProtectedRoute>
             }
-          />
+          /> */}
 
           <Route path="*" element={<NotFound />} />
         </Routes>

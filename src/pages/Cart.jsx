@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import db from '../db.json';
 import { getCart, updateCart, clearCart } from '/src/utils/cartUtils.js';
-import PaystackCheckout from '../components/checkout/PaystackCheckout';
 
 const Cart = () => {
+  const navigate = useNavigate();
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -103,7 +103,10 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0) {
+      setError('Your cart is empty.');
+      return;
+    }
 
     // Validate stock availability
     const stockIssues = cartItems.filter((item) => item.quantity > (item.product?.stock || 0));
@@ -111,28 +114,12 @@ const Cart = () => {
       const issueMessages = stockIssues.map(
         (item) => `Only ${item.product.stock} units of ${item.product.name} available.`
       );
-      setError(`Checkout failed:\n${issueMessages.join('\n')}`);
+      setError(`Cannot proceed to checkout:\n${issueMessages.join('\n')}`);
       return;
     }
 
-    const order = {
-      id: Date.now(),
-      items: cart,
-      total: totalPrice,
-      date: new Date().toISOString(),
-    };
-
-    try {
-      const storedOrders = localStorage.getItem('orders');
-      const orders = storedOrders ? JSON.parse(storedOrders) : [];
-      localStorage.setItem('orders', JSON.stringify([...orders, order]));
-      setCart([]);
-      clearCart();
-      setMessage('Order placed successfully!');
-    } catch (err) {
-      console.error('Error during checkout:', err);
-      setError('Failed to place order. Please try again.');
-    }
+    // Navigate to checkout page
+    navigate('/checkout');
   };
 
   if (loading) {
@@ -310,9 +297,8 @@ const Cart = () => {
                   disabled={cart.length === 0 || cartItems.some((item) => item.quantity > (item.product?.stock || 0))}
                   aria-label="Proceed to checkout"
                 >
-                  Checkout
+                  Proceed to Checkout
                 </button>
-                <PaystackCheckout />
                 <button
                   onClick={handleClearCart}
                   className={`px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition ${

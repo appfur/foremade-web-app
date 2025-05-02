@@ -348,10 +348,6 @@ const Product = () => {
                   {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
                 </button>
 
-                <Link to="/shipping" className="text-center justify-center items-center px-2 py-1 text-[10px] rounded-lg transition bg-slate-600 text-white hover:bg-blue-900">
-                  <i className='bx bx-link-external text-white text-xl'></i>
-                </Link>
-
                 <button
                   onClick={toggleFavorite}
                   className={`flex items-center justify-center gap-2 px-2 py-1 text-xs border rounded-lg transition ${
