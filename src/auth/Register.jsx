@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../firebase';
 import { Link, useNavigate } from 'react-router-dom';
 
-// Helper function to map Firebase errors to user-friendly messages
 const getFriendlyErrorMessage = (error) => {
   switch (error.code) {
     case 'auth/network-request-failed':
@@ -33,20 +32,17 @@ export default function Register() {
   const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
 
-  // Validate email format
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Function to handle navigation after signup
   const handleNavigation = () => {
     console.log('Attempting to navigate to /login');
     navigate('/login', { replace: true });
     console.log('Navigation should have completed');
   };
 
-  // Handle email/password registration
   const handleRegister = async (e) => {
     e.preventDefault();
     setNameError('');
@@ -54,7 +50,6 @@ export default function Register() {
     setPasswordError('');
     setSuccessMessage('');
 
-    // Client-side validation
     let hasError = false;
     if (!name.trim()) {
       setNameError('Full name is required.');
@@ -77,10 +72,12 @@ export default function Register() {
       const user = userCredential.user;
       console.log('User created successfully:', user.uid);
 
-      // Update user profile with name
       await updateProfile(user, { displayName: name });
 
-      // Save user data to local storage (instead of Firestore)
+      // Send email verification
+      await sendEmailVerification(user);
+      console.log('Verification email sent to:', user.email);
+
       const userData = {
         email: email,
         name: name,
@@ -92,27 +89,24 @@ export default function Register() {
       console.log('User data saved to local storage:', userData);
 
       const firstName = name.split(' ')[0];
-      setSuccessMessage(`Welcome, ${firstName}! Registration successful!`);
-      console.log('Showing success alert...');
-      window.alert(`Welcome, ${firstName}! Your registration was successful! You will now be redirected to the login page.`);
-      console.log('Alert should have been shown, navigating to login...');
-      handleNavigation();
+      setSuccessMessage(`Welcome, ${firstName}! Registration successful! Please check your email to verify your account.`);
+      console.log('Showing success message...');
+      setTimeout(() => {
+        handleNavigation();
+      }, 3000);
     } catch (err) {
       console.error('Registration error:', err);
-      console.log('Error code:', err.code);
-      console.log('Error message:', err.message);
       const errorMessage = getFriendlyErrorMessage(err);
       if (errorMessage.includes('email')) {
         setEmailError(errorMessage);
       } else if (errorMessage.includes('password')) {
         setPasswordError(errorMessage);
       } else {
-        setNameError(errorMessage); // Fallback to name field for general errors
+        setNameError(errorMessage);
       }
     }
   };
 
-  // Handle Google Sign-In
   const handleGoogleSignIn = async () => {
     setNameError('');
     setEmailError('');
@@ -126,7 +120,9 @@ export default function Register() {
       const user = result.user;
       console.log('Google Sign-In successful:', user.uid);
 
-      // Check if user data exists in local storage
+      await sendEmailVerification(user);
+      console.log('Verification email sent to:', user.email);
+
       const storedUserData = localStorage.getItem('userData');
       let userData;
       if (!storedUserData) {
@@ -145,15 +141,13 @@ export default function Register() {
       }
 
       const displayName = user.displayName || 'Google User';
-      setSuccessMessage(`Welcome, ${displayName}! Google Sign-In successful!`);
-      console.log('Showing success alert...');
-      window.alert(`Welcome, ${displayName}! Google Sign-In successful! You will now be redirected to the login page.`);
-      console.log('Alert should have been shown, navigating to login...');
-      handleNavigation();
+      setSuccessMessage(`Welcome, ${displayName}! Google Sign-In successful! Please check your email to verify your account.`);
+      console.log('Showing success message...');
+      setTimeout(() => {
+        handleNavigation();
+      }, 3000);
     } catch (err) {
       console.error('Google Sign-In error:', err);
-      console.log('Error code:', err.code);
-      console.log('Error message:', err.message);
       setEmailError(getFriendlyErrorMessage(err));
     }
   };
@@ -173,7 +167,6 @@ export default function Register() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <form onSubmit={handleRegister}>
-              {/* Full Name Field */}
               <div className="mb-4 relative">
                 <input
                   type="text"
@@ -194,12 +187,9 @@ export default function Register() {
                 >
                   Full Name
                 </label>
-                {nameError && (
-                  <p className="text-red-600 text-[10px] mt-1">{nameError}</p>
-                )}
+                {nameError && <p className="text-red-600 text-[10px] mt-1">{nameError}</p>}
               </div>
 
-              {/* Email Field */}
               <div className="mb-4 relative">
                 <input
                   type="email"
@@ -232,7 +222,6 @@ export default function Register() {
                 )}
               </div>
 
-              {/* Password Field */}
               <div className="mb-4 relative">
                 <input
                   type="password"
@@ -253,18 +242,11 @@ export default function Register() {
                 >
                   Password (6+ Characters)
                 </label>
-                <span className="absolute right-3 top-3 text-gray-500 cursor-pointer">
-                  👁️
-                </span>
-                {passwordError && (
-                  <p className="text-red-600 text-[10px] mt-1">{passwordError}</p>
-                )}
+                <span className="absolute right-3 top-3 text-gray-500 cursor-pointer">👁️</span>
+                {passwordError && <p className="text-red-600 text-[10px] mt-1">{passwordError}</p>}
               </div>
 
-              {/* Success Message */}
-              {successMessage && (
-                <p className="text-green-600 text-[10px] mb-4">{successMessage}</p>
-              )}
+              {successMessage && <p className="text-green-600 text-[10px] mb-4">{successMessage}</p>}
 
               <button
                 type="submit"
@@ -274,26 +256,17 @@ export default function Register() {
               </button>
             </form>
 
-            {/* Google/Facebook Sign-In Section */}
             <div className="flex flex-col justify-center items-center md:border-l md:pl-6">
               <p className="text-gray-600 mb-4">Or continue with</p>
               <button
                 onClick={handleGoogleSignIn}
                 className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center mb-4 hover:bg-gray-100 transition duration-200"
               >
-                <img
-                  src="https://www.google.com/favicon.ico"
-                  alt="Google"
-                  className="w-5 h-5 mr-2"
-                />
+                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5 mr-2" />
                 Google
               </button>
               <button className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-200">
-                <img
-                  src="https://www.facebook.com/favicon.ico"
-                  alt="Facebook"
-                  className="w-5 h-5 mr-2"
-                />
+                <img src="https://www.facebook.com/favicon.ico" alt="Facebook" className="w-5 h-5 mr-2" />
                 Facebook
               </button>
             </div>

@@ -1,22 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { auth } from '../firebase';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 
 export default function AddPhone() {
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [showOtp, setShowOtp] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState(null);
   const navigate = useNavigate();
 
-  // Validate phone number format (basic regex for international numbers)
   const validatePhone = (phone) => {
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/; // Accepts formats like +1234567890 or 1234567890
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
     return phoneRegex.test(phone);
   };
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        'recaptcha-container',
+        {
+          size: 'invisible',
+          callback: () => {
+            console.log('reCAPTCHA solved');
+          },
+          'expired-callback': () => {
+            setPhoneError('reCAPTCHA expired. Please try again.');
+            window.recaptchaVerifier.reset();
+          },
+        },
+        auth
+      );
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setPhoneError('');
     setSuccessMessage('');
+    setOtpError('');
 
     if (!phone.trim()) {
       setPhoneError('Phone number is required.');
@@ -28,14 +53,55 @@ export default function AddPhone() {
       return;
     }
 
-    // Simulate saving the phone number (e.g., to local storage for now)
-    localStorage.setItem('userPhone', phone);
-    setSuccessMessage('Phone number added successfully! Proceeding to login...');
+    try {
+      const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+      const appVerifier = window.recaptchaVerifier;
+      const result = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(result);
+      setShowOtp(true);
+      setSuccessMessage('OTP sent to your phone number.');
+    } catch (err) {
+      console.error('Error sending OTP:', err);
+      setPhoneError(getFriendlyErrorMessage(err));
+      window.recaptchaVerifier.reset();
+    }
+  };
 
-    // Redirect to login after a short delay
-    setTimeout(() => {
-      navigate('/login');
-    }, 2000);
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    setOtpError('');
+
+    if (!otp) {
+      setOtpError('Please enter the OTP.');
+      return;
+    }
+
+    try {
+      const result = await confirmationResult.confirm(otp);
+      const user = result.user;
+      console.log('Phone number verified for user:', user.uid);
+      localStorage.setItem('userPhone', phone);
+      setSuccessMessage('Phone number verified successfully! Redirecting to login...');
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err) {
+      console.error('Error verifying OTP:', err);
+      setOtpError(getFriendlyErrorMessage(err));
+    }
+  };
+
+  const getFriendlyErrorMessage = (error) => {
+    switch (error.code) {
+      case 'auth/invalid-verification-code':
+        return 'Invalid OTP. Please try again.';
+      case 'auth/code-expired':
+        return 'OTP has expired. Please request a new one.';
+      case 'auth/invalid-phone-number':
+        return 'Invalid phone number format.';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      default:
+        return 'An error occurred. Please try again.';
+    }
   };
 
   return (
@@ -50,6 +116,7 @@ export default function AddPhone() {
         </p>
 
         <form onSubmit={handleSubmit}>
+          <div id="recaptcha-container"></div>
           <div className="mb-4 relative">
             <input
               type="tel"
@@ -59,32 +126,55 @@ export default function AddPhone() {
               className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
                 phoneError ? 'border-red-500' : successMessage ? 'border-green-500' : 'border-gray-300'
               }`}
-              placeholder="e.g., +1234567890"
               autoComplete="tel"
             />
             <label
               htmlFor="phone"
-              className={`absolute left-3 top-3 text-gray-500 transition-all duration-300 transform origin-left pointer-events-none peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1 ${
-                phone ? '-translate-y-6 scale-75 text-blue-500 bg-white px-1' : ''
-              }`}
+              className="absolute left-3 -top-2 text-gray-500 text-xs bg-white px-1 transition-all duration-300 transform origin-left"
             >
               Phone Number
             </label>
-            {phoneError && (
-              <p className="text-red-600 text-[10px] mt-1">{phoneError}</p>
-            )}
+            {phoneError && <p className="text-red-600 text-[10px] mt-1">{phoneError}</p>}
           </div>
 
-          {successMessage && (
-            <p className="text-green-600 text-[10px] mb-4">{successMessage}</p>
+          {showOtp && (
+            <div className="mb-4 relative">
+              <input
+                type="text"
+                id="otp"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className={`w-full p-3 border rounded-lg transition-all duration-300 peer ${
+                  otpError ? 'border-red-500' : 'border-gray-300'
+                }`}
+                autoComplete="one-time-code"
+              />
+              <label
+                htmlFor="otp"
+                className="absolute left-3 -top-2 text-gray-500 text-xs bg-white px-1 transition-all duration-300 transform origin-left"
+              >
+                OTP
+              </label>
+              {otpError && <p className="text-red-600 text-[10px] mt-1">{otpError}</p>}
+              <button
+                type="button"
+                onClick={handleOtpSubmit}
+                className="mt-2 bg-blue-900 text-white p-2 rounded-lg hover:bg-blue-800 transition duration-200"
+              >
+                Verify OTP
+              </button>
+            </div>
           )}
 
-          <button
-            type="submit"
-            className="w-full bg-blue-900 text-white p-3 rounded-lg hover:bg-blue-800 transition duration-200"
-          >
-            Submit
-          </button>
+          {!showOtp && (
+            <button
+              type="submit"
+              className="w-full bg-blue-900 text-white p-3 rounded-lg hover:bg-blue-800 transition duration-200"
+            >
+              Submit
+            </button>
+          )}
+          {successMessage && <p className="text-green-600 text-[10px] mb-4">{successMessage}</p>}
         </form>
       </div>
     </div>

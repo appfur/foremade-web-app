@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import db from '../../db.json';
 import { getCart } from '/src/utils/cartUtils';
+import { auth } from '../../firebase';
+import { signOut } from 'firebase/auth';
 
 const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -10,38 +12,21 @@ const Header = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dataLoading, setDataLoading] = useState(true); // Added for cart/favorites loading
+  const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cart, setCart] = useState([]);
   const [favorites, setFavorites] = useState([]);
+  const [user, setUser] = useState(null);
   const location = useLocation();
 
-  // Load cart from cartUtils and favorites from localStorage on mount
   useEffect(() => {
     setDataLoading(true);
     try {
-      // Load cart from cartUtils
       const cartItems = getCart();
-      if (Array.isArray(cartItems)) {
-        setCart(cartItems);
-      } else {
-        setCart([]);
-      }
-
-      // Load favorites from localStorage
+      setCart(Array.isArray(cartItems) ? cartItems : []);
       const storedFavorites = localStorage.getItem('favorites');
-      if (storedFavorites) {
-        const parsedFavorites = JSON.parse(storedFavorites);
-        if (Array.isArray(parsedFavorites)) {
-          setFavorites(parsedFavorites);
-        } else {
-          setFavorites([]);
-          localStorage.setItem('favorites', JSON.stringify([]));
-        }
-      } else {
-        setFavorites([]);
-        localStorage.setItem('favorites', JSON.stringify([]));
-      }
+      setFavorites(storedFavorites ? JSON.parse(storedFavorites) : []);
+      localStorage.setItem('favorites', JSON.stringify([]));
     } catch (err) {
       console.error('Error loading cart/favorites:', err);
       setCart([]);
@@ -53,37 +38,20 @@ const Header = () => {
     }
   }, []);
 
-  // Listen for cart updates via custom event and favorites via localStorage
   useEffect(() => {
     const handleCartUpdate = () => {
       const updatedCart = getCart();
-      if (Array.isArray(updatedCart)) {
-        setCart(updatedCart);
-      } else {
-        setCart([]);
-      }
+      setCart(Array.isArray(updatedCart) ? updatedCart : []);
     };
 
     const handleStorageChange = (event) => {
       if (event.key === 'favorites') {
         try {
           const storedFavorites = localStorage.getItem('favorites');
-          if (storedFavorites) {
-            const parsedFavorites = JSON.parse(storedFavorites);
-            if (Array.isArray(parsedFavorites)) {
-              setFavorites(parsedFavorites);
-            } else {
-              setFavorites([]);
-              localStorage.setItem('favorites', JSON.stringify([]));
-            }
-          } else {
-            setFavorites([]);
-            localStorage.setItem('favorites', JSON.stringify([]));
-          }
+          setFavorites(storedFavorites ? JSON.parse(storedFavorites) : []);
         } catch (err) {
-          console.error('Error parsing favorites from storage event:', err);
+          console.error('Error parsing favorites:', err);
           setFavorites([]);
-          localStorage.setItem('favorites', JSON.stringify([]));
         }
       }
     };
@@ -96,7 +64,6 @@ const Header = () => {
     };
   }, []);
 
-  // Load products from db.json
   useEffect(() => {
     try {
       setLoading(true);
@@ -110,17 +77,21 @@ const Header = () => {
     }
   }, []);
 
-  // Handle search input change
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return unsubscribe;
+  }, []);
+
   const handleSearch = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-
     if (query.trim() === '') {
       setSearchResults([]);
       setShowDropdown(false);
       return;
     }
-
     const filtered = products.filter((product) =>
       product.name.toLowerCase().includes(query.toLowerCase())
     );
@@ -129,49 +100,55 @@ const Header = () => {
   };
 
   const handleFocus = () => {
-    if (searchQuery.trim() !== '' && searchResults.length > 0) {
-      setShowDropdown(true);
-    }
+    if (searchQuery.trim() !== '' && searchResults.length > 0) setShowDropdown(true);
   };
 
   const handleBlur = () => {
-    setTimeout(() => {
-      setShowDropdown(false);
-    }, 200);
+    setTimeout(() => setShowDropdown(false), 200);
   };
 
-  // Calculate cart and favorites counts
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      localStorage.removeItem('userData');
+    } catch (err) {
+      console.error('Logout error:', err);
+      setError('Failed to logout.');
+    }
+  };
+
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
   const favoritesCount = favorites.length;
 
-  if (loading || dataLoading) {
-    return <div className="p-4 text-gray-600">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="p-4 text-red-600">Error: {error}</div>;
-  }
-
-  if (products.length === 0) {
-    return <div className="p-4 text-gray-600">No products available to search.</div>;
-  }
+  if (loading || dataLoading) return <div className="p-4 text-gray-600">Loading...</div>;
+  if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
+  if (products.length === 0) return <div className="p-4 text-gray-600">No products available.</div>;
 
   return (
     <header className="bg-white">
-      {/* Top Bar (Visible on Desktop and Tablet) */}
       <div className="hidden sm:block bg-white border-b border-gray-200 text-gray-600 py-2">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
-            <p className="cursor-pointer">
-              Hi!{' '}
-              <Link to="/login" className="text-blue-500 underline">
-                Sign in
-              </Link>{' '}
-              or{' '}
-              <Link to="/register" className="text-blue-500 underline">
-                Register
-              </Link>
-            </p>
+            {user ? (
+              <p className="cursor-pointer">
+                Hello, {user.displayName || user.email.split('@')[0]} |{' '}
+                <span className="text-blue-500 underline cursor-pointer" onClick={handleLogout}>
+                  Logout
+                </span>
+              </p>
+            ) : (
+              <p className="cursor-pointer">
+                Hi!{' '}
+                <Link to="/login" className="text-blue-500 underline">
+                  Sign in
+                </Link>{' '}
+                or{' '}
+                <Link to="/register" className="text-blue-500 underline">
+                  Register
+                </Link>
+              </p>
+            )}
             <Link to="/deals" className="hover:text-blue-600">
               Daily Deals
             </Link>
@@ -235,7 +212,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Main Bar */}
       <div className="container mx-auto px-4 py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
         <div className="flex items-center">
           <Link to="/">
@@ -327,10 +303,7 @@ const Header = () => {
               </span>
             )}
           </Link>
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="text-gray-600 focus:outline-none"
-          >
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-gray-600 focus:outline-none">
             <i className="bx bx-menu text-2xl"></i>
           </button>
         </div>
@@ -355,7 +328,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Search Bar and Buttons (Mobile) */}
       <div className="sm:hidden px-4 py-2">
         <div className="flex items-center w-full mb-2 relative">
           <div className="relative flex-1">
@@ -468,7 +440,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Category Links (Desktop/Tablet, Centered) */}
       <div className="hidden sm:block border-t border-gray-200 py-2">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 text-xs text-gray-600">
@@ -513,7 +484,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Sidebar (Mobile) */}
       <div
         className={`fixed inset-y-0 left-0 w-64 bg-white transform ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -521,26 +491,32 @@ const Header = () => {
       >
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <h2 className="text-base font-bold text-gray-800">Menu</h2>
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="text-gray-600 focus:outline-none"
-          >
+          <button onClick={() => setIsSidebarOpen(false)} className="text-gray-600 focus:outline-none">
             <i className="bx bx-x text-2xl"></i>
           </button>
         </div>
         <nav className="flex flex-col p-4 space-y-2 text-sm text-gray-600">
           <div className="flex items-center space-x-2 mb-4">
             <i className="bx bx-log-in-circle text-2xl text-gray-600"></i>
-            <p className="cursor-pointer">
-              Hi!{' '}
-              <Link to="/login" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
-                Sign in
-              </Link>
-              <span className="mx-1">|</span>
-              <Link to="/register" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
-                Register
-              </Link>
-            </p>
+            {user ? (
+              <p className="cursor-pointer">
+                Hello, {user.displayName || user.email.split('@')[0]} |{' '}
+                <span className="text-blue-600 underline cursor-pointer" onClick={handleLogout}>
+                  Logout
+                </span>
+              </p>
+            ) : (
+              <p className="cursor-pointer">
+                Hi!{' '}
+                <Link to="/login" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
+                  Sign in
+                </Link>
+                <span className="mx-1">|</span>
+                <Link to="/register" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
+                  Register
+                </Link>
+              </p>
+            )}
           </div>
           <Link to="/deals" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
             <i className="bx bx-bolt-circle text-lg"></i>
@@ -589,7 +565,6 @@ const Header = () => {
         </nav>
       </div>
 
-      {/* Bottom Navigation Bar (Mobile) */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-2 z-40">
         <Link
           to="/"
