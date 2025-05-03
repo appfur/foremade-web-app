@@ -27,7 +27,7 @@ function App() {
   return (
     <BrowserRouter>
       <Header />
-      <main className="min-h-screen">
+      <main className="min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
         <Routes>
           {/* Unprotected Routes */}
           <Route path="/login" element={<Login />} />

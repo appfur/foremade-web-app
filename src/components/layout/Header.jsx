@@ -126,8 +126,8 @@ const Header = () => {
   if (products.length === 0) return <div className="p-4 text-gray-600">No products available.</div>;
 
   return (
-    <header className="bg-white">
-      <div className="hidden sm:block bg-white border-b border-gray-200 text-gray-600 py-2">
+    <header className="">
+      <div className="hidden sm:block border-b border-gray-200 text-gray-600 py-2">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
             {user ? (
