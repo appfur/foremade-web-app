@@ -1,82 +1,135 @@
-import React, { useState } from 'react';
-import { auth, db } from '../firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { auth } from '../firebase';
+import { createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import countryCodes from '../components/common/countryCodes';
+import countries from '../components/common/countries';
+import { Link } from 'react-router-dom';
 
 export default function SellerRegister() {
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [formData, setFormData] = useState({
+    country: 'Nigeria',
+    email: '',
+    phone: '+234-',
+    password: '',
+    confirmPassword: '',
+  });
+  const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
+  const [user, setUser] = useState(null);
+  const [isPhoneCodeManual, setIsPhoneCodeManual] = useState(false);
 
-  const validateEmail = (value) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!value.trim()) {
-      return 'Please Enter Your Email.';
-    } else if (!emailRegex.test(value)) {
-      return 'Please enter a valid email address.';
-    }
-    return '';
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setFormData((prev) => ({ ...prev, email: currentUser.email || '' }));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const getCountryCode = (countryName) => {
+    const country = countryCodes.find((c) => c.country === countryName);
+    return country ? country.code : '+234'; // Default to +234 for Nigeria
   };
 
-  const validatePhone = (value) => {
-    if (!value.includes('-') || !value.split('-')[1]) {
-      return 'Please enter a valid phone number.';
-    }
-    const number = value.split('-')[1];
-    if (number.length < 7) {
-      return 'Phone number must be at least 7 digits.';
-    }
-    return '';
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const newFormData = { ...prev, [name]: value };
+      if (name === 'country') {
+        setIsPhoneCodeManual(false); // Reset manual override on country change
+        const newCode = getCountryCode(value);
+        const currentNumber = prev.phone.includes('-') ? prev.phone.split('-')[1] : '';
+        newFormData.phone = `${newCode}-${currentNumber}`;
+      }
+      return newFormData;
+    });
+    setErrors((prev) => ({ ...prev, [name]: '', phone: '' }));
   };
 
-  const validatePassword = (pass, confirmPass) => {
-    if (!pass) {
-      return 'Please enter a password.';
-    } else if (pass.length < 6) {
-      return 'Password must be at least 6 characters.';
-    } else if (pass !== confirmPass) {
-      return 'Passwords do not match.';
+  const handlePhoneCodeChange = (e) => {
+    const selectedCode = e.target.value;
+    setIsPhoneCodeManual(true); // Mark as manual override
+    setFormData((prev) => {
+      const number = prev.phone.includes('-') ? prev.phone.split('-')[1] : '';
+      return { ...prev, phone: `${selectedCode}-${number}` };
+    });
+    setErrors((prev) => ({ ...prev, phone: '' }));
+  };
+
+  const handlePhoneNumberChange = (e) => {
+    const number = e.target.value.replace(/[^0-9]/g, '');
+    setFormData((prev) => {
+      const code = isPhoneCodeManual
+        ? prev.phone.includes('-')
+          ? prev.phone.split('-')[0]
+          : getCountryCode(prev.country)
+        : getCountryCode(prev.country);
+      return { ...prev, phone: `${code}-${number}` };
+    });
+    setErrors((prev) => ({ ...prev, phone: '' }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.country) {
+      newErrors.country = 'Please select a country.';
     }
-    return '';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Please enter your email.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+    if (!formData.phone.includes('-') || !formData.phone.split('-')[1]) {
+      newErrors.phone = 'Please enter a valid phone number.';
+    } else if (formData.phone.split('-')[1].length < 7) {
+      newErrors.phone = 'Phone number must be at least 7 digits.';
+    }
+    if (!user) {
+      if (!formData.password) {
+        newErrors.password = 'Please enter a password.';
+      } else if (formData.password.length < 6) {
+        newErrors.password = 'Password must be at least 6 characters.';
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.password = 'Passwords do not match.';
+      }
+    }
+    return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError('');
 
-    // Validate form inputs
-    const emailErr = validateEmail(email);
-    const phoneErr = validatePhone(phone);
-    const passwordErr = validatePassword(password, confirmPassword);
+    const newErrors = validateForm();
+    setErrors(newErrors);
 
-    setEmailError(emailErr);
-    setPhoneError(phoneErr);
-    setPasswordError(passwordErr);
-
-    if (emailErr || phoneErr || passwordErr) {
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
 
     try {
-      // Create user with Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      let currentUser;
+      if (user) {
+        currentUser = user;
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        currentUser = userCredential.user;
+      }
 
-      // Save seller details to Firestore
-      await setDoc(doc(db, 'sellers', user.uid), {
-        email: email,
-        phone: phone,
-        createdAt: serverTimestamp(),
-        uid: user.uid,
+      // Store seller data in user profile's displayName as JSON
+      const sellerData = {
+        country: formData.country,
+        phone: formData.phone,
+        createdAt: new Date().toISOString(), // Client-side timestamp
+      };
+
+      await updateProfile(currentUser, {
+        displayName: JSON.stringify(sellerData),
       });
 
-      console.log('Seller registered and saved to Firestore:', user.uid);
+      console.log('Seller data saved to Authentication user document:', currentUser.uid);
       // Optionally, redirect to a success page or next step
       // e.g., navigate('/seller-dashboard');
     } catch (error) {
@@ -89,119 +142,143 @@ export default function SellerRegister() {
     }
   };
 
-  const handleEmailChange = (e) => {
-    const value = e.target.value;
-    setEmail(value);
-    setEmailError(validateEmail(value));
-  };
-
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-5xl bg-blue-50 p-8 rounded-lg flex flex-col md:flex-row gap-8">
-        {/* Left Image Section */}
-        <div className="md:w-1/2 flex items-center justify-center">
+    <div className="container mx-auto px-2 sm:px-4 py-6 min-h-screen flex flex-col items-center justify-center">
+      <div className="w-full max-w-2xl bg-blue-50 p-4 sm:p-6 rounded-lg flex flex-col gap-6">
+        {/* Image Section */}
+        <div className="w-full flex items-center justify-center">
           <img
             src="src/assets/icons/sell-registration.svg"
             alt="Seller Registration Illustration"
-            className="w-full h-auto object-cover rounded-lg"
+            className="w-full max-w-xs sm:max-w-sm h-auto object-contain rounded-lg"
           />
         </div>
 
-        {/* Right Form Section */}
-        <div className="md:w-1/2">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Create an account</h2>
-          <p className="text-gray-600 text-sm mb-6">Create your own Store / Already have a Store? Login</p>
-          {submitError && <p className="text-red-600 text-sm mb-4">{submitError}</p>}
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Form Section */}
+        <div className="w-full">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Create an account</h2>
+          <p className="text-gray-600 text-xs sm:text-sm mb-4 sm:mb-6">
+            Create your own Store / Already have a Store? Login
+          </p>
+          {submitError && <p className="text-red-600 text-xs sm:text-sm mb-3 sm:mb-4">{submitError}</p>}
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                Country or region <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+                className={`mt-1 block w-full border rounded-md py-3 px-2 text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                  errors.country ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                }`}
+              >
+                <option value="">Select a country</option>
+                {countries.map((country, index) => (
+                  <option key={index} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+              {errors.country && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.country}</p>}
+            </div>
+            <div>
+              <label
+                className={`block text-xs sm:text-sm font-medium text-gray-700 transition-all duration-200 ${
+                  formData.email ? 'text-xs -translate-y-4' : ''
+                }`}
+              >
                 Email <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
-                value={email}
-                onChange={handleEmailChange}
-                className={`mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 ${
-                  emailError ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
-                } ${email ? 'pt-4' : ''}`}
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
+                  errors.email ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                } ${formData.email ? 'pt-4' : ''}`}
               />
-              {emailError && <p className="text-red-600 text-sm mt-1">{emailError}</p>}
+              {errors.email && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.email}</p>}
             </div>
-            <div className="flex gap-4">
-              <div className="w-1/2">
-                <label className="block text-sm font-medium text-gray-700">
-                    Phone <span className="text-red-500">*</span>
+            <div className="flex flex-col gap-4">
+              <div className="w-full">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                  Phone <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-1 flex items-center border border-gray-300 rounded">
                   <select
-                    className="px-2 py-2 text-sm bg-gray-100 text-gray-700 border-r border-gray-300 focus:outline-none"
-                    value={phone.startsWith('+') ? phone.split('-')[0] : '+1'}
-                    onChange={(e) => {
-                      const selectedCode = e.target.value;
-                      setPhone((prev) => {
-                        const number = prev.includes('-') ? prev.split('-')[1] : prev;
-                        return `${selectedCode}-${number || ''}`;
-                      });
-                    }}
+                    value={
+                      isPhoneCodeManual
+                        ? formData.phone.split('-')[0]
+                        : getCountryCode(formData.country)
+                    }
+                    onChange={handlePhoneCodeChange}
+                    className="px-2 py-3 text-xs sm:text-sm bg-gray-100 text-gray-700 border-r border-gray-300 focus:outline-none"
                   >
                     {countryCodes.map((country) => (
                       <option key={country.code} value={country.code}>
-                        {country.code} ({country.name})
+                        {country.code} ({country.country})
                       </option>
                     ))}
                   </select>
                   <input
                     type="tel"
-                    value={phone.includes('-') ? phone.split('-')[1] || '' : phone}
-                    onChange={(e) => {
-                      const number = e.target.value.replace(/[^0-9]/g, '');
-                      const code = phone.includes('-') ? phone.split('-')[0] : '+1';
-                      setPhone(`${code}-${number}`);
-                    }}
+                    value={formData.phone.includes('-') ? formData.phone.split('-')[1] || '' : formData.phone}
+                    onChange={handlePhoneNumberChange}
                     placeholder="Enter phone number"
-                    className={`w-full p-2 focus:outline-none focus:ring-2 ${
-                      phoneError ? 'border-red-500' : 'focus:ring-blue-500'
+                    className={`w-full py-3 px-2 text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                      errors.phone ? 'border-red-500' : 'focus:ring-blue-500'
                     }`}
                   />
                 </div>
-                {phoneError && <p className="text-red-600 text-sm mt-1">{phoneError}</p>}
+                {errors.phone && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.phone}</p>}
               </div>
-              <div className="w-1/2">
-                <label className="block text-sm font-medium text-gray-700">
-                    Password <span className="text-red-500">*</span>
+              <div className="w-full">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                  Password <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="Enter password"
-                  className={`mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 ${
-                    passwordError ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
+                    errors.password ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
                   }`}
+                  disabled={user}
                 />
-                {passwordError && <p className="text-red-600 text-sm mt-1">{passwordError}</p>}
+                {errors.password && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.password}</p>}
               </div>
             </div>
-            <div className="flex gap-4">
-              <div className="w-1/2">
-                <label className="block text-sm font-medium text-gray-700">Confirm Password *</label>
+            <div className="flex flex-col gap-4">
+              <div className="w-full">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                  Confirm Password <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                   placeholder="Confirm password"
-                  className={`mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 ${
-                    passwordError ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
+                    errors.password ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
                   }`}
+                  disabled={user}
                 />
               </div>
             </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-900 text-white py-2 px-4 rounded hover:bg-blue-800 transition duration-200"
-            >
-              Proceed To Next
-            </button>
+            <Link to="/seller-product-details">
+                <button
+                type="submit"
+                className="w-full bg-blue-900 text-white py-3 px-4 rounded hover:bg-blue-800 transition duration-200 text-sm sm:text-base"
+                >
+                Proceed To Next
+                </button>
+            </Link>
           </form>
         </div>
       </div>

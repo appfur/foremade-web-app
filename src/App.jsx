@@ -22,6 +22,7 @@ import Wallet from './profile/Wallet';
 import Loyalty from './profile/Loyalty';
 import Checkout from './components/checkout/Checkout';
 import SellerRegister from './seller/SellerRegister';
+import SellerProductDetails from './seller/SellerProductDetails';
 
 function App() {
   return (
@@ -110,6 +111,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Loyalty />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/seller-product-details"
+            element={
+              <ProtectedRoute>
+                <SellerProductDetails />
               </ProtectedRoute>
             }
           />
