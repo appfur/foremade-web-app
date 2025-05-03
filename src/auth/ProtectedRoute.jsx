@@ -7,8 +7,14 @@ export default function ProtectedRoute({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    // Listen for authentication state changes
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setIsAuthenticated(!!user);
+      setLoading(false);
+    }, (error) => {
+      // Handle any errors in auth state change
+      console.error('Auth state error:', error);
+      setIsAuthenticated(false);
       setLoading(false);
     });
 
@@ -23,5 +29,6 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/add-phone" replace />;
+  // Allow authenticated users to access children, redirect unauthenticated to /add-phone
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }

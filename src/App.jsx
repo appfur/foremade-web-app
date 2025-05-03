@@ -44,9 +44,9 @@ function App() {
           <Route
             path="/cart"
             element={
-              <ProtectedRoute>
+              // <ProtectedRoute>
                 <Cart />
-              </ProtectedRoute>
+              // </ProtectedRoute> 
             }
           />
           <Route
@@ -116,17 +116,17 @@ function App() {
           <Route
             path="/checkout"
             element={
-              <ProtectedRoute>
+              // <ProtectedRoute>
                 <Checkout />
-              </ProtectedRoute>
+              // </ProtectedRoute> 
             }
           />
           <Route
             path="/sell"
             element={
-              <ProtectedRoute>
+              // <ProtectedRoute>
                 <SellerRegister />
-              </ProtectedRoute>
+              // </ProtectedRoute>
             }
           />
 

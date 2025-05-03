@@ -30,12 +30,12 @@ export default function SellerRegister() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-lg flex flex-col md:flex-row gap-8">
+    <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
+      <div className="w-full max-w-4xl bg-blue-50 p-8 rounded-lg flex flex-col md:flex-row gap-8">
         {/* Left Image Section */}
         <div className="md:w-1/2 flex items-center justify-center">
           <img
-            src="https://via.placeholder.com/300x400?text=Seller+Registration+Image"
+            src="src/assets/icons/sell-registration.svg"
             alt="Seller Registration Illustration"
             className="w-full h-auto object-cover rounded-lg"
           />
@@ -43,8 +43,8 @@ export default function SellerRegister() {
 
         {/* Right Form Section */}
         <div className="md:w-1/2">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Sellers Registration</h2>
-          <p className="text-gray-600 mb-6">Create your own Store / Already have a Store? Login</p>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Create an account </h2>
+          <p className="text-gray-600 text-sm mb-6">Create your own Store / Already have a Store? Login</p>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
@@ -68,7 +68,9 @@ export default function SellerRegister() {
               <div className="w-1/2">
                 <label className="block text-sm font-medium text-gray-700">Phone *</label>
                 <div className="mt-1 flex items-center border border-gray-300 rounded">
-                  <span className="px-2 bg-gray-100 text-gray-700">🇳🇬 +234</span>
+                  <span className="px-2 text-xsbg-gray-100 text-gray-700">
+                    
+                  </span>
                   <input
                     type="tel"
                     value={phone}

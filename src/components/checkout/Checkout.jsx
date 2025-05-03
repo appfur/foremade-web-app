@@ -12,6 +12,7 @@ const Checkout = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,7 +21,7 @@ const Checkout = () => {
     postalCode: '',
   });
 
-  // Load cart and user email on mount
+  // Load cart, user email, and authentication status on mount
   useEffect(() => {
     try {
       setLoading(true);
@@ -37,9 +38,16 @@ const Checkout = () => {
         setCart([]);
         setError('Cart is empty or invalid.');
       }
-      if (auth.currentUser?.email) {
-        setFormData((prev) => ({ ...prev, email: auth.currentUser.email }));
-      }
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        setIsAuthenticated(!!user);
+        if (user?.email) {
+          setFormData((prev) => ({ ...prev, email: user.email }));
+        }
+      }, (error) => {
+        console.error('Auth state error:', error);
+        setIsAuthenticated(false);
+      });
+      return () => unsubscribe();
     } catch (err) {
       console.error('Error loading cart:', err);
       setCart([]);
@@ -129,6 +137,15 @@ const Checkout = () => {
       setError('Failed to place order. Please try again.');
     }
   }, [cart, cartItems, formData, totalPrice, navigate]);
+
+  // Handle payment initiation for unauthenticated users
+  const handlePaymentAttempt = () => {
+    if (!isAuthenticated) {
+      setError('Please log in to complete your purchase.');
+      navigate('/login', { state: { from: '/checkout' }, replace: true });
+      return;
+    }
+  };
 
   if (loading) {
     return (
@@ -271,14 +288,27 @@ const Checkout = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <PaystackCheckout
-                  email={formData.email}
-                  amount={totalPrice * 100}
-                  onSuccess={handlePaymentSuccess}
-                  onClose={() => setMessage('Payment cancelled.')}
-                  disabled={!formValidity.isValid || cart.length === 0}
-                  buttonText="Pay Now"
-                />
+                {isAuthenticated ? (
+                  <PaystackCheckout
+                    email={formData.email}
+                    amount={totalPrice * 100} // Amount in Kobo
+                    totalPrice={totalPrice} // Pass totalPrice for validation
+                    onSuccess={handlePaymentSuccess}
+                    onClose={() => setMessage('Payment cancelled.')}
+                    disabled={!formValidity.isValid || cart.length === 0}
+                    buttonText="Pay Now"
+                  />
+                ) : (
+                  <div>
+                    <p className="text-red-600 mb-2">Please log in to complete your purchase.</p>
+                    <button
+                      onClick={handlePaymentAttempt}
+                      className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:opacity-50"
+                    >
+                      Log In to Pay
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
