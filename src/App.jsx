@@ -20,8 +20,8 @@ import Settings from './pages/Settings';
 import Register from './auth/Register';
 import Wallet from './profile/Wallet';
 import Loyalty from './profile/Loyalty';
-import Shipping from './pages/Shipping';
 import Checkout from './components/checkout/Checkout';
+import SellerRegister from './seller/SellerRegister';
 
 function App() {
   return (
@@ -121,14 +121,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* <Route
-            path="/shipping"
+          <Route
+            path="/sell"
             element={
               <ProtectedRoute>
-                <Shipping />
+                <SellerRegister />
               </ProtectedRoute>
             }
-          /> */}
+          />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

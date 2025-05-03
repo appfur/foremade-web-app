@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth, db } from '/src/firebase.js';
 import { doc, setDoc } from 'firebase/firestore';
@@ -37,7 +37,6 @@ const Checkout = () => {
         setCart([]);
         setError('Cart is empty or invalid.');
       }
-      // Set email from auth if available
       if (auth.currentUser?.email) {
         setFormData((prev) => ({ ...prev, email: auth.currentUser.email }));
       }
@@ -62,16 +61,16 @@ const Checkout = () => {
     (total, item) => total + (item.product ? item.product.price * item.quantity : 0),
     0
   );
-  const taxRate = 0.075; // 7.5% tax
+  const taxRate = 0.075;
   const tax = subtotal * taxRate;
-  const shipping = subtotal > 0 ? 500 : 0; // Flat 500 NGN shipping
+  const shipping = subtotal > 0 ? 500 : 0;
   const totalPrice = subtotal + tax + shipping;
 
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ totalItems, ...prev, [name]: value }));
-    setError(null); // Clear error on input change
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setError(null);
   };
 
   // Validate form
@@ -87,17 +86,29 @@ const Checkout = () => {
   };
 
   // Memoize form validity
-  const formValidity = useMemo(() => {
-    const { name, email, address, city, postalCode } = formData;
-    return {
-      isValid: name && email && address && city && postalCode && /\S+@\S+\.\S+/.test(email),
-      message: '',
-    };
-  }, [formData]);
+  const formValidity = useMemo(() => validateForm(), [formData]);
 
   // Handle Paystack success
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = useCallback(async () => {
     try {
+      if (cart.length === 0) {
+        setError('Your cart is empty.');
+        return;
+      }
+      const validation = validateForm();
+      if (!validation.isValid) {
+        setError(validation.message);
+        return;
+      }
+      const stockIssues = cartItems.filter((item) => item.quantity > (item.product?.stock || 0));
+      if (stockIssues.length > 0) {
+        const issueMessages = stockIssues.map(
+          (item) => `Only ${item.product.stock} units of ${item.product.name} available.`
+        );
+        setError(`Checkout failed:\n${issueMessages.join('\n')}`);
+        return;
+      }
+
       const userId = auth.currentUser?.uid || 'anonymous';
       const order = {
         userId,
@@ -107,7 +118,6 @@ const Checkout = () => {
         shippingDetails: formData,
         status: 'completed',
       };
-      // Save to Firestore
       const orderId = `order-${Date.now()}`;
       await setDoc(doc(db, 'orders', orderId), order);
       setCart([]);
@@ -118,30 +128,7 @@ const Checkout = () => {
       console.error('Error saving order to Firestore:', err);
       setError('Failed to place order. Please try again.');
     }
-  };
-
-  // Handle checkout validation before payment
-  // const handleCheckout = () => {
-    if (cart.length === 0) {
-      setError('Your cart is empty.');
-      return;
-    }
-    const validation = validateForm();
-    if (!validation.isValid) {
-      setError(validation.message);
-      return;
-    }
-
-    // Validate stock
-    const stockIssues = cartItems.filter((item) => item.quantity > (item.product?.stock || 0));
-    if (stockIssues.length > 0) {
-      const issueMessages = stockIssues.map(
-        (item) => `Only ${item.product.stock} units of ${item.product.name} available.`
-      );
-      setError(`Checkout failed:\n${issueMessages.join('\n')}`);
-      return;
-    }
-  // };
+  }, [cart, cartItems, formData, totalPrice, navigate]);
 
   if (loading) {
     return (
@@ -248,6 +235,10 @@ const Checkout = () => {
             <div className="p-4 bg-gray-50 rounded-lg shadow-sm sticky top-4">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h2>
               <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex justify-between">
+                  <span>Total Items</span>
+                  <span>{totalItems}</span>
+                </div>
                 {cartItems.map((item) => (
                   <div key={item.productId} className="flex justify-between">
                     <span>
@@ -282,7 +273,7 @@ const Checkout = () => {
               <div className="mt-4">
                 <PaystackCheckout
                   email={formData.email}
-                  amount={totalPrice * 100} // Paystack expects amount in kobo
+                  amount={totalPrice * 100}
                   onSuccess={handlePaymentSuccess}
                   onClose={() => setMessage('Payment cancelled.')}
                   disabled={!formValidity.isValid || cart.length === 0}
