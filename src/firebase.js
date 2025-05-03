@@ -1,20 +1,28 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage'; // Add this import
+import { getStorage } from 'firebase/storage';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCRWR2Z2xlmcGBSVHEbbkIm9nL_qpTGSno",
-  authDomain: "foremade-backend.firebaseapp.com",
-  projectId: "foremade-backend",
-  storageBucket: "foremade-backend.firebasestorage.app",
-  messagingSenderId: "957543574407",
-  appId: "1:957543574407:web:315572254cc0ba6b80c122"
-};
+let auth;
+let db;
+let storage;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app); // Initialize and export storage
+try {
+  const app = initializeApp({
+    apiKey: "AIzaSyCRWR2Z2xlmcGBSVHEbbkIm9nL_qpTGSno",
+    authDomain: "foremade-backend.firebaseapp.com",
+    projectId: "foremade-backend",
+    storageBucket: "foremade-backend.firebasestorage.app",
+    messagingSenderId: "957543574407",
+    appId: "1:957543574407:web:315572254cc0ba6b80c122"
+  });
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  console.log('Firebase initialized successfully');
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+  throw new Error('Failed to initialize Firebase. Check your configuration.');
+}
 
-export { auth, db, storage }; // Export storage
+export { auth, db, storage };

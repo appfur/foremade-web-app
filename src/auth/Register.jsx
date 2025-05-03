@@ -30,6 +30,7 @@ export default function Register() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
@@ -38,9 +39,7 @@ export default function Register() {
   };
 
   const handleNavigation = () => {
-    console.log('Attempting to navigate to /login');
     navigate('/login', { replace: true });
-    console.log('Navigation should have completed');
   };
 
   const handleRegister = async (e) => {
@@ -49,6 +48,7 @@ export default function Register() {
     setEmailError('');
     setPasswordError('');
     setSuccessMessage('');
+    setLoading(true);
 
     let hasError = false;
     if (!name.trim()) {
@@ -64,17 +64,17 @@ export default function Register() {
       hasError = true;
     }
 
-    if (hasError) return;
+    if (hasError) {
+      setLoading(false);
+      return;
+    }
 
     try {
-      console.log('Starting email/password registration...');
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log('User created successfully:', user.uid);
 
       await updateProfile(user, { displayName: name });
 
-      // Send email verification
       await sendEmailVerification(user);
       console.log('Verification email sent to:', user.email);
 
@@ -86,16 +86,16 @@ export default function Register() {
         uid: user.uid,
       };
       localStorage.setItem('userData', JSON.stringify(userData));
-      console.log('User data saved to local storage:', userData);
 
       const firstName = name.split(' ')[0];
-      setSuccessMessage(`Welcome, ${firstName}! Registration successful! Please check your email to verify your account.`);
-      console.log('Showing success message...');
+      setSuccessMessage(`Welcome, ${firstName}! Registration successful! Please verify your email by clicking the link sent to ${email} before logging in.`);
       setTimeout(() => {
+        setLoading(false);
         handleNavigation();
-      }, 3000);
+      }, 5000);
     } catch (err) {
       console.error('Registration error:', err);
+      setLoading(false);
       const errorMessage = getFriendlyErrorMessage(err);
       if (errorMessage.includes('email')) {
         setEmailError(errorMessage);
@@ -112,13 +112,12 @@ export default function Register() {
     setEmailError('');
     setPasswordError('');
     setSuccessMessage('');
+    setLoading(true);
 
     const provider = new GoogleAuthProvider();
     try {
-      console.log('Starting Google Sign-In...');
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      console.log('Google Sign-In successful:', user.uid);
 
       await sendEmailVerification(user);
       console.log('Verification email sent to:', user.email);
@@ -134,20 +133,19 @@ export default function Register() {
           uid: user.uid,
         };
         localStorage.setItem('userData', JSON.stringify(userData));
-        console.log('User data saved to local storage for Google user:', userData);
       } else {
         userData = JSON.parse(storedUserData);
-        console.log('User data already exists in local storage:', userData);
       }
 
       const displayName = user.displayName || 'Google User';
-      setSuccessMessage(`Welcome, ${displayName}! Google Sign-In successful! Please check your email to verify your account.`);
-      console.log('Showing success message...');
+      setSuccessMessage(`Welcome, ${displayName}! Please verify your email by clicking the link sent to ${user.email} before logging in.`);
       setTimeout(() => {
+        setLoading(false);
         handleNavigation();
-      }, 3000);
+      }, 5000);
     } catch (err) {
       console.error('Google Sign-In error:', err);
+      setLoading(false);
       setEmailError(getFriendlyErrorMessage(err));
     }
   };
@@ -251,8 +249,9 @@ export default function Register() {
               <button
                 type="submit"
                 className="w-full bg-blue-900 text-white p-3 rounded-lg hover:bg-blue-800 transition duration-200"
+                disabled={loading}
               >
-                Sign Up
+                {loading ? 'Registering...' : 'Sign Up'}
               </button>
             </form>
 
@@ -261,13 +260,17 @@ export default function Register() {
               <button
                 onClick={handleGoogleSignIn}
                 className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center mb-4 hover:bg-gray-100 transition duration-200"
+                disabled={loading}
               >
                 <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5 mr-2" />
-                Google
+                {loading ? 'Processing...' : 'Google'}
               </button>
-              <button className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-200">
+              <button
+                className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-200"
+                disabled={loading}
+              >
                 <img src="https://www.facebook.com/favicon.ico" alt="Facebook" className="w-5 h-5 mr-2" />
-                Facebook
+                {loading ? 'Processing...' : 'Facebook'}
               </button>
             </div>
           </div>
