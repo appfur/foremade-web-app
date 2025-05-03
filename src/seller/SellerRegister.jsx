@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import { createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 import countryCodes from '../components/common/countryCodes';
 import countries from '../components/common/countries';
-import { Link } from 'react-router-dom';
 
 export default function SellerRegister() {
   const [formData, setFormData] = useState({
-    country: 'Nigeria',
+    country: '',
     email: '',
-    phone: '+234-',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -17,6 +17,7 @@ export default function SellerRegister() {
   const [submitError, setSubmitError] = useState('');
   const [user, setUser] = useState(null);
   const [isPhoneCodeManual, setIsPhoneCodeManual] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -30,7 +31,7 @@ export default function SellerRegister() {
 
   const getCountryCode = (countryName) => {
     const country = countryCodes.find((c) => c.country === countryName);
-    return country ? country.code : '+234'; // Default to +234 for Nigeria
+    return country ? country.code : ''; // Return empty if no country
   };
 
   const handleChange = (e) => {
@@ -38,10 +39,10 @@ export default function SellerRegister() {
     setFormData((prev) => {
       const newFormData = { ...prev, [name]: value };
       if (name === 'country') {
-        setIsPhoneCodeManual(false); // Reset manual override on country change
+        setIsPhoneCodeManual(false);
         const newCode = getCountryCode(value);
-        const currentNumber = prev.phone.includes('-') ? prev.phone.split('-')[1] : '';
-        newFormData.phone = `${newCode}-${currentNumber}`;
+        const currentNumber = prev.phone.includes('-') ? prev.phone.split('-')[1] || '' : '';
+        newFormData.phone = newCode ? `${newCode}-${currentNumber}` : currentNumber;
       }
       return newFormData;
     });
@@ -50,9 +51,9 @@ export default function SellerRegister() {
 
   const handlePhoneCodeChange = (e) => {
     const selectedCode = e.target.value;
-    setIsPhoneCodeManual(true); // Mark as manual override
+    setIsPhoneCodeManual(true);
     setFormData((prev) => {
-      const number = prev.phone.includes('-') ? prev.phone.split('-')[1] : '';
+      const number = prev.phone.includes('-') ? prev.phone.split('-')[1] || '' : '';
       return { ...prev, phone: `${selectedCode}-${number}` };
     });
     setErrors((prev) => ({ ...prev, phone: '' }));
@@ -66,7 +67,7 @@ export default function SellerRegister() {
           ? prev.phone.split('-')[0]
           : getCountryCode(prev.country)
         : getCountryCode(prev.country);
-      return { ...prev, phone: `${code}-${number}` };
+      return { ...prev, phone: code ? `${code}-${number}` : number };
     });
     setErrors((prev) => ({ ...prev, phone: '' }));
   };
@@ -91,11 +92,24 @@ export default function SellerRegister() {
         newErrors.password = 'Please enter a password.';
       } else if (formData.password.length < 6) {
         newErrors.password = 'Password must be at least 6 characters.';
+      }
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password.';
       } else if (formData.password !== formData.confirmPassword) {
-        newErrors.password = 'Passwords do not match.';
+        newErrors.confirmPassword = 'Passwords do not match.';
       }
     }
     return newErrors;
+  };
+
+  const isFormValid = () => {
+    return (
+      formData.country &&
+      formData.email.trim() &&
+      formData.phone.includes('-') &&
+      formData.phone.split('-')[1] &&
+      (user || (formData.password && formData.confirmPassword && formData.password === formData.confirmPassword))
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -118,11 +132,10 @@ export default function SellerRegister() {
         currentUser = userCredential.user;
       }
 
-      // Store seller data in user profile's displayName as JSON
       const sellerData = {
         country: formData.country,
         phone: formData.phone,
-        createdAt: new Date().toISOString(), // Client-side timestamp
+        createdAt: new Date().toISOString(),
       };
 
       await updateProfile(currentUser, {
@@ -130,8 +143,7 @@ export default function SellerRegister() {
       });
 
       console.log('Seller data saved to Authentication user document:', currentUser.uid);
-      // Optionally, redirect to a success page or next step
-      // e.g., navigate('/seller-dashboard');
+      navigate('/seller-product-details');
     } catch (error) {
       console.error('Error registering seller:', error);
       setSubmitError(
@@ -145,7 +157,6 @@ export default function SellerRegister() {
   return (
     <div className="container mx-auto px-2 sm:px-4 py-6 min-h-screen flex flex-col items-center justify-center">
       <div className="w-full max-w-2xl bg-blue-50 p-4 sm:p-6 rounded-lg flex flex-col gap-6">
-        {/* Image Section */}
         <div className="w-full flex items-center justify-center">
           <img
             src="src/assets/icons/sell-registration.svg"
@@ -153,12 +164,10 @@ export default function SellerRegister() {
             className="w-full max-w-xs sm:max-w-sm h-auto object-contain rounded-lg"
           />
         </div>
-
-        {/* Form Section */}
         <div className="w-full">
           <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Create an account</h2>
           <p className="text-gray-600 text-xs sm:text-sm mb-4 sm:mb-6">
-            Create your own Store / Already have a Store? Login
+            Create your own Store / Already have a Store? <a href="/login" className="text-blue-600 hover:underline">Login</a>
           </p>
           {submitError && <p className="text-red-600 text-xs sm:text-sm mb-3 sm:mb-4">{submitError}</p>}
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
@@ -211,7 +220,7 @@ export default function SellerRegister() {
                   <select
                     value={
                       isPhoneCodeManual
-                        ? formData.phone.split('-')[0]
+                        ? formData.phone.split('-')[0] || ''
                         : getCountryCode(formData.country)
                     }
                     onChange={handlePhoneCodeChange}
@@ -265,20 +274,24 @@ export default function SellerRegister() {
                   onChange={handleChange}
                   placeholder="Confirm password"
                   className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                    errors.password ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
                   }`}
                   disabled={user}
                 />
+                {errors.confirmPassword && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.confirmPassword}</p>}
               </div>
             </div>
-            <Link to="/seller-product-details">
-                <button
-                type="submit"
-                className="w-full bg-blue-900 text-white py-3 px-4 rounded hover:bg-blue-800 transition duration-200 text-sm sm:text-base"
-                >
-                Proceed To Next
-                </button>
-            </Link>
+            <button
+              type="submit"
+              disabled={!isFormValid()}
+              className={`w-full py-3 px-4 rounded text-white text-sm sm:text-base transition duration-200 ${
+                isFormValid()
+                  ? 'bg-blue-900 hover:bg-blue-800'
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Proceed To Next
+            </button>
           </form>
         </div>
       </div>
