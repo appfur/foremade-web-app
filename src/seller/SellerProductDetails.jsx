@@ -50,7 +50,7 @@ export default function SellerProductDetails() {
       console.log('Fetched products:', productList);
     } catch (error) {
       console.error('Error fetching products:', error);
-      toast.error('Failed to load products.');
+      toast.error('Failed to load products: ' + error.message);
     }
     setLoading(false);
   };
@@ -67,9 +67,6 @@ export default function SellerProductDetails() {
       newErrors.stock = 'Enter a valid stock quantity.';
     }
     if (!formData.category) newErrors.category = 'Select a category.';
-    if (!editingProductId && formData.imageFiles.length === 0) {
-      newErrors.imageFiles = 'At least one image is required for new products.';
-    }
     console.log('Validation errors:', newErrors);
     return newErrors;
   };
@@ -92,20 +89,27 @@ export default function SellerProductDetails() {
     console.log('Selected files:', files.map((f) => f.name));
   };
 
+  const sanitizeFileName = (fileName) => {
+    return fileName
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .replace(/_+/g, '_')
+      .toLowerCase();
+  };
+
   const uploadImages = async (files, productId) => {
     console.log('Uploading images for productId:', productId);
     const imageUrls = [];
     for (const file of files) {
       try {
-        const uniqueFileName = `${Date.now()}-${file.name}`;
-        const storageRef = ref(storage, `products/${productId}/${uniqueFileName}`);
+        const sanitizedFileName = sanitizeFileName(`${Date.now()}-${file.name}`);
+        const storageRef = ref(storage, `products/${productId}/${sanitizedFileName}`);
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
         imageUrls.push(url);
-        console.log(`Uploaded image: ${uniqueFileName}, URL: ${url}`);
+        console.log(`Uploaded image: ${sanitizedFileName}, URL: ${url}`);
       } catch (error) {
         console.error(`Error uploading image ${file.name}:`, error);
-        throw new Error(`Failed to upload image: ${file.name}`);
+        toast.warn(`Failed to upload image ${file.name}: ${error.message}`);
       }
     }
     return imageUrls;
@@ -150,8 +154,14 @@ export default function SellerProductDetails() {
 
       if (formData.imageFiles.length > 0) {
         const tempProductId = editingProductId || `temp-${Date.now()}`;
-        imageUrls = await uploadImages(formData.imageFiles, tempProductId);
-        console.log('Images uploaded:', imageUrls);
+        try {
+          imageUrls = await uploadImages(formData.imageFiles, tempProductId);
+          console.log('Images uploaded:', imageUrls);
+        } catch (error) {
+          console.error('Image upload failed:', error);
+          toast.warn('Image upload failed. Saving product without images.');
+          imageUrls = [];
+        }
       }
 
       productData.imageUrls = imageUrls;
@@ -199,8 +209,6 @@ export default function SellerProductDetails() {
     setEditingProductId(product.id);
     console.log('Editing product:', product.id);
   };
-
-  
 
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -318,7 +326,7 @@ export default function SellerProductDetails() {
           </div>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700">
-              Product Images (JPEG/PNG, max 5MB each) <span className="text-red-500">{editingProductId ? '' : '*'}</span>
+              Product Images (JPEG/PNG, max 5MB each)
             </label>
             <input
               type="file"

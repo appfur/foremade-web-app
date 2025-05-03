@@ -114,7 +114,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
           <Route
             path="/seller-product-details"
             element={
