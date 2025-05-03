@@ -200,6 +200,7 @@ export default function SellerProductDetails() {
     console.log('Editing product:', product.id);
   };
 
+  
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       setLoading(true);
