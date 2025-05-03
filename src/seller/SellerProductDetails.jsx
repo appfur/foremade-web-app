@@ -12,7 +12,6 @@ export default function SellerProductDetails() {
     price: '',
     stock: '',
     category: '',
-    sku: '',
     imageFiles: [],
   });
   const [products, setProducts] = useState([]);
@@ -32,7 +31,8 @@ export default function SellerProductDetails() {
         console.log('Authenticated user:', currentUser.uid);
         fetchProducts(currentUser.uid);
       } else {
-        console.warn('No authenticated user.');
+        console.warn('No authenticated user. Please log in.');
+        toast.error('Please log in to manage products.');
       }
     });
     return () => unsubscribe();
@@ -41,6 +41,7 @@ export default function SellerProductDetails() {
   const fetchProducts = async (sellerId) => {
     setLoading(true);
     try {
+      console.log('Fetching products for sellerId:', sellerId);
       const querySnapshot = await getDocs(collection(db, 'products'));
       const productList = querySnapshot.docs
         .filter((doc) => doc.data().sellerId === sellerId)
@@ -54,7 +55,8 @@ export default function SellerProductDetails() {
     setLoading(false);
   };
 
-  const validateForm = async () => {
+  const validateForm = () => {
+    console.log('Validating form data:', formData);
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Product name is required.';
     if (!formData.description.trim()) newErrors.description = 'Description is required.';
@@ -65,39 +67,11 @@ export default function SellerProductDetails() {
       newErrors.stock = 'Enter a valid stock quantity.';
     }
     if (!formData.category) newErrors.category = 'Select a category.';
-    if (!formData.sku.trim()) {
-      newErrors.sku = 'SKU is required.';
-    } else if (!/^[a-zA-Z0-9-]{1,20}$/.test(formData.sku)) {
-      newErrors.sku = 'SKU must be 1–20 alphanumeric characters or hyphens.';
-    } else {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'products'));
-        const existingSkus = querySnapshot.docs
-          .filter((doc) => doc.data().sellerId === user.uid && doc.id !== editingProductId)
-          .map((doc) => doc.data().sku.toLowerCase());
-        if (existingSkus.includes(formData.sku.toLowerCase())) {
-          newErrors.sku = 'This SKU is already used.';
-        }
-      } catch (error) {
-        console.error('Error checking SKU uniqueness:', error);
-        newErrors.sku = 'Unable to verify SKU uniqueness. Try again.';
-      }
-    }
     if (!editingProductId && formData.imageFiles.length === 0) {
       newErrors.imageFiles = 'At least one image is required for new products.';
     }
+    console.log('Validation errors:', newErrors);
     return newErrors;
-  };
-
-  const generateSKU = () => {
-    const categoryAbbr = formData.category ? formData.category.slice(0, 4).toUpperCase() : 'PROD';
-    const nameSnippet = formData.name
-      ? formData.name.replace(/\s/g, '').slice(0, 5).toUpperCase()
-      : 'ITEM';
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const sku = `${categoryAbbr}-${nameSnippet}-${randomNum}`;
-    setFormData((prev) => ({ ...prev, sku }));
-    setErrors((prev) => ({ ...prev, sku: '' }));
   };
 
   const handleChange = (e) => {
@@ -115,13 +89,15 @@ export default function SellerProductDetails() {
     }
     setFormData((prev) => ({ ...prev, imageFiles: files }));
     setErrors((prev) => ({ ...prev, imageFiles: '' }));
+    console.log('Selected files:', files.map((f) => f.name));
   };
 
   const uploadImages = async (files, productId) => {
+    console.log('Uploading images for productId:', productId);
     const imageUrls = [];
     for (const file of files) {
       try {
-        const uniqueFileName = `${Date.now()}-${file.name}`; // Avoid overwrites
+        const uniqueFileName = `${Date.now()}-${file.name}`;
         const storageRef = ref(storage, `products/${productId}/${uniqueFileName}`);
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
@@ -148,10 +124,9 @@ export default function SellerProductDetails() {
     }
 
     try {
-      const newErrors = await validateForm();
+      const newErrors = validateForm();
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
-        console.log('Validation errors:', newErrors);
         setLoading(false);
         return;
       }
@@ -162,22 +137,21 @@ export default function SellerProductDetails() {
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
         category: formData.category,
-        sku: formData.sku,
         sellerId: user.uid,
         imageUrls: [],
         updatedAt: new Date().toISOString(),
       };
 
-      console.log('Preparing product data:', productData);
+      console.log('Prepared product data:', productData);
 
       let imageUrls = editingProductId
         ? (products.find((p) => p.id === editingProductId)?.imageUrls || [])
         : [];
 
       if (formData.imageFiles.length > 0) {
-        console.log('Uploading images...');
-        imageUrls = await uploadImages(formData.imageFiles, editingProductId || 'temp');
-        console.log('Images uploaded, URLs:', imageUrls);
+        const tempProductId = editingProductId || `temp-${Date.now()}`;
+        imageUrls = await uploadImages(formData.imageFiles, tempProductId);
+        console.log('Images uploaded:', imageUrls);
       }
 
       productData.imageUrls = imageUrls;
@@ -189,10 +163,10 @@ export default function SellerProductDetails() {
         console.log('Product updated successfully:', editingProductId, productData);
         toast.success('Product updated successfully!');
       } else {
-        console.log('Adding new product...');
+        console.log('Adding new product to Firestore...');
         productData.createdAt = new Date().toISOString();
         const docRef = await addDoc(collection(db, 'products'), productData);
-        console.log('Product added successfully:', docRef.id, productData);
+        console.log('Product added successfully, ID:', docRef.id, 'Data:', productData);
         toast.success('Product added successfully!');
       }
 
@@ -202,14 +176,13 @@ export default function SellerProductDetails() {
         price: '',
         stock: '',
         category: '',
-        sku: '',
         imageFiles: [],
       });
       setEditingProductId(null);
       fetchProducts(user.uid);
     } catch (error) {
       console.error('Error saving product:', error);
-      toast.error(error.message || 'Failed to save product. Check console for details.');
+      toast.error(`Failed to save product: ${error.message || 'Unknown error'}`);
     }
     setLoading(false);
   };
@@ -221,16 +194,17 @@ export default function SellerProductDetails() {
       price: product.price.toString(),
       stock: product.stock.toString(),
       category: product.category,
-      sku: product.sku,
       imageFiles: [],
     });
     setEditingProductId(product.id);
+    console.log('Editing product:', product.id);
   };
 
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       setLoading(true);
       try {
+        console.log('Deleting product:', productId);
         await deleteDoc(doc(db, 'products', productId));
         console.log('Product deleted:', productId);
         toast.success('Product deleted successfully!');
@@ -245,8 +219,7 @@ export default function SellerProductDetails() {
 
   const filteredProducts = products.filter(
     (product) =>
-      (product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.sku.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       (filterCategory ? product.category === filterCategory : true)
   );
 
@@ -343,35 +316,6 @@ export default function SellerProductDetails() {
           </div>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700">
-              SKU <span className="text-red-500">*</span>
-            </label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                name="sku"
-                value={formData.sku}
-                onChange={handleChange}
-                className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                  errors.sku ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
-                }`}
-              />
-              <button
-                type="button"
-                onClick={generateSKU}
-                disabled={!formData.name || !formData.category}
-                className={`mt-1 py-3 px-4 rounded text-white text-xs sm:text-sm transition duration-200 ${
-                  formData.name && formData.category
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Auto-Generate SKU
-              </button>
-            </div>
-            {errors.sku && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.sku}</p>}
-          </div>
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700">
               Product Images (JPEG/PNG, max 5MB each) <span className="text-red-500">{editingProductId ? '' : '*'}</span>
             </label>
             <input
@@ -392,9 +336,9 @@ export default function SellerProductDetails() {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !user}
             className={`w-full py-3 px-4 rounded text-white text-sm sm:text-base transition duration-200 ${
-              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-900 hover:bg-blue-800'
+              loading || !user ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-900 hover:bg-blue-800'
             }`}
           >
             {loading ? 'Saving...' : editingProductId ? 'Update Product' : 'Add Product'}
@@ -409,7 +353,6 @@ export default function SellerProductDetails() {
                   price: '',
                   stock: '',
                   category: '',
-                  sku: '',
                   imageFiles: [],
                 });
                 setEditingProductId(null);
@@ -426,7 +369,7 @@ export default function SellerProductDetails() {
           <div className="flex flex-col gap-4 mb-4">
             <input
               type="text"
-              placeholder="Search by name or SKU"
+              placeholder="Search by name"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm border-gray-300 focus:ring-blue-500"
@@ -457,7 +400,6 @@ export default function SellerProductDetails() {
                     <th className="p-2 text-left">Price</th>
                     <th className="p-2 text-left">Stock</th>
                     <th className="p-2 text-left">Category</th>
-                    <th className="p-2 text-left">SKU</th>
                     <th className="p-2 text-left">Images</th>
                     <th className="p-2 text-left">Actions</th>
                   </tr>
@@ -471,7 +413,6 @@ export default function SellerProductDetails() {
                         {product.stock} {product.stock === 0 ? '(Out of Stock)' : ''}
                       </td>
                       <td className="p-2">{product.category}</td>
-                      <td className="p-2">{product.sku}</td>
                       <td className="p-2">
                         {product.imageUrls?.length > 0 ? (
                           <div className="flex gap-2">
