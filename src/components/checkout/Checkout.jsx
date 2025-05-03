@@ -121,7 +121,7 @@ const Checkout = () => {
   };
 
   // Handle checkout validation before payment
-  const handleCheckout = () => {
+  // const handleCheckout = () => {
     if (cart.length === 0) {
       setError('Your cart is empty.');
       return;
@@ -141,7 +141,7 @@ const Checkout = () => {
       setError(`Checkout failed:\n${issueMessages.join('\n')}`);
       return;
     }
-  };
+  // };
 
   if (loading) {
     return (
