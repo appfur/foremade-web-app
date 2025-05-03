@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 
 export default function AddPhone() {
   const [phone, setPhone] = useState('');
@@ -11,6 +10,7 @@ export default function AddPhone() {
   const [otpError, setOtpError] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState(null);
+  const recaptchaRef = useRef(null);
   const navigate = useNavigate();
 
   const validatePhone = (phone) => {
@@ -19,22 +19,37 @@ export default function AddPhone() {
   };
 
   useEffect(() => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        'recaptcha-container',
-        {
-          size: 'invisible',
-          callback: () => {
-            console.log('reCAPTCHA solved');
+    const auth = getAuth();
+    if (!window.recaptchaVerifier && recaptchaRef.current) {
+      try {
+        window.recaptchaVerifier = new RecaptchaVerifier(recaptchaRef.current, {
+          size: 'normal', // Use 'normal' for debugging, switch to 'invisible' later
+          callback: (response) => {
+            console.log('reCAPTCHA solved:', response);
           },
           'expired-callback': () => {
             setPhoneError('reCAPTCHA expired. Please try again.');
-            window.recaptchaVerifier.reset();
+            if (window.recaptchaVerifier) window.recaptchaVerifier.reset();
           },
-        },
-        auth
-      );
+        }, auth);
+        window.recaptchaVerifier.render().then((widgetId) => {
+          window.recaptchaWidgetId = widgetId;
+        });
+      } catch (err) {
+        console.error('reCAPTCHA initialization error:', err);
+        setPhoneError('Failed to initialize reCAPTCHA. Check your Firebase configuration or SDK version.');
+      }
     }
+    return () => {
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        delete window.recaptchaVerifier;
+        if (window.recaptchaWidgetId) {
+          window.grecaptcha.reset(window.recaptchaWidgetId);
+          delete window.recaptchaWidgetId;
+        }
+      }
+    };
   }, []);
 
   const handleSubmit = async (e) => {
@@ -53,6 +68,12 @@ export default function AddPhone() {
       return;
     }
 
+    const auth = getAuth();
+    if (!window.recaptchaVerifier) {
+      setPhoneError('reCAPTCHA not initialized. Please refresh the page or check Firebase setup.');
+      return;
+    }
+
     try {
       const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
       const appVerifier = window.recaptchaVerifier;
@@ -63,7 +84,7 @@ export default function AddPhone() {
     } catch (err) {
       console.error('Error sending OTP:', err);
       setPhoneError(getFriendlyErrorMessage(err));
-      window.recaptchaVerifier.reset();
+      if (window.recaptchaVerifier) window.recaptchaVerifier.reset();
     }
   };
 
@@ -116,7 +137,7 @@ export default function AddPhone() {
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div id="recaptcha-container"></div>
+          <div id="recaptcha-container" ref={recaptchaRef}></div>
           <div className="mb-4 relative">
             <input
               type="tel"
