@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { auth } from '../firebase'; // Only import Firebase Auth
+import { auth } from '../firebase';
 import { Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Spinner from '../components/common/Spinner';
@@ -15,7 +15,6 @@ export default function Profile() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [userData, setUserData] = useState(null);
 
-  // Mock data for counts (since we're not fetching from Firestore)
   const mockOrderCount = 5;
   const mockWishlistCount = 3;
   const mockWalletBalance = 100.50;
@@ -31,19 +30,18 @@ export default function Profile() {
         return;
       }
 
-      // Load additional user data from local storage
       const storedUserData = localStorage.getItem('userData');
       let additionalData = {};
       if (storedUserData) {
         additionalData = JSON.parse(storedUserData);
       }
 
-      // Fetch name and email from Firebase Auth, merge with local storage data
       setUserData({
         email: user.email,
-        name: user.displayName || 'User', // Fetch name from Firebase Auth
+        username: user.displayName || 'user', // Username from Firebase Auth
+        name: additionalData.name || user.displayName || 'User', // Full name from local storage
         profileImage: additionalData.profileImage || null,
-        createdAt: additionalData.createdAt || null, // Date joined
+        createdAt: additionalData.createdAt || null,
         address: additionalData.address || 'Not provided',
         uid: user.uid,
       });
@@ -86,12 +84,10 @@ export default function Profile() {
         if (progress >= 100) clearInterval(interval);
       }, 200);
 
-      // Simulate image upload by saving to local storage
       const newImageUrl = URL.createObjectURL(profileImage);
       setTimeout(() => {
         setUserData((prev) => {
           const updatedData = { ...prev, profileImage: newImageUrl };
-          // Update local storage with new image URL
           localStorage.setItem('userData', JSON.stringify(updatedData));
           return updatedData;
         });
@@ -99,7 +95,7 @@ export default function Profile() {
         setImagePreview(null);
         setUploadProgress(0);
         setUploading(false);
-      }, 2000); // Simulate a 2-second upload
+      }, 2000);
     } catch (err) {
       console.error('Image upload error:', err);
       setUploadError('Failed to upload image. Please try again.');
@@ -107,7 +103,6 @@ export default function Profile() {
     }
   };
 
-  // Format the createdAt date for display
   const formatDate = (isoString) => {
     if (!isoString) return 'Not available';
     const date = new Date(isoString);
@@ -239,6 +234,10 @@ export default function Profile() {
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-slate-400">Username</p>
+                <p className="font-semibold text-gray-800">{userData.username}</p>
+              </div>
               <div>
                 <p className="text-slate-400">First Name</p>
                 <p className="font-semibold text-gray-800">{userData.name.split(' ')[0]}</p>

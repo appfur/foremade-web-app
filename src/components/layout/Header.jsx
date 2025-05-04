@@ -80,9 +80,34 @@ const Header = () => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
+      if (user) {
+        console.log('Authenticated user:', {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+        });
+      }
     });
     return unsubscribe;
   }, []);
+
+  const getDisplayName = (user) => {
+    if (!user) return null;
+    try {
+      // Check if displayName is a JSON string
+      if (user.displayName && user.displayName.startsWith('{')) {
+        console.warn('displayName is a JSON string, should be a proper name:', user.displayName);
+        const parsed = JSON.parse(user.displayName);
+        // Use name field if available, otherwise fallback to email
+        return parsed.name || user.email.split('@')[0];
+      }
+      // Use displayName or email as fallback
+      return user.displayName || user.email.split('@')[0];
+    } catch (error) {
+      console.error('Error parsing displayName:', error);
+      return user.email.split('@')[0];
+    }
+  };
 
   const handleSearch = (e) => {
     const query = e.target.value;
@@ -112,6 +137,9 @@ const Header = () => {
       await signOut(auth);
       setUser(null);
       localStorage.removeItem('userData');
+      localStorage.removeItem('favorites');
+      localStorage.removeItem('cart');
+      console.log('User logged out, local storage cleared');
     } catch (err) {
       console.error('Logout error:', err);
       setError('Failed to logout.');
@@ -132,7 +160,7 @@ const Header = () => {
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
             {user ? ( 
               <p className="cursor-pointer">
-                Hello, {user.displayName || user.email.split('@')[0]} |{' '}
+                Hello, {getDisplayName(user)} |{' '}
                 <span className="text-blue-500 underline cursor-pointer" onClick={handleLogout}>
                   Logout
                 </span>
@@ -500,7 +528,7 @@ const Header = () => {
             <i className="bx bx-log-in-circle text-2xl text-gray-600"></i>
             {user ? (
               <p className="cursor-pointer">
-                Hello, {user.displayName || user.email.split('@')[0]} |{' '}
+                Hello, {getDisplayName(user)} |{' '}
                 <span className="text-blue-600 underline cursor-pointer" onClick={handleLogout}>
                   Logout
                 </span>

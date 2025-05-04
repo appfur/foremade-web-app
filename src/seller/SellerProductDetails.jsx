@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db, storage } from '../firebase';
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, db } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -12,48 +11,48 @@ export default function SellerProductDetails() {
     price: '',
     stock: '',
     category: '',
-    imageFiles: [],
+    colors: [],
   });
-  const [products, setProducts] = useState([]);
-  const [editingProductId, setEditingProductId] = useState(null);
   const [errors, setErrors] = useState({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
   const categories = ['Electronics', 'Clothing', 'Home & Garden', 'Books', 'Toys', 'Other'];
+  const availableColors = [
+    { name: 'red', hex: '#ff0000' },
+    { name: 'blue', hex: '#0000ff' },
+    { name: 'green', hex: '#008000' },
+    { name: 'yellow', hex: '#ffff00' },
+    { name: 'black', hex: '#000000' },
+    { name: 'white', hex: '#ffffff' },
+  ];
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
+    console.log('Firestore instance:', db);
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
-        console.log('Authenticated user:', currentUser.uid);
-        fetchProducts(currentUser.uid);
+        try {
+          const token = await currentUser.getIdToken(true);
+          console.log('Authenticated user:', {
+            uid: currentUser.uid,
+            email: currentUser.email,
+            token: token ? 'Present' : 'Missing',
+            tokenLength: token?.length || 0,
+          });
+          setUser(currentUser);
+        } catch (error) {
+          console.error('Error refreshing token:', error);
+          toast.error('Authentication error. Please log in again.');
+          setUser(null);
+        }
       } else {
         console.warn('No authenticated user. Please log in.');
-        toast.error('Please log in to manage products.');
+        toast.error('Please log in to add products.');
+        setUser(null);
       }
     });
     return () => unsubscribe();
   }, []);
-
-  const fetchProducts = async (sellerId) => {
-    setLoading(true);
-    try {
-      console.log('Fetching products for sellerId:', sellerId);
-      const querySnapshot = await getDocs(collection(db, 'products'));
-      const productList = querySnapshot.docs
-        .filter((doc) => doc.data().sellerId === sellerId)
-        .map((doc) => ({ id: doc.id, ...doc.data() }));
-      setProducts(productList);
-      console.log('Fetched products:', productList);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      toast.error('Failed to load products: ' + error.message);
-    }
-    setLoading(false);
-  };
 
   const validateForm = () => {
     console.log('Validating form data:', formData);
@@ -67,6 +66,7 @@ export default function SellerProductDetails() {
       newErrors.stock = 'Enter a valid stock quantity.';
     }
     if (!formData.category) newErrors.category = 'Select a category.';
+    if (formData.colors.length === 0) newErrors.colors = 'Select at least one color.';
     console.log('Validation errors:', newErrors);
     return newErrors;
   };
@@ -77,42 +77,15 @@ export default function SellerProductDetails() {
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files).filter(
-      (file) => ['image/jpeg', 'image/png'].includes(file.type) && file.size <= 5 * 1024 * 1024
-    );
-    if (files.length !== e.target.files.length) {
-      toast.error('Only JPEG/PNG images under 5MB are allowed.');
-    }
-    setFormData((prev) => ({ ...prev, imageFiles: files }));
-    setErrors((prev) => ({ ...prev, imageFiles: '' }));
-    console.log('Selected files:', files.map((f) => f.name));
-  };
-
-  const sanitizeFileName = (fileName) => {
-    return fileName
-      .replace(/[^a-zA-Z0-9._-]/g, '_')
-      .replace(/_+/g, '_')
-      .toLowerCase();
-  };
-
-  const uploadImages = async (files, productId) => {
-    console.log('Uploading images for productId:', productId);
-    const imageUrls = [];
-    for (const file of files) {
-      try {
-        const sanitizedFileName = sanitizeFileName(`${Date.now()}-${file.name}`);
-        const storageRef = ref(storage, `products/${productId}/${sanitizedFileName}`);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        imageUrls.push(url);
-        console.log(`Uploaded image: ${sanitizedFileName}, URL: ${url}`);
-      } catch (error) {
-        console.error(`Error uploading image ${file.name}:`, error);
-        toast.warn(`Failed to upload image ${file.name}: ${error.message}`);
-      }
-    }
-    return imageUrls;
+  const handleColorToggle = (color) => {
+    setFormData((prev) => {
+      const newColors = prev.colors.includes(color)
+        ? prev.colors.filter((c) => c !== color)
+        : [...prev.colors, color];
+      return { ...prev, colors: newColors };
+    });
+    setErrors((prev) => ({ ...prev, colors: '' }));
+    console.log('Toggled color:', color, 'New colors:', formData.colors);
   };
 
   const handleSubmit = async (e) => {
@@ -120,12 +93,13 @@ export default function SellerProductDetails() {
     setErrors({});
     setLoading(true);
 
-    if (!user) {
-      console.error('No authenticated user.');
-      toast.error('You must be logged in to save products.');
-      setLoading(false);
-      return;
-    }
+    // Temporarily bypass auth check for testing permissive rules
+    // if (!user) {
+    //   console.error('No authenticated user.');
+    //   toast.error('You must be logged in to add products.');
+    //   setLoading(false);
+    //   return;
+    // }
 
     try {
       const newErrors = validateForm();
@@ -141,44 +115,20 @@ export default function SellerProductDetails() {
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
         category: formData.category,
-        sellerId: user.uid,
-        imageUrls: [],
+        colors: formData.colors,
+        sellerId: user ? user.uid : 'test-user',
+        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
       console.log('Prepared product data:', productData);
 
-      let imageUrls = editingProductId
-        ? (products.find((p) => p.id === editingProductId)?.imageUrls || [])
-        : [];
-
-      if (formData.imageFiles.length > 0) {
-        const tempProductId = editingProductId || `temp-${Date.now()}`;
-        try {
-          imageUrls = await uploadImages(formData.imageFiles, tempProductId);
-          console.log('Images uploaded:', imageUrls);
-        } catch (error) {
-          console.error('Image upload failed:', error);
-          toast.warn('Image upload failed. Saving product without images.');
-          imageUrls = [];
-        }
-      }
-
-      productData.imageUrls = imageUrls;
-
-      if (editingProductId) {
-        console.log('Updating product:', editingProductId);
-        const productRef = doc(db, 'products', editingProductId);
-        await updateDoc(productRef, productData);
-        console.log('Product updated successfully:', editingProductId, productData);
-        toast.success('Product updated successfully!');
-      } else {
-        console.log('Adding new product to Firestore...');
-        productData.createdAt = new Date().toISOString();
-        const docRef = await addDoc(collection(db, 'products'), productData);
-        console.log('Product added successfully, ID:', docRef.id, 'Data:', productData);
-        toast.success('Product added successfully!');
-      }
+      console.log('Attempting to add product to Firestore...');
+      const productsCollection = collection(db, 'products');
+      console.log('Collection reference:', productsCollection.path);
+      const docRef = await addDoc(productsCollection, productData);
+      console.log('Product added successfully, ID:', docRef.id, 'Data:', productData);
+      toast.success('Product added successfully!');
 
       setFormData({
         name: '',
@@ -186,59 +136,23 @@ export default function SellerProductDetails() {
         price: '',
         stock: '',
         category: '',
-        imageFiles: [],
+        colors: [],
       });
-      setEditingProductId(null);
-      fetchProducts(user.uid);
     } catch (error) {
-      console.error('Error saving product:', error);
+      console.error('Error saving product:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+      });
       toast.error(`Failed to save product: ${error.message || 'Unknown error'}`);
     }
     setLoading(false);
   };
 
-  const handleEdit = (product) => {
-    setFormData({
-      name: product.name,
-      description: product.description,
-      price: product.price.toString(),
-      stock: product.stock.toString(),
-      category: product.category,
-      imageFiles: [],
-    });
-    setEditingProductId(product.id);
-    console.log('Editing product:', product.id);
-  };
-
-  const handleDelete = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      setLoading(true);
-      try {
-        console.log('Deleting product:', productId);
-        await deleteDoc(doc(db, 'products', productId));
-        console.log('Product deleted:', productId);
-        toast.success('Product deleted successfully!');
-        fetchProducts(user.uid);
-      } catch (error) {
-        console.error('Error deleting product:', error);
-        toast.error('Failed to delete product.');
-      }
-      setLoading(false);
-    }
-  };
-
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (filterCategory ? product.category === filterCategory : true)
-  );
-
   return (
     <div className="container mx-auto px-2 sm:px-4 py-6 min-h-screen flex flex-col items-center justify-center">
       <div className="w-full max-w-2xl bg-blue-50 p-4 sm:p-6 rounded-lg flex flex-col gap-6">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
-          {editingProductId ? 'Edit Product' : 'Add Product'}
-        </h2>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Add Product</h2>
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700">
@@ -326,145 +240,38 @@ export default function SellerProductDetails() {
           </div>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700">
-              Product Images (JPEG/PNG, max 5MB each)
+              Colors <span className="text-red-500">*</span>
             </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png"
-              multiple
-              onChange={handleFileChange}
-              className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                errors.imageFiles ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
-              }`}
-            />
-            {errors.imageFiles && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.imageFiles}</p>}
-            {formData.imageFiles.length > 0 && (
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                {formData.imageFiles.length} file(s) selected
-              </p>
-            )}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {availableColors.map((color) => (
+                <button
+                  key={color.name}
+                  type="button"
+                  onClick={() => handleColorToggle(color.name)}
+                  className={`w-8 h-8 rounded-full border-2 ${
+                    formData.colors.includes(color.name)
+                      ? 'border-blue-500 opacity-100'
+                      : 'border-gray-300 opacity-50'
+                  }`}
+                  style={{ backgroundColor: color.hex }}
+                  title={color.name}
+                />
+              ))}
+            </div>
+            {errors.colors && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.colors}</p>}
           </div>
           <button
             type="submit"
-            disabled={loading || !user}
+            disabled={loading}
             className={`w-full py-3 px-4 rounded text-white text-sm sm:text-base transition duration-200 ${
-              loading || !user ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-900 hover:bg-blue-800'
+              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-900 hover:bg-blue-800'
             }`}
           >
-            {loading ? 'Saving...' : editingProductId ? 'Update Product' : 'Add Product'}
+            {loading ? 'Saving...' : 'Add Product'}
           </button>
-          {editingProductId && (
-            <button
-              type="button"
-              onClick={() => {
-                setFormData({
-                  name: '',
-                  description: '',
-                  price: '',
-                  stock: '',
-                  category: '',
-                  imageFiles: [],
-                });
-                setEditingProductId(null);
-              }}
-              className="w-full py-3 px-4 rounded bg-gray-500 text-white text-sm sm:text-base hover:bg-gray-600 transition duration-200"
-            >
-              Cancel Edit
-            </button>
-          )}
         </form>
-
-        <div className="mt-6">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Your Products</h3>
-          <div className="flex flex-col gap-4 mb-4">
-            <input
-              type="text"
-              placeholder="Search by name"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm border-gray-300 focus:ring-blue-500"
-            />
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm border-gray-300 focus:ring-blue-500"
-            >
-              <option value="">All Categories</option>
-              {categories.map((category, index) => (
-                <option key={index} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </div>
-          {loading ? (
-            <p className="text-xs sm:text-sm text-gray-600">Loading products...</p>
-          ) : filteredProducts.length === 0 ? (
-            <p className="text-xs sm:text-sm text-gray-600">No products found.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs sm:text-sm">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="p-2 text-left">Name</th>
-                    <th className="p-2 text-left">Price</th>
-                    <th className="p-2 text-left">Stock</th>
-                    <th className="p-2 text-left">Category</th>
-                    <th className="p-2 text-left">Images</th>
-                    <th className="p-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.map((product) => (
-                    <tr key={product.id} className="border-b">
-                      <td className="p-2">{product.name}</td>
-                      <td className="p-2">${product.price.toFixed(2)}</td>
-                      <td className="p-2">
-                        {product.stock} {product.stock === 0 ? '(Out of Stock)' : ''}
-                      </td>
-                      <td className="p-2">{product.category}</td>
-                      <td className="p-2">
-                        {product.imageUrls?.length > 0 ? (
-                          <div className="flex gap-2">
-                            {product.imageUrls.slice(0, 2).map((url, index) => (
-                              <img
-                                key={index}
-                                src={url}
-                                alt={`${product.name} ${index + 1}`}
-                                className="w-10 h-10 object-cover rounded"
-                              />
-                            ))}
-                            {product.imageUrls.length > 2 && (
-                              <span>+{product.imageUrls.length - 2}</span>
-                            )}
-                          </div>
-                        ) : (
-                          'No images'
-                        )}
-                      </td>
-                      <td className="p-2">
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="text-blue-600 hover:underline mr-2"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
       </div>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={5000} />
     </div>
   );
 }

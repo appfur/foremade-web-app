@@ -22,6 +22,17 @@ const getFriendlyErrorMessage = (error) => {
   }
 };
 
+// Generate username from full name (e.g., "Emmanuel Chinecherem" -> "emmaChi")
+const generateUsername = (fullName) => {
+  const nameParts = fullName.trim().split(' ').filter(part => part);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts[1] || '';
+  const username = (
+    (firstName.slice(0, 4) + lastName.slice(0, 3)).toLowerCase() || 'user' + Math.floor(Math.random() * 1000)
+  ).replace(/[^a-z0-9]/g, '');
+  return username;
+};
+
 export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -73,7 +84,8 @@ export default function Register() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      await updateProfile(user, { displayName: name });
+      const username = generateUsername(name);
+      await updateProfile(user, { displayName: username });
 
       await sendEmailVerification(user);
       console.log('Verification email sent to:', user.email);
@@ -81,6 +93,7 @@ export default function Register() {
       const userData = {
         email: email,
         name: name,
+        username: username,
         address: '',
         createdAt: new Date().toISOString(),
         uid: user.uid,
@@ -88,11 +101,13 @@ export default function Register() {
       localStorage.setItem('userData', JSON.stringify(userData));
 
       const firstName = name.split(' ')[0];
-      setSuccessMessage(`Welcome, ${firstName}! Registration successful! Please verify your email by clicking the link sent to ${email} before logging in.`);
+      setSuccessMessage(
+        `Welcome, ${firstName}! Registration successful! A verification email has been sent to ${email}. Please verify your email before logging in. Check your inbox or spam folder.`
+      );
       setTimeout(() => {
         setLoading(false);
         handleNavigation();
-      }, 5000);
+      }, 7000);
     } catch (err) {
       console.error('Registration error:', err);
       setLoading(false);
@@ -119,6 +134,10 @@ export default function Register() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
+      const fullName = user.displayName || user.email.split('@')[0];
+      const username = generateUsername(fullName);
+      await updateProfile(user, { displayName: username });
+
       await sendEmailVerification(user);
       console.log('Verification email sent to:', user.email);
 
@@ -127,7 +146,8 @@ export default function Register() {
       if (!storedUserData) {
         userData = {
           email: user.email,
-          name: user.displayName || 'Google User',
+          name: fullName,
+          username: username,
           address: '',
           createdAt: new Date().toISOString(),
           uid: user.uid,
@@ -137,12 +157,13 @@ export default function Register() {
         userData = JSON.parse(storedUserData);
       }
 
-      const displayName = user.displayName || 'Google User';
-      setSuccessMessage(`Welcome, ${displayName}! Please verify your email by clicking the link sent to ${user.email} before logging in.`);
+      setSuccessMessage(
+        `Welcome, ${fullName}! A verification email has been sent to ${user.email}. Please verify your email before logging in. Check your inbox or spam folder.`
+      );
       setTimeout(() => {
         setLoading(false);
         handleNavigation();
-      }, 5000);
+      }, 7000);
     } catch (err) {
       console.error('Google Sign-In error:', err);
       setLoading(false);
