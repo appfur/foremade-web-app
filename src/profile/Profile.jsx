@@ -38,8 +38,8 @@ export default function Profile() {
 
       setUserData({
         email: user.email,
-        username: user.displayName || 'user', // Username from Firebase Auth
-        name: additionalData.name || user.displayName || 'User', // Full name from local storage
+        username: user.displayName || 'user',
+        name: additionalData.name || user.displayName || 'User',
         profileImage: additionalData.profileImage || null,
         createdAt: additionalData.createdAt || null,
         address: additionalData.address || 'Not provided',
@@ -162,7 +162,7 @@ export default function Profile() {
             </div>
             <div className="rounded-lg p-4 text-center bg-gray-50">
               <p className="text-gray-400">Loyalty Points</p>
-              <p className="text-lg font-semibold text-gray-800">{mockLoyaltyPoints} 🌟</p>
+              <p className="text-lg font-semibold text-gray-800">{mockLoyaltyPoints} <i className="bx bx-star text-yellow-500"></i></p>
             </div>
           </div>
           <div className="rounded-lg p-6 mb-6 bg-gray-50">
@@ -174,12 +174,12 @@ export default function Profile() {
                 ) : userData.profileImage ? (
                   <img src={userData.profileImage} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-gray-500 text-2xl">👤</span>
+                  <i className="bx bx-user text-gray-500 text-4xl"></i>
                 )}
               </div>
               <div className="flex flex-col gap-2">
-                <label className="cursor-pointer text-blue-600 hover:underline">
-                  Choose Image
+                <label className="cursor-pointer text-blue-600 hover:underline flex items-center">
+                  <i className="bx bx-upload mr-1"></i> Choose Image
                   <input
                     type="file"
                     accept="image/*"
@@ -192,9 +192,9 @@ export default function Profile() {
                     <button
                       onClick={handleImageUpload}
                       disabled={uploading}
-                      className={`px-4 py-2 rounded-lg bg-blue-500 text-white ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
+                      className={`px-4 py-2 rounded-lg bg-blue-500 text-white flex items-center ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
                     >
-                      {uploading ? 'Uploading...' : 'Upload'}
+                      <i className="bx bx-cloud-upload mr-1"></i> {uploading ? 'Uploading...' : 'Upload'}
                     </button>
                     <button
                       onClick={() => {
@@ -202,9 +202,9 @@ export default function Profile() {
                         setProfileImage(null);
                         setUploadError('');
                       }}
-                      className="px-4 py-2 rounded-lg bg-gray-300 text-gray-800 hover:bg-gray-400"
+                      className="px-4 py-2 rounded-lg bg-gray-300 text-gray-800 hover:bg-gray-400 flex items-center"
                     >
-                      Cancel
+                      <i className="bx bx-x mr-1"></i> Cancel
                     </button>
                   </div>
                 )}
@@ -229,8 +229,7 @@ export default function Profile() {
                 to="/edit"
                 className="flex items-center px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition duration-200"
               >
-                Edit Profile
-                <span className="ml-2">✏️</span>
+                <i className="bx bx-edit mr-1"></i> Edit Profile
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -250,7 +249,7 @@ export default function Profile() {
                 <p className="text-slate-400">Email</p>
                 <p className="font-semibold flex items-center text-gray-800">
                   {userData.email}
-                  <span className="ml-2 text-green-500">✅</span>
+                  <i className="bx bx-check-circle ml-2 text-green-500"></i>
                 </p>
               </div>
               <div>
@@ -270,13 +269,12 @@ export default function Profile() {
                 to="/profile/add-address"
                 className="flex items-center px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition duration-200"
               >
-                Add Address
-                <span className="ml-2">📍</span>
+                <i className="bx bx-map mr-1"></i> Add Address
               </Link>
             </div>
             <div className="text-center">
               <div className="inline-block p-4 rounded-full mb-2 bg-gray-100">
-                <span className="text-2xl">📍</span>
+                <i className="bx bx-map text-2xl"></i>
               </div>
               <p className="text-gray-400">No address found!</p>
             </div>

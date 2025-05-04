@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Link, useNavigate } from 'react-router-dom';
@@ -26,6 +26,17 @@ const getFriendlyErrorMessage = (error) => {
   }
 };
 
+// Generate username from full name (e.g., "Emmanuel Chinecherem" -> "emmaChi")
+const generateUsername = (fullName) => {
+  const nameParts = fullName.trim().split(' ').filter(part => part);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts[1] || '';
+  const username = (
+    (firstName.slice(0, 4) + lastName.slice(0, 3)).toLowerCase() || 'user' + Math.floor(Math.random() * 1000)
+  ).replace(/[^a-z0-9]/g, '');
+  return username;
+};
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,6 +44,7 @@ export default function Login() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // Validate email format
@@ -47,6 +59,7 @@ export default function Login() {
     setEmailError('');
     setPasswordError('');
     setSuccessMessage('');
+    setLoading(true);
 
     // Client-side validation
     let hasError = false;
@@ -59,24 +72,49 @@ export default function Login() {
       hasError = true;
     }
 
-    if (hasError) return;
+    if (hasError) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("User logged in successfully:", userCredential.user);
+      const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        await sendEmailVerification(user);
+        setEmailError(
+          `Your email is not verified. A new verification email has been sent to ${email}. Please check your inbox or spam folder.`
+        );
+        setLoading(false);
+        return;
+      }
+
+      console.log("User logged in successfully:", user);
       setSuccessMessage('Login successful! Redirecting to profile...');
       setTimeout(() => {
+        setLoading(false);
         navigate('/profile');
-      }, 2000); // Redirect after 2 seconds to show the success message
+      }, 2000);
     } catch (err) {
       console.error('Login error:', err);
+      setLoading(false);
       const errorMessage = getFriendlyErrorMessage(err);
       if (errorMessage.includes('email') || errorMessage.includes('account')) {
-        setEmailError(errorMessage);
+        setEmailError(
+          <>
+            {errorMessage}{' '}
+            {errorMessage.includes('sign up') && (
+              <Link to="/register" className="text-blue-600 hover:underline">
+                Sign up here
+              </Link>
+            )}
+          </>
+        );
       } else if (errorMessage.includes('password')) {
         setPasswordError(errorMessage);
       } else {
-        setEmailError(errorMessage); // Fallback to email field for general errors
+        setEmailError(errorMessage);
       }
     }
   };
@@ -86,11 +124,21 @@ export default function Login() {
     setEmailError('');
     setPasswordError('');
     setSuccessMessage('');
+    setLoading(true);
 
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+
+      if (!user.emailVerified) {
+        await sendEmailVerification(user);
+        setEmailError(
+          `Your email is not verified. A new verification email has been sent to ${user.email}. Please check your inbox or spam folder.`
+        );
+        setLoading(false);
+        return;
+      }
 
       // Check if user already exists in Firestore
       const userDoc = doc(db, 'users', user.uid);
@@ -98,23 +146,40 @@ export default function Login() {
 
       if (!userSnapshot.exists()) {
         // New user, save their data to Firestore
+        const fullName = user.displayName || user.email.split('@')[0];
+        const username = generateUsername(fullName);
         await setDoc(userDoc, {
           email: user.email,
-          name: user.displayName || 'Google User',
+          name: fullName,
+          username: username,
           address: '',
           createdAt: new Date().toISOString(),
           uid: user.uid
         });
+
+        // Update local storage for consistency with Register.jsx
+        const userData = {
+          email: user.email,
+          name: fullName,
+          username: username,
+          address: '',
+          createdAt: new Date().toISOString(),
+          uid: user.uid,
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+
         console.log("User registered with Google successfully");
       }
 
       console.log("User signed in with Google successfully");
       setSuccessMessage('Google Sign-In successful! Redirecting to profile...');
       setTimeout(() => {
+        setLoading(false);
         navigate('/profile');
       }, 2000);
     } catch (err) {
       console.error('Google Sign-In error:', err);
+      setLoading(false);
       setEmailError(getFriendlyErrorMessage(err));
     }
   };
@@ -126,7 +191,7 @@ export default function Login() {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-semibold text-gray-800 mb-2">Sign In</h2>
           <p className="text-gray-600 mb-6">
-            Don't not have account?{' '}
+            Don't have an account?{' '}
             <Link to="/register" className="text-blue-600 hover:underline">
               Sign Up
             </Link>
@@ -213,8 +278,9 @@ export default function Login() {
               <button
                 type="submit"
                 className="w-full bg-blue-900 text-white p-3 rounded-lg hover:bg-blue-800 transition duration-200"
+                disabled={loading}
               >
-                Login
+                {loading ? 'Logging in...' : 'Login'}
               </button>
             </form>
 
@@ -224,21 +290,22 @@ export default function Login() {
               <button
                 onClick={handleGoogleSignIn}
                 className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center mb-4 hover:bg-gray-100 transition duration-200"
+                disabled={loading}
               >
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"
                   className="w-5 h-5 mr-2"
                 />
-                Google
+                {loading ? 'Processing...' : 'Google'}
               </button>
-              <button className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-200">
+              <button className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-200" disabled={loading}>
                 <img
                   src="https://www.facebook.com/favicon.ico"
                   alt="Facebook"
                   className="w-5 h-5 mr-2"
                 />
-                Facebook
+                {loading ? 'Processing...' : 'Facebook'}
               </button>
             </div>
           </div>
