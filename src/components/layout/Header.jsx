@@ -203,9 +203,6 @@ const Header = () => {
                 <Link to="/favorites" className="block px-4 py-1 text-xs hover:bg-gray-100">
                   Favorites ({favoritesCount})
                 </Link>
-                <Link to="/settings" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Settings
-                </Link>
               </div>
             </div>
             <Link to="/sell" className="hover:text-blue-600">
@@ -217,10 +214,11 @@ const Header = () => {
             <Link to="/notifications" className="relative">
               <i className="bx bx-bell text-lg text-gray-600"></i>
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                6
+                0
               </span>
             </Link>
           </div>
+
         </div>
       </div>
 
@@ -229,7 +227,7 @@ const Header = () => {
           <Link to="/">
             <img
               src={logo}
-              className="h-8 sm:h-10 w-40"
+              className="h-6 w-40"
               alt="Foremade"
             />
           </Link>

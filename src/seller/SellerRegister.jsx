@@ -4,9 +4,11 @@ import { createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } fro
 import { useNavigate } from 'react-router-dom';
 import countryCodes from '../components/common/countryCodes';
 import countries from '../components/common/countries';
+import sellIllustration from '/src/assets/icons/sell-registration.svg';
 
 export default function SellerRegister() {
   const [formData, setFormData] = useState({
+    name: '',
     country: '',
     email: '',
     phone: '',
@@ -20,10 +22,25 @@ export default function SellerRegister() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Load userData from localStorage
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      const userData = JSON.parse(storedUserData);
+      setFormData((prev) => ({
+        ...prev,
+        name: userData.name || '',
+        email: userData.email || '',
+      }));
+    }
+
+    // Monitor auth state
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        setFormData((prev) => ({ ...prev, email: currentUser.email || '' }));
+        setFormData((prev) => ({
+          ...prev,
+          email: currentUser.email || prev.email,
+        }));
       }
     });
     return () => unsubscribe();
@@ -31,7 +48,7 @@ export default function SellerRegister() {
 
   const getCountryCode = (countryName) => {
     const country = countryCodes.find((c) => c.country === countryName);
-    return country ? country.code : ''; // Return empty if no country
+    return country ? country.code : '';
   };
 
   const handleChange = (e) => {
@@ -74,6 +91,9 @@ export default function SellerRegister() {
 
   const validateForm = () => {
     const newErrors = {};
+    if (!formData.name.trim()) {
+      newErrors.name = 'Please enter your full name.';
+    }
     if (!formData.country) {
       newErrors.country = 'Please select a country.';
     }
@@ -104,6 +124,7 @@ export default function SellerRegister() {
 
   const isFormValid = () => {
     return (
+      formData.name.trim() &&
       formData.country &&
       formData.email.trim() &&
       formData.phone.includes('-') &&
@@ -133,6 +154,7 @@ export default function SellerRegister() {
       }
 
       const sellerData = {
+        name: formData.name,
         country: formData.country,
         phone: formData.phone,
         createdAt: new Date().toISOString(),
@@ -159,7 +181,7 @@ export default function SellerRegister() {
       <div className="w-full max-w-2xl bg-blue-50 p-4 sm:p-6 rounded-lg flex flex-col gap-6">
         <div className="w-full flex items-center justify-center">
           <img
-            src="src/assets/icons/sell-registration.svg"
+            src={sellIllustration}
             alt="Seller Registration Illustration"
             className="w-full max-w-xs sm:max-w-sm h-auto object-contain rounded-lg"
           />
@@ -171,6 +193,25 @@ export default function SellerRegister() {
           </p>
           {submitError && <p className="text-red-600 text-xs sm:text-sm mb-3 sm:mb-4">{submitError}</p>}
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            <div>
+              <label
+                className={`block text-xs sm:text-sm font-medium text-gray-700 transition-all duration-200 ${
+                  formData.name ? 'text-xs -translate-y-4' : ''
+                }`}
+              >
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
+                  errors.name ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                } ${formData.name ? 'pt-4' : ''}`}
+              />
+              {errors.name && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.name}</p>}
+            </div>
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700">
                 Country or region <span className="text-red-500">*</span>
