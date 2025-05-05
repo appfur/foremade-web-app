@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { auth } from '../firebase';
 import db from '../db.json';
-import { getOrderHistory, getOrderCount } from '/src/utils/cartUtils';
-import Sidebar from './Sidebar';
+import Sidebar from '/src/profile/Sidebar';
 import Spinner from '../components/common/Spinner';
 
 const Orders = () => {
@@ -14,6 +13,7 @@ const Orders = () => {
   const [orderCount, setOrderCount] = useState(0);
 
   const mockWishlistCount = 3;
+  const ORDER_HISTORY_KEY = 'orderHistory_1';
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -53,12 +53,14 @@ const Orders = () => {
         uid: user.uid,
       });
 
-      setOrderCount(getOrderCount());
+      const orderHistory = getOrderHistory();
+      setOrderCount(orderHistory.length);
       setLoading(false);
     });
 
     const handleOrderPlaced = () => {
-      setOrderCount(getOrderCount());
+      const orderHistory = getOrderHistory();
+      setOrderCount(orderHistory.length);
       loadOrders();
     };
     window.addEventListener('orderPlaced', handleOrderPlaced);
@@ -67,6 +69,16 @@ const Orders = () => {
       window.removeEventListener('orderPlaced', handleOrderPlaced);
     };
   }, []);
+
+  const getOrderHistory = () => {
+    try {
+      const storedOrders = localStorage.getItem(ORDER_HISTORY_KEY);
+      return storedOrders ? JSON.parse(storedOrders) : [];
+    } catch (err) {
+      console.error('Error getting order history:', err);
+      return [];
+    }
+  };
 
   const loadOrders = () => {
     try {
@@ -120,10 +132,6 @@ const Orders = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadOrders();
-  }, []);
 
   const calculateOrderTotal = (items) => {
     const subtotal = items.reduce((total, item) => {

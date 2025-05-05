@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth, db } from '/src/firebase.js';
+import { auth, db } from '/src/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import dbJson from '/src/db.json';
-import { getCart, clearCart } from '/src/utils/cartUtils.js';
+import { getCart, clearCart, checkout } from '/src/utils/cartUtils';
 import PaystackCheckout from './PaystackCheckout';
+import Spinner from '/src/components/common/Spinner';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -14,14 +15,16 @@ const Checkout = () => {
   const [message, setMessage] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    address: '',
+    name: 'Emmanuel Chinecherem',
+    email: 'test@example.com',
+    address: 'Not provided',
     city: '',
     postalCode: '',
+    country: 'Nigeria',
+    phone: '+234-8052975966',
   });
 
-  // Load cart, user email, and authentication status on mount
+  // Load cart, user data, and authentication status
   useEffect(() => {
     try {
       setLoading(true);
@@ -38,15 +41,41 @@ const Checkout = () => {
         setCart([]);
         setError('Cart is empty or invalid.');
       }
+
       const unsubscribe = auth.onAuthStateChanged((user) => {
         setIsAuthenticated(!!user);
-        if (user?.email) {
-          setFormData((prev) => ({ ...prev, email: user.email }));
+        if (user) {
+          const storedUserData = localStorage.getItem('userData');
+          let additionalData = {};
+          if (storedUserData) {
+            try {
+              additionalData = JSON.parse(storedUserData);
+              if (typeof additionalData.name !== 'string' || additionalData.name.includes('{')) {
+                console.warn('Corrupted name field:', additionalData.name);
+                additionalData.name = 'Emmanuel Chinecherem';
+              }
+              if (typeof additionalData.username !== 'string') {
+                additionalData.username = 'emmaChi';
+              }
+            } catch (err) {
+              console.error('Error parsing userData:', err);
+              additionalData = {};
+            }
+          }
+          setFormData((prev) => ({
+            ...prev,
+            email: user.email || 'test@example.com',
+            name: additionalData.name || user.displayName || 'Emmanuel Chinecherem',
+            address: additionalData.address || 'Not provided',
+            country: additionalData.country || 'Nigeria',
+            phone: additionalData.phone || '+234-8052975966',
+          }));
         }
       }, (error) => {
         console.error('Auth state error:', error);
         setIsAuthenticated(false);
       });
+
       return () => unsubscribe();
     } catch (err) {
       console.error('Error loading cart:', err);
@@ -127,13 +156,19 @@ const Checkout = () => {
         status: 'completed',
       };
       const orderId = `order-${Date.now()}`;
+      
+      // Save to Firestore
       await setDoc(doc(db, 'orders', orderId), order);
+      
+      // Save to localStorage via cartUtils.checkout
+      const localOrder = checkout();
+      
       setCart([]);
       clearCart();
       setMessage('Order placed successfully!');
       navigate('/order-confirmation', { state: { order } });
     } catch (err) {
-      console.error('Error saving order to Firestore:', err);
+      console.error('Error saving order:', err);
       setError('Failed to place order. Please try again.');
     }
   }, [cart, cartItems, formData, totalPrice, navigate]);
@@ -149,15 +184,15 @@ const Checkout = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Checkout</h1>
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Spinner />
         <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 text-gray-800">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Checkout</h1>
       {error && <p className="text-red-600 mb-4 whitespace-pre-line">{error}</p>}
       {message && <p className="text-green-600 mb-4">{message}</p>}
@@ -203,6 +238,20 @@ const Checkout = () => {
                 />
               </div>
               <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                  Phone
+                </label>
+                <input
+                  type="text"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="mt-1 w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div>
                 <label htmlFor="address" className="block text-sm font-medium text-gray-700">
                   Address
                 </label>
@@ -239,6 +288,20 @@ const Checkout = () => {
                   id="postalCode"
                   name="postalCode"
                   value={formData.postalCode}
+                  onChange={handleInputChange}
+                  className="mt-1 w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                  Country
+                </label>
+                <input
+                  type="text"
+                  id="country"
+                  name="country"
+                  value={formData.country}
                   onChange={handleInputChange}
                   className="mt-1 w-full p-2 border border-gray-300 rounded"
                   required
@@ -292,20 +355,22 @@ const Checkout = () => {
                   <PaystackCheckout
                     email={formData.email}
                     amount={totalPrice * 100} // Amount in Kobo
-                    totalPrice={totalPrice} // Pass totalPrice for validation
+                    totalPrice={totalPrice}
                     onSuccess={handlePaymentSuccess}
                     onClose={() => setMessage('Payment cancelled.')}
                     disabled={!formValidity.isValid || cart.length === 0}
                     buttonText="Pay Now"
+                    className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    iconClass="bx bx-cart mr-2"
                   />
                 ) : (
                   <div>
                     <p className="text-red-600 mb-2">Please log in to complete your purchase.</p>
                     <button
                       onClick={handlePaymentAttempt}
-                      className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:opacity-50"
+                      className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 flex items-center justify-center"
                     >
-                      Log In to Pay
+                      <i className="bx bx-user mr-2"></i> Log In to Pay
                     </button>
                   </div>
                 )}

@@ -23,6 +23,8 @@ import Checkout from './components/checkout/Checkout';
 import SellerRegister from './seller/SellerRegister';
 import SellerProductDetails from './seller/SellerProductDetails';
 import Orders from './profile/Orders';
+import Address from './profile/Address';
+import Setting from './profile/Setting';
 
 function App() {
   return (
@@ -135,6 +137,22 @@ function App() {
             element={
               // <ProtectedRoute>
                 <SellerRegister />
+              // </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/address"
+            element={
+              <ProtectedRoute>
+                <Address />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/setting"
+            element={
+              // <ProtectedRoute>
+                <Setting />
               // </ProtectedRoute>
             }
           />

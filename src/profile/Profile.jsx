@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import { Link } from 'react-router-dom';
-import { getOrderCount } from '../utils/cartUtils';
 import Sidebar from './Sidebar';
 import Spinner from '../components/common/Spinner';
 
@@ -20,6 +19,17 @@ export default function Profile() {
   const mockWishlistCount = 3;
   const mockWalletBalance = 100.50;
   const mockLoyaltyPoints = 250;
+  const ORDER_HISTORY_KEY = 'orderHistory_1';
+
+  const getOrderCount = () => {
+    try {
+      const storedOrders = localStorage.getItem(ORDER_HISTORY_KEY);
+      return storedOrders ? JSON.parse(storedOrders).length : 0;
+    } catch (err) {
+      console.error('Error getting order count:', err);
+      return 0;
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -88,7 +98,11 @@ export default function Profile() {
     }
 
     setProfileImage(file);
-    setImagePreview(URL.createObjectURL(file));
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
     setUploadError('');
   };
 
@@ -106,10 +120,11 @@ export default function Profile() {
         if (progress >= 100) clearInterval(interval);
       }, 200);
 
-      const newImageUrl = URL.createObjectURL(profileImage);
-      setTimeout(() => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64Image = reader.result;
         setUserData((prev) => {
-          const updatedData = { ...prev, profileImage: newImageUrl };
+          const updatedData = { ...prev, profileImage: base64Image };
           localStorage.setItem('userData', JSON.stringify(updatedData));
           return updatedData;
         });
@@ -117,7 +132,8 @@ export default function Profile() {
         setImagePreview(null);
         setUploadProgress(0);
         setUploading(false);
-      }, 2000);
+      };
+      reader.readAsDataURL(profileImage);
     } catch (err) {
       console.error('Image upload error:', err);
       setUploadError('Failed to upload image. Please try again.');

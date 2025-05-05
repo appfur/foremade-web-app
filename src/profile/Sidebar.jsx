@@ -48,14 +48,14 @@ export default function Sidebar({ userData, orderCount, wishlistCount }) {
           <span>Wishlist ({wishlistCount})</span>
         </Link>
         <Link
-          to="/addresses"
+          to="/address"
           className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100"
         >
           <i className="bx bx-map text-lg"></i>
           <span>Addresses</span>
         </Link>
         <Link
-          to="/settings"
+          to="/setting"
           className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100"
         >
           <i className="bx bx-cog text-lg"></i>
