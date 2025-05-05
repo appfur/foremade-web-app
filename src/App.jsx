@@ -14,7 +14,6 @@ import ProtectedRoute from './auth/ProtectedRoute'; // Import ProtectedRoute
 import Cart from './pages/Cart';
 import Favorites from './pages/Favorites';
 import Watchlist from './pages/Watchlist';
-import Orders from './pages/Orders';
 import Profile from './profile/Profile';
 import Settings from './pages/Settings';
 import Register from './auth/Register';
@@ -23,6 +22,7 @@ import Loyalty from './profile/Loyalty';
 import Checkout from './components/checkout/Checkout';
 import SellerRegister from './seller/SellerRegister';
 import SellerProductDetails from './seller/SellerProductDetails';
+import Orders from './profile/Orders';
 
 function App() {
   return (

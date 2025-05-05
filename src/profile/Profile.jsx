@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import { Link } from 'react-router-dom';
+import { getOrderCount } from '../utils/cartUtils';
 import Sidebar from './Sidebar';
 import Spinner from '../components/common/Spinner';
 
@@ -14,8 +15,8 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [userData, setUserData] = useState(null);
+  const [orderCount, setOrderCount] = useState(0);
 
-  const mockOrderCount = 5;
   const mockWishlistCount = 3;
   const mockWalletBalance = 100.50;
   const mockLoyaltyPoints = 250;
@@ -33,22 +34,43 @@ export default function Profile() {
       const storedUserData = localStorage.getItem('userData');
       let additionalData = {};
       if (storedUserData) {
-        additionalData = JSON.parse(storedUserData);
+        try {
+          additionalData = JSON.parse(storedUserData);
+          if (typeof additionalData.name !== 'string' || additionalData.name.includes('{')) {
+            console.warn('Corrupted name field:', additionalData.name);
+            additionalData.name = 'Emmanuel Chinecherem';
+          }
+          if (typeof additionalData.username !== 'string') {
+            additionalData.username = 'emmaChi';
+          }
+        } catch (err) {
+          console.error('Error parsing userData:', err);
+          additionalData = {};
+        }
       }
 
       setUserData({
-        email: user.email,
-        username: user.displayName || 'user',
-        name: additionalData.name || user.displayName || 'User',
+        email: user.email || 'test@example.com',
+        username: additionalData.username || user.displayName || 'emmaChi',
+        name: additionalData.name || user.displayName || 'Emmanuel Chinecherem',
         profileImage: additionalData.profileImage || null,
-        createdAt: additionalData.createdAt || null,
+        createdAt: additionalData.createdAt || '2025-05-04T23:28:48.857Z',
         address: additionalData.address || 'Not provided',
+        country: additionalData.country || 'Nigeria',
+        phone: additionalData.phone || '+234-8052975966',
         uid: user.uid,
       });
+
+      setOrderCount(getOrderCount());
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const handleOrderPlaced = () => setOrderCount(getOrderCount());
+    window.addEventListener('orderPlaced', handleOrderPlaced);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('orderPlaced', handleOrderPlaced);
+    };
   }, []);
 
   const handleImageChange = (e) => {
@@ -105,12 +127,17 @@ export default function Profile() {
 
   const formatDate = (isoString) => {
     if (!isoString) return 'Not available';
-    const date = new Date(isoString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (err) {
+      console.error('Error formatting date:', err);
+      return 'Invalid date';
+    }
   };
 
   if (loading) {
@@ -145,13 +172,13 @@ export default function Profile() {
   return (
     <div className="container mx-auto px-4 py-8 text-gray-800">
       <div className="flex flex-col md:flex-row gap-6">
-        <Sidebar userData={userData} orderCount={mockOrderCount} wishlistCount={mockWishlistCount} />
+        <Sidebar userData={userData} orderCount={orderCount} wishlistCount={mockWishlistCount} />
         <div className="md:w-3/4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="rounded-lg p-4 text-center bg-gray-50">
+            <Link to="/orders" className="rounded-lg p-4 text-center bg-gray-50 hover:bg-gray-100 transition">
               <p className="text-gray-400">Orders</p>
-              <p className="text-lg font-semibold text-gray-800">{mockOrderCount}</p>
-            </div>
+              <p className="text-lg font-semibold text-gray-800">{orderCount}</p>
+            </Link>
             <div className="rounded-lg p-4 text-center bg-gray-50">
               <p className="text-gray-400">Wish List</p>
               <p className="text-lg font-semibold text-gray-800">{mockWishlistCount}</p>
@@ -251,6 +278,14 @@ export default function Profile() {
                   {userData.email}
                   <i className="bx bx-check-circle ml-2 text-green-500"></i>
                 </p>
+              </div>
+              <div>
+                <p className="text-slate-400">Country</p>
+                <p className="font-semibold text-gray-800">{userData.country}</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Phone</p>
+                <p className="font-semibold text-gray-800">{userData.phone}</p>
               </div>
               <div>
                 <p className="text-slate-400">Date Joined</p>
