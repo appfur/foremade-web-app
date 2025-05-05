@@ -13,7 +13,7 @@ import ProtectedRoute from './auth/ProtectedRoute'; // Import ProtectedRoute
 // Cart & Other Components
 import Cart from './pages/Cart';
 import Favorites from './pages/Favorites';
-import Watchlist from './pages/Watchlist';
+import Watchlist from './profile/Watchlist';
 import Profile from './profile/Profile';
 import Settings from './pages/Settings';
 import Register from './auth/Register';

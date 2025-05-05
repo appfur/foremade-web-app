@@ -140,10 +140,10 @@ const Header = () => {
       <div className="hidden sm:block border-b border-gray-200 text-gray-600 py-2">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
-            {user ? ( 
-              <p className="cursor-pointer">
+            {user ? (
+              <Link to="/profile" className="cursor-pointer hover:text-blue-600">
                 Hello, {getDisplayName()}
-              </p>
+              </Link>
             ) : (
               <p className="cursor-pointer">
                 Hi!{' '}
@@ -193,7 +193,7 @@ const Header = () => {
               <button className="hover:text-blue-600 flex items-center">
                 My Foremade <i className="bx bx-chevron-down ml-1"></i>
               </button>
-              <div className="absolute hidden group-hover:block bg-white border border-gray-200 py-2 mt-1 z-10 w-48 rounded-md shadow-lg">
+              <div className="absolute hidden group-hover:block bg-white border border-gray-200 py-3 z-10 w-48 rounded-md shadow-lg">
                 <Link to="/profile" className="block px-4 py-1 text-xs hover:bg-gray-100">
                   Profile
                 </Link>
@@ -214,7 +214,12 @@ const Header = () => {
             <Link to="/watchlist" className="hover:text-blue-600">
               Watchlist
             </Link>
-            <i className="bx bx-bell text-lg text-gray-600"></i>
+            <Link to="/notifications" className="relative">
+              <i className="bx bx-bell text-lg text-gray-600"></i>
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                6
+              </span>
+            </Link>
           </div>
         </div>
       </div>
@@ -224,7 +229,7 @@ const Header = () => {
           <Link to="/">
             <img
               src={logo}
-              className="h-8 sm:h-8"
+              className="h-8 sm:h-10 w-40"
               alt="Foremade"
             />
           </Link>
@@ -291,7 +296,7 @@ const Header = () => {
         </div>
 
         <div className="sm:hidden flex items-center gap-3">
-          <Link to="/my-account">
+          <Link to="/profile">
             <i className="bx bx-user text-gray-600 text-xl"></i>
           </Link>
           <Link to="/favorites" className="relative">
@@ -453,7 +458,7 @@ const Header = () => {
             <Link to="/foremade-live" className="hover:text-blue-600">
               Tablet & Phones
             </Link>
-            <Link to="/saved" className="hover:text-blue-600">
+            <Link to="/favorites" className="hover:text-blue-600">
               Health & Beauty
             </Link>
             <div className="relative group lg:hidden">
@@ -481,10 +486,10 @@ const Header = () => {
             <Link to="/health-beauty" className="hover:text-blue-600 hidden lg:inline">
               Drinks & Categories
             </Link>
-            <Link to="/industrial" className="hover:text-blue-600 hidden lg:inline">
+            <Link to="/home-garden" className="hover:text-blue-600 hidden lg:inline">
               Home & Kitchen
             </Link>
-            <Link to="/home-garden" className="hover:text-blue-600 hidden lg:inline">
+            <Link to="/smart-watches" className="hover:text-blue-600 hidden lg:inline">
               Smart Watches
             </Link>
           </div>
@@ -504,11 +509,13 @@ const Header = () => {
         </div>
         <nav className="flex flex-col p-4 space-y-2 text-sm text-gray-600">
           <div className="flex items-center space-x-2 mb-4">
-            <i className="bx bx-user-circle text-2xl text-gray-600"></i>
+            <Link to="/profile" onClick={() => setIsSidebarOpen(false)}>
+              <i className="bx bx-user-circle text-2xl text-gray-600"></i>
+            </Link>
             {user ? (
-              <p className="cursor-pointer">
+              <Link to="/profile" className="cursor-pointer hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
                 Hello, {getDisplayName()}
-              </p>
+              </Link>
             ) : (
               <p className="cursor-pointer">
                 Hi!{' '}
@@ -550,9 +557,9 @@ const Header = () => {
             <i className="bx bx-heart text-lg"></i>
             <span>Favorites ({favoritesCount})</span>
           </Link>
-          <Link to="/my-account" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link to="/profile" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
             <i className="bx bx-user text-lg"></i>
-            <span>My Account</span>
+            <span>Profile</span>
           </Link>
           <Link to="/watchlist" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
             <i className="bx bx-bookmark text-lg"></i>
@@ -582,11 +589,11 @@ const Header = () => {
         <Link
           to="/profile"
           className={`flex flex-col items-center ${
-            location.pathname === '/my-account' ? 'text-blue-600' : 'text-gray-600'
+            location.pathname === '/profile' ? 'text-blue-600' : 'text-gray-600'
           } hover:text-blue-600`}
         >
           <i className="bx bx-user text-2xl"></i>
-          <span className="text-xs">My Foremade</span>
+          <span className="text-xs">Profile</span>
         </Link>
         <Link
           to="/search"

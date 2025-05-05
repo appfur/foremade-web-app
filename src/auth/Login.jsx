@@ -26,14 +26,19 @@ const getFriendlyErrorMessage = (error) => {
   }
 };
 
-// Generate username from full name (e.g., "Emmanuel Chinecherem" -> "emmaChi")
+// Generate username from full name (e.g., "Emmanuel Chinecherem" -> "emmaChi021")
 const generateUsername = (fullName) => {
   const nameParts = fullName.trim().split(' ').filter(part => part);
   const firstName = nameParts[0] || '';
   const lastName = nameParts[1] || '';
-  const username = (
-    (firstName.slice(0, 4) + lastName.slice(0, 3)).toLowerCase() || 'user' + Math.floor(Math.random() * 1000)
-  ).replace(/[^a-z0-9]/g, '');
+  const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  let usernameBase;
+  if (firstName) {
+    usernameBase = (firstName.slice(0, 4) + lastName.slice(0, 3)).toLowerCase();
+  } else {
+    usernameBase = 'user';
+  }
+  const username = (usernameBase + randomNum).replace(/[^a-z0-9]/g, '');
   return username;
 };
 
@@ -51,6 +56,25 @@ export default function Login() {
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  // Resend verification email
+  const handleResendVerification = async () => {
+    setLoading(true);
+    setEmailError('');
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      await sendEmailVerification(user);
+      setEmailError(
+        `A new verification email has been sent to ${email}. Please check your inbox or spam folder.`
+      );
+    } catch (err) {
+      console.error('Resend verification error:', err);
+      setEmailError(getFriendlyErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle email/password login
@@ -82,15 +106,23 @@ export default function Login() {
       const user = userCredential.user;
 
       if (!user.emailVerified) {
-        await sendEmailVerification(user);
         setEmailError(
-          `Your email is not verified. A new verification email has been sent to ${email}. Please check your inbox or spam folder.`
+          <>
+            Your email is not verified. Please check your inbox or spam folder for the verification email sent to {email}. Click the link to verify, then try logging in again. Need a new link?{' '}
+            <button
+              onClick={handleResendVerification}
+              className="text-blue-600 hover:underline"
+              disabled={loading}
+            >
+              Resend Verification
+            </button>
+          </>
         );
         setLoading(false);
         return;
       }
 
-      console.log("User logged in successfully:", user);
+      console.log('User logged in successfully:', user);
       setSuccessMessage('Login successful! Redirecting to profile...');
       setTimeout(() => {
         setLoading(false);
@@ -134,7 +166,23 @@ export default function Login() {
       if (!user.emailVerified) {
         await sendEmailVerification(user);
         setEmailError(
-          `Your email is not verified. A new verification email has been sent to ${user.email}. Please check your inbox or spam folder.`
+          <>
+            Your email is not verified. Please check your inbox or spam folder for the verification email sent to {user.email}. Click the link to verify, then try logging in again. Need a new link?{' '}
+            <button
+              onClick={() => {
+                sendEmailVerification(user).then(() => {
+                  setEmailError(`A new verification email has been sent to ${user.email}. Please check your inbox or spam folder.`);
+                }).catch((err) => {
+                  console.error('Resend verification error:', err);
+                  setEmailError(getFriendlyErrorMessage(err));
+                });
+              }}
+              className="text-blue-600 hover:underline"
+              disabled={loading}
+            >
+              Resend Verification
+            </button>
+          </>
         );
         setLoading(false);
         return;
@@ -154,7 +202,8 @@ export default function Login() {
           username: username,
           address: '',
           createdAt: new Date().toISOString(),
-          uid: user.uid
+          uid: user.uid,
+          profileImage: null,
         });
 
         // Update local storage for consistency with Register.jsx
@@ -165,13 +214,14 @@ export default function Login() {
           address: '',
           createdAt: new Date().toISOString(),
           uid: user.uid,
+          profileImage: null,
         };
         localStorage.setItem('userData', JSON.stringify(userData));
 
-        console.log("User registered with Google successfully");
+        console.log('User registered with Google successfully');
       }
 
-      console.log("User signed in with Google successfully");
+      console.log('User signed in with Google successfully');
       setSuccessMessage('Google Sign-In successful! Redirecting to profile...');
       setTimeout(() => {
         setLoading(false);
@@ -299,7 +349,10 @@ export default function Login() {
                 />
                 {loading ? 'Processing...' : 'Google'}
               </button>
-              <button className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-200" disabled={loading}>
+              <button
+                className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-200"
+                disabled={loading}
+              >
                 <img
                   src="https://www.facebook.com/favicon.ico"
                   alt="Facebook"
