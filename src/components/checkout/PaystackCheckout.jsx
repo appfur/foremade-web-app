@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 const PaystackCheckout = ({
   email,
   amount,
-  totalPrice,
+  // totalPrice,
   onSuccess,
   onClose,
   disabled,
@@ -33,7 +33,7 @@ const PaystackCheckout = ({
     }
 
     const handler = window.PaystackPop.setup({
-      key: 'pk_test_80ce5e6562afd9418a07b2fd2f1a261dbb62a9bd', // Test key (replace with your test key)
+      key: 'pk_live_80ce5e6562afd9418a07b2fd2f1a261dbb62a9bd', // Test key (replace with your test key)
       email,
       amount: parseInt(amount, 10), // Amount in Kobo
       currency: 'NGN',

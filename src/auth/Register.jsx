@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, sendEmailVerification, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { auth } from '../firebase';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -15,6 +15,8 @@ const getFriendlyErrorMessage = (error) => {
       return 'Please enter a valid email address.';
     case 'auth/popup-closed-by-user':
       return 'Google sign-in was cancelled. Please try again.';
+    case 'auth/cancelled-popup-request':
+      return 'Google sign-in popup was closed. Please try again.';
     case 'auth/account-exists-with-different-credential':
       return 'An account already exists with this email.';
     default:
@@ -27,9 +29,14 @@ const generateUsername = (fullName) => {
   const nameParts = fullName.trim().split(' ').filter(part => part);
   const firstName = nameParts[0] || '';
   const lastName = nameParts[1] || '';
-  const username = (
-    (firstName.slice(0, 4) + lastName.slice(0, 3)).toLowerCase() || 'user' + Math.floor(Math.random() * 1000)
-  ).replace(/[^a-z0-9]/g, '');
+  const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  let usernameBase;
+  if (firstName) {
+    usernameBase = (firstName.slice(0, 4) + lastName.slice(0, 3)).toLowerCase();
+  } else {
+    usernameBase = 'user';
+  }
+  const username = (usernameBase + randomNum).replace(/[^a-z0-9]/g, '');
   return username;
 };
 
@@ -41,7 +48,9 @@ export default function Register() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [loadingFacebook] = useState(false);
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
@@ -59,7 +68,7 @@ export default function Register() {
     setEmailError('');
     setPasswordError('');
     setSuccessMessage('');
-    setLoading(true);
+    setLoadingEmail(true);
 
     let hasError = false;
     if (!name.trim()) {
@@ -76,11 +85,12 @@ export default function Register() {
     }
 
     if (hasError) {
-      setLoading(false);
+      setLoadingEmail(false);
       return;
     }
 
     try {
+      await setPersistence(auth, browserSessionPersistence);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -105,12 +115,12 @@ export default function Register() {
         `Welcome, ${firstName}! Registration successful! A verification email has been sent to ${email}. Please verify your email before logging in. Check your inbox or spam folder.`
       );
       setTimeout(() => {
-        setLoading(false);
+        setLoadingEmail(false);
         handleNavigation();
       }, 7000);
     } catch (err) {
       console.error('Registration error:', err);
-      setLoading(false);
+      setLoadingEmail(false);
       const errorMessage = getFriendlyErrorMessage(err);
       if (errorMessage.includes('email')) {
         setEmailError(errorMessage);
@@ -127,10 +137,12 @@ export default function Register() {
     setEmailError('');
     setPasswordError('');
     setSuccessMessage('');
-    setLoading(true);
+    setLoadingGoogle(true);
 
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     try {
+      await setPersistence(auth, browserSessionPersistence);
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
@@ -161,12 +173,12 @@ export default function Register() {
         `Welcome, ${fullName}! A verification email has been sent to ${user.email}. Please verify your email before logging in. Check your inbox or spam folder.`
       );
       setTimeout(() => {
-        setLoading(false);
+        setLoadingGoogle(false);
         handleNavigation();
       }, 7000);
     } catch (err) {
       console.error('Google Sign-In error:', err);
-      setLoading(false);
+      setLoadingGoogle(false);
       setEmailError(getFriendlyErrorMessage(err));
     }
   };
@@ -270,9 +282,9 @@ export default function Register() {
               <button
                 type="submit"
                 className="w-full bg-blue-900 text-white p-3 rounded-lg hover:bg-blue-800 transition duration-200"
-                disabled={loading}
+                disabled={loadingEmail}
               >
-                {loading ? 'Registering...' : 'Sign Up'}
+                {loadingEmail ? 'Registering...' : 'Sign Up'}
               </button>
             </form>
 
@@ -281,17 +293,17 @@ export default function Register() {
               <button
                 onClick={handleGoogleSignIn}
                 className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center mb-4 hover:bg-gray-100 transition duration-200"
-                disabled={loading}
+                disabled={loadingGoogle}
               >
                 <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5 mr-2" />
-                {loading ? 'Processing...' : 'Google'}
+                {loadingGoogle ? 'Processing...' : 'Google'}
               </button>
               <button
                 className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-200"
-                disabled={loading}
+                disabled={loadingFacebook}
               >
                 <img src="https://www.facebook.com/favicon.ico" alt="Facebook" className="w-5 h-5 mr-2" />
-                {loading ? 'Processing...' : 'Facebook'}
+                {loadingFacebook ? 'Processing...' : 'Facebook'}
               </button>
             </div>
           </div>

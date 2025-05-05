@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Spinner from '../components/common/Spinner';
 
@@ -23,7 +23,7 @@ export default function Address() {
   const [editingAddressId, setEditingAddressId] = useState(null);
   const [orderCount, setOrderCount] = useState(0);
   const [wishlistCount] = useState(3); // Mock, as in Profile.jsx
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const ORDER_HISTORY_KEY = 'orderHistory_1';
 
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

@@ -218,7 +218,6 @@ const Header = () => {
               </span>
             </Link>
           </div>
-
         </div>
       </div>
 
@@ -387,12 +386,14 @@ const Header = () => {
           )}
         </div>
         <div className="flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide p-2">
-          <Link
-            to="/login"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-log-in mr-2"></i>Sign in
-          </Link>
+          {!user && (
+            <Link
+              to="/login"
+              className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+            >
+              <i className="bx bx-log-in mr-2"></i>Sign in
+            </Link>
+          )}
           <Link
             to="/fashion"
             className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"

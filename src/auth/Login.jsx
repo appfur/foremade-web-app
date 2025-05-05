@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Link, useNavigate } from 'react-router-dom';
@@ -19,8 +19,12 @@ const getFriendlyErrorMessage = (error) => {
       return 'Please enter a valid email address.';
     case 'auth/popup-closed-by-user':
       return 'Google sign-in was cancelled. Please try again.';
+    case 'auth/cancelled-popup-request':
+      return 'Google sign-in popup was closed. Please try again.';
+    case 'auth/too-many-requests':
+      return 'Too many login attempts. Please try again later or reset your password.';
     case 'auth/account-exists-with-different-credential':
-      return 'An account already exists with this email.';
+      return 'An account already exists with this email. Try logging in with another method.';
     default:
       return 'An error occurred. Please try again later.';
   }
@@ -49,7 +53,9 @@ export default function Login() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [loadingFacebook] = useState(false);
   const navigate = useNavigate();
 
   // Validate email format
@@ -60,9 +66,10 @@ export default function Login() {
 
   // Resend verification email
   const handleResendVerification = async () => {
-    setLoading(true);
+    setLoadingEmail(true);
     setEmailError('');
     try {
+      await setPersistence(auth, browserSessionPersistence);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       await sendEmailVerification(user);
@@ -73,7 +80,7 @@ export default function Login() {
       console.error('Resend verification error:', err);
       setEmailError(getFriendlyErrorMessage(err));
     } finally {
-      setLoading(false);
+      setLoadingEmail(false);
     }
   };
 
@@ -83,7 +90,7 @@ export default function Login() {
     setEmailError('');
     setPasswordError('');
     setSuccessMessage('');
-    setLoading(true);
+    setLoadingEmail(true);
 
     // Client-side validation
     let hasError = false;
@@ -97,40 +104,49 @@ export default function Login() {
     }
 
     if (hasError) {
-      setLoading(false);
+      setLoadingEmail(false);
       return;
     }
 
     try {
+      await setPersistence(auth, browserSessionPersistence);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      if (!user.emailVerified) {
+      // Force refresh to ensure emailVerified is up-to-date
+      await user.reload();
+      const refreshedUser = auth.currentUser;
+
+      if (!refreshedUser.emailVerified) {
         setEmailError(
           <>
             Your email is not verified. Please check your inbox or spam folder for the verification email sent to {email}. Click the link to verify, then try logging in again. Need a new link?{' '}
             <button
               onClick={handleResendVerification}
               className="text-blue-600 hover:underline"
-              disabled={loading}
+              disabled={loadingEmail}
             >
               Resend Verification
             </button>
           </>
         );
-        setLoading(false);
+        setLoadingEmail(false);
         return;
       }
 
-      console.log('User logged in successfully:', user);
+      console.log('User logged in successfully:', {
+        uid: user.uid,
+        email: user.email,
+        emailVerified: user.emailVerified,
+      });
       setSuccessMessage('Login successful! Redirecting to profile...');
       setTimeout(() => {
-        setLoading(false);
+        setLoadingEmail(false);
         navigate('/profile');
       }, 2000);
     } catch (err) {
       console.error('Login error:', err);
-      setLoading(false);
+      setLoadingEmail(false);
       const errorMessage = getFriendlyErrorMessage(err);
       if (errorMessage.includes('email') || errorMessage.includes('account')) {
         setEmailError(
@@ -156,21 +172,27 @@ export default function Login() {
     setEmailError('');
     setPasswordError('');
     setSuccessMessage('');
-    setLoading(true);
+    setLoadingGoogle(true);
 
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     try {
+      await setPersistence(auth, browserSessionPersistence);
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      if (!user.emailVerified) {
-        await sendEmailVerification(user);
+      // Force refresh to ensure emailVerified is up-to-date
+      await user.reload();
+      const refreshedUser = auth.currentUser;
+
+      if (!refreshedUser.emailVerified) {
+        await sendEmailVerification(refreshedUser);
         setEmailError(
           <>
             Your email is not verified. Please check your inbox or spam folder for the verification email sent to {user.email}. Click the link to verify, then try logging in again. Need a new link?{' '}
             <button
               onClick={() => {
-                sendEmailVerification(user).then(() => {
+                sendEmailVerification(refreshedUser).then(() => {
                   setEmailError(`A new verification email has been sent to ${user.email}. Please check your inbox or spam folder.`);
                 }).catch((err) => {
                   console.error('Resend verification error:', err);
@@ -178,13 +200,13 @@ export default function Login() {
                 });
               }}
               className="text-blue-600 hover:underline"
-              disabled={loading}
+              disabled={loadingGoogle}
             >
               Resend Verification
             </button>
           </>
         );
-        setLoading(false);
+        setLoadingGoogle(false);
         return;
       }
 
@@ -221,15 +243,19 @@ export default function Login() {
         console.log('User registered with Google successfully');
       }
 
-      console.log('User signed in with Google successfully');
+      console.log('User signed in with Google successfully:', {
+        uid: user.uid,
+        email: user.email,
+        emailVerified: user.emailVerified,
+      });
       setSuccessMessage('Google Sign-In successful! Redirecting to profile...');
       setTimeout(() => {
-        setLoading(false);
+        setLoadingGoogle(false);
         navigate('/profile');
       }, 2000);
     } catch (err) {
       console.error('Google Sign-In error:', err);
-      setLoading(false);
+      setLoadingGoogle(false);
       setEmailError(getFriendlyErrorMessage(err));
     }
   };
@@ -328,9 +354,9 @@ export default function Login() {
               <button
                 type="submit"
                 className="w-full bg-blue-900 text-white p-3 rounded-lg hover:bg-blue-800 transition duration-200"
-                disabled={loading}
+                disabled={loadingEmail}
               >
-                {loading ? 'Logging in...' : 'Login'}
+                {loadingEmail ? 'Logging in...' : 'Login'}
               </button>
             </form>
 
@@ -340,25 +366,25 @@ export default function Login() {
               <button
                 onClick={handleGoogleSignIn}
                 className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center mb-4 hover:bg-gray-100 transition duration-200"
-                disabled={loading}
+                disabled={loadingGoogle}
               >
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"
                   className="w-5 h-5 mr-2"
                 />
-                {loading ? 'Processing...' : 'Google'}
+                {loadingGoogle ? 'Processing...' : 'Google'}
               </button>
               <button
                 className="w-full max-w-xs bg-white border border-gray-300 p-3 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-200"
-                disabled={loading}
+                disabled={loadingFacebook}
               >
                 <img
                   src="https://www.facebook.com/favicon.ico"
                   alt="Facebook"
                   className="w-5 h-5 mr-2"
                 />
-                {loading ? 'Processing...' : 'Facebook'}
+                {loadingFacebook ? 'Processing...' : 'Facebook'}
               </button>
             </div>
           </div>
