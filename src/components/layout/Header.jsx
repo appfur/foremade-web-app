@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import db from '../../db.json';
 import { getCart } from '/src/utils/cartUtils';
 import { auth } from '../../firebase';
+import logo from '/src/assets/logo.png';
 
 const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -222,8 +223,8 @@ const Header = () => {
         <div className="flex items-center">
           <Link to="/">
             <img
-              src="http://foremade.com/storage/app/public/company/2025-04-20-6805437335cb6.webp"
-              className="h-8 sm:h-10"
+              src={logo}
+              className="h-8 sm:h-8"
               alt="Foremade"
             />
           </Link>
