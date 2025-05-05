@@ -5,7 +5,6 @@ import { db } from '../firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Spinner from '../components/common/Spinner';
-import { v4 as uuidv4 } from 'uuid';
 
 export default function Address() {
   const [loading, setLoading] = useState(true);
@@ -26,6 +25,8 @@ export default function Address() {
   const [wishlistCount] = useState(3); // Mock, as in Profile.jsx
   const navigate = useNavigate();
   const ORDER_HISTORY_KEY = 'orderHistory_1';
+
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const getOrderCount = () => {
     try {
@@ -77,7 +78,9 @@ export default function Address() {
         name: additionalData.name || user.displayName || 'Emmanuel Chinecherem',
         profileImage: additionalData.profileImage || null,
         createdAt: additionalData.createdAt || '2025-05-04T23:28:48.857Z',
-        address: additionalData.address || userAddresses[0]?.street || 'Not provided',
+        address: additionalData.address || userAddresses[0]?.street
+          ? `${userAddresses[0].street}, ${userAddresses[0].city}, ${userAddresses[0].state}, ${userAddresses[0].postalCode}, ${userAddresses[0].country}`
+          : 'Not provided',
         addresses: userAddresses,
         uid: user.uid,
       });
@@ -101,9 +104,6 @@ export default function Address() {
     if (!formData.state.trim()) errors.state = 'State is required.';
     if (!formData.country.trim()) errors.country = 'Country is required.';
     if (!formData.postalCode.trim()) errors.postalCode = 'Postal code is required.';
-    else if (!/^\d{5}(-\d{4})?$/.test(formData.postalCode)) {
-      errors.postalCode = 'Invalid postal code format (e.g., 12345 or 12345-6789).';
-    }
     return errors;
   };
 
@@ -124,7 +124,7 @@ export default function Address() {
     try {
       setLoading(true);
       const newAddress = {
-        id: editingAddressId || uuidv4(),
+        id: editingAddressId || generateId(),
         street: formData.street,
         city: formData.city,
         state: formData.state,
