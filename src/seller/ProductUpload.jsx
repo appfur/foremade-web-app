@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { auth } from '../firebase';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function SellerProductDetails() {
+export default function ProductUpload() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -12,69 +11,51 @@ export default function SellerProductDetails() {
     stock: '',
     category: '',
     colors: [],
+    sizes: [],
+    condition: '',
   });
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
   const categories = ['Electronics', 'Clothing', 'Home & Garden', 'Books', 'Toys', 'Other'];
   const availableColors = [
-    { name: 'red', hex: '#ff0000' },
-    { name: 'blue', hex: '#0000ff' },
-    { name: 'green', hex: '#008000' },
-    { name: 'yellow', hex: '#ffff00' },
-    { name: 'black', hex: '#000000' },
-    { name: 'white', hex: '#ffffff' },
+    { name: 'Red', hex: '#ff0000' },
+    { name: 'Blue', hex: '#0000ff' },
+    { name: 'Green', hex: '#008000' },
+    { name: 'Yellow', hex: '#ffff00' },
+    { name: 'Black', hex: '#000000' },
+    { name: 'White', hex: '#ffffff' },
   ];
+  const sizes = ['S', 'M', 'L', 'XL'];
+  const conditions = ['New', 'Used', 'Refurbished'];
 
   useEffect(() => {
-    console.log('Firestore instance:', db);
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
-        try {
-          const token = await currentUser.getIdToken(true);
-          console.log('Authenticated user:', {
-            uid: currentUser.uid,
-            email: currentUser.email,
-            token: token ? 'Present' : 'Missing',
-            tokenLength: token?.length || 0,
-          });
-          setUser(currentUser);
-        } catch (error) {
-          console.error('Error refreshing token:', error);
-          toast.error('Authentication error. Please log in again.');
-          setUser(null);
-        }
+        setUser(currentUser);
       } else {
-        console.warn('No authenticated user. Please log in.');
         toast.error('Please log in to add products.');
-        setUser(null);
       }
     });
     return () => unsubscribe();
   }, []);
 
-  const validateForm = () => {
-    console.log('Validating form data:', formData);
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Product name is required.';
-    if (!formData.description.trim()) newErrors.description = 'Description is required.';
-    if (!formData.price || isNaN(formData.price) || formData.price <= 0) {
-      newErrors.price = 'Enter a valid price.';
-    }
-    if (!formData.stock || isNaN(formData.stock) || formData.stock < 0) {
-      newErrors.stock = 'Enter a valid stock quantity.';
-    }
-    if (!formData.category) newErrors.category = 'Select a category.';
-    if (formData.colors.length === 0) newErrors.colors = 'Select at least one color.';
-    console.log('Validation errors:', newErrors);
-    return newErrors;
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+      setErrors((prev) => ({ ...prev, image: '' }));
+    }
   };
 
   const handleColorToggle = (color) => {
@@ -85,7 +66,30 @@ export default function SellerProductDetails() {
       return { ...prev, colors: newColors };
     });
     setErrors((prev) => ({ ...prev, colors: '' }));
-    console.log('Toggled color:', color, 'New colors:', formData.colors);
+  };
+
+  const handleSizeToggle = (size) => {
+    setFormData((prev) => {
+      const newSizes = prev.sizes.includes(size)
+        ? prev.sizes.filter((s) => s !== size)
+        : [...prev.sizes, size];
+      return { ...prev, sizes: newSizes };
+    });
+    setErrors((prev) => ({ ...prev, sizes: '' }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = 'Product name is required.';
+    if (!formData.description.trim()) newErrors.description = 'Description is required.';
+    if (!formData.price || isNaN(formData.price) || formData.price <= 0) newErrors.price = 'Enter a valid price.';
+    if (!formData.stock || isNaN(formData.stock) || formData.stock < 0) newErrors.stock = 'Enter a valid stock quantity.';
+    if (!formData.category) newErrors.category = 'Select a category.';
+    if (formData.colors.length === 0) newErrors.colors = 'Select at least one color.';
+    if (formData.sizes.length === 0) newErrors.sizes = 'Select at least one size.';
+    if (!formData.condition) newErrors.condition = 'Select a condition.';
+    if (!image) newErrors.image = 'Select an image.';
+    return newErrors;
   };
 
   const handleSubmit = async (e) => {
@@ -93,43 +97,42 @@ export default function SellerProductDetails() {
     setErrors({});
     setLoading(true);
 
-    // Temporarily bypass auth check for testing permissive rules
-    // if (!user) {
-    //   console.error('No authenticated user.');
-    //   toast.error('You must be logged in to add products.');
-    //   setLoading(false);
-    //   return;
-    // }
+    if (!user) {
+      toast.error('You must be logged in to add products.');
+      setLoading(false);
+      return;
+    }
+
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setLoading(false);
+      return;
+    }
 
     try {
-      const newErrors = validateForm();
-      if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
-        setLoading(false);
-        return;
-      }
+      const uploadData = new FormData();
+      uploadData.append('image', image);
+      uploadData.append('name', formData.name);
+      uploadData.append('description', formData.description);
+      uploadData.append('price', formData.price);
+      uploadData.append('stock', formData.stock);
+      uploadData.append('category', formData.category);
+      uploadData.append('colors', JSON.stringify(formData.colors));
+      uploadData.append('sizes', JSON.stringify(formData.sizes));
+      uploadData.append('condition', formData.condition);
+      uploadData.append('sellerId', user.uid);
 
-      const productData = {
-        name: formData.name,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
-        category: formData.category,
-        colors: formData.colors,
-        sellerId: user ? user.uid : 'test-user',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: uploadData,
+      });
 
-      console.log('Prepared product data:', productData);
+      if (!response.ok) throw new Error('Failed to upload product');
+      const result = await response.json();
+      console.log(result)
 
-      console.log('Attempting to add product to Firestore...');
-      const productsCollection = collection(db, 'products');
-      console.log('Collection reference:', productsCollection.path);
-      const docRef = await addDoc(productsCollection, productData);
-      console.log('Product added successfully, ID:', docRef.id, 'Data:', productData);
       toast.success('Product added successfully!');
-
       setFormData({
         name: '',
         description: '',
@@ -137,14 +140,14 @@ export default function SellerProductDetails() {
         stock: '',
         category: '',
         colors: [],
+        sizes: [],
+        condition: '',
       });
+      setImage(null);
+      setImagePreview('');
     } catch (error) {
-      console.error('Error saving product:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-      });
-      toast.error(`Failed to save product: ${error.message || 'Unknown error'}`);
+      console.error('Error uploading product:', error);
+      toast.error(`Failed to upload product: ${error.message}`);
     }
     setLoading(false);
   };
@@ -187,7 +190,7 @@ export default function SellerProductDetails() {
           <div className="flex flex-col gap-4">
             <div className="w-full">
               <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                Price ($) <span className="text-red-500">*</span>
+                Price (₦) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -230,8 +233,8 @@ export default function SellerProductDetails() {
               }`}
             >
               <option value="">Select a category</option>
-              {categories.map((category, index) => (
-                <option key={index} value={category}>
+              {categories.map((category) => (
+                <option key={category} value={category}>
                   {category}
                 </option>
               ))}
@@ -260,6 +263,70 @@ export default function SellerProductDetails() {
             </div>
             {errors.colors && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.colors}</p>}
           </div>
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700">
+              Sizes <span className="text-red-500">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {sizes.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => handleSizeToggle(size)}
+                  className={`px-4 py-2 rounded border ${
+                    formData.sizes.includes(size)
+                      ? 'border-blue-500 bg-blue-100'
+                      : 'border-gray-300 bg-gray-100'
+                  } text-xs sm:text-sm`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+            {errors.sizes && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.sizes}</p>}
+          </div>
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700">
+              Condition <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="condition"
+              value={formData.condition}
+              onChange={handleChange}
+              className={`mt-1 block w-full border rounded-md py-3 px-2 text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                errors.condition ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+              }`}
+            >
+              <option value="">Select a condition</option>
+              {conditions.map((condition) => (
+                <option key={condition} value={condition}>
+                  {condition}
+                </option>
+              ))}
+            </select>
+            {errors.condition && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.condition}</p>}
+          </div>
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700">
+              Product Image <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className={`mt-1 w-full py-3 px-2 border rounded text-xs sm:text-sm ${
+                errors.image ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="mt-2 w-full max-w-xs h-auto rounded"
+              />
+            )}
+            {errors.image && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.image}</p>}
+          </div>
           <button
             type="submit"
             disabled={loading}
@@ -267,7 +334,7 @@ export default function SellerProductDetails() {
               loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-900 hover:bg-blue-800'
             }`}
           >
-            {loading ? 'Saving...' : 'Add Product'}
+            {loading ? 'Uploading...' : 'Add Product'}
           </button>
         </form>
       </div>

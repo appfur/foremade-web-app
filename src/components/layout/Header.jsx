@@ -247,7 +247,7 @@ const Header = () => {
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Search for anything"
+                placeholder="Search Foremade"
                 className="w-full bg-white py-2 pl-10 pr-3 text-xs focus:outline-none placeholder-black border-none rounded-r-full"
                 value={searchQuery}
                 onChange={handleSearch}
@@ -342,7 +342,7 @@ const Header = () => {
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Search for anything"
+              placeholder="Search Foremade"
               className="w-full text-black border border-gray-300 rounded-l-md p-2 pl-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
               value={searchQuery}
               onChange={handleSearch}

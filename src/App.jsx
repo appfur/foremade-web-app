@@ -7,10 +7,8 @@ import Login from './auth/Login';
 import NotFound from './pages/NotFound';
 import BestSelling from './components/product/BestSelling';
 import Product from './pages/Product';
-import AddPhone from './auth/AddPhone'; // Import the new AddPhone component
-import ProtectedRoute from './auth/ProtectedRoute'; // Import ProtectedRoute
-
-// Cart & Other Components
+import AddPhone from './auth/AddPhone';
+import ProtectedRoute from './auth/ProtectedRoute';
 import Cart from './pages/Cart';
 import Favorites from './pages/Favorites';
 import Watchlist from './profile/Watchlist';
@@ -21,10 +19,11 @@ import Wallet from './profile/Wallet';
 import Loyalty from './profile/Loyalty';
 import Checkout from './components/checkout/Checkout';
 import SellerRegister from './seller/SellerRegister';
-import SellerProductDetails from './seller/SellerProductDetails';
+import SellerProductUpload from './seller/SellerProductUpload';
 import Orders from './profile/Orders';
 import Address from './profile/Address';
 import Setting from './profile/Setting';
+// import ImageUpload from './components/ImageUpload';
 
 function App() {
   return (
@@ -37,21 +36,17 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/add-phone" element={<AddPhone />} />
 
-          {/* Public Routes (accessible without auth) */}
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/bestSelling" element={<BestSelling />} />
           <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<Product />} />
 
+          {/* Seller Upload Route */}
+          {/* <Route path="/seller/upload" element={<ImageUpload />} /> */}
+
           {/* Protected Routes */}
-          <Route
-            path="/cart"
-            element={
-              // <ProtectedRoute>
-                <Cart />
-              // </ProtectedRoute> 
-            }
-          />
+          <Route path="/cart" element={<Cart />} />
           <Route
             path="/favorites"
             element={
@@ -120,26 +115,12 @@ function App() {
             path="/seller-product-details"
             element={
               <ProtectedRoute>
-                <SellerProductDetails />
+                <SellerProductUpload />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/checkout"
-            element={
-              // <ProtectedRoute>
-                <Checkout />
-              // </ProtectedRoute> 
-            }
-          />
-          <Route
-            path="/sell"
-            element={
-              // <ProtectedRoute>
-                <SellerRegister />
-              // </ProtectedRoute>
-            }
-          />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/sell" element={<SellerRegister />} />
           <Route
             path="/address"
             element={
@@ -148,14 +129,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/setting"
-            element={
-              // <ProtectedRoute>
-                <Setting />
-              // </ProtectedRoute>
-            }
-          />
+          <Route path="/setting" element={<Setting />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

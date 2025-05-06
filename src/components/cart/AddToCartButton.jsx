@@ -35,7 +35,7 @@ const AddToCartButton = ({ productId, className = '' }) => {
     <div className="relative">
       <button
         onClick={handleAddToCart}
-        className={`text-xl text-gray-600 hover:text-blue-600 transition duration-200 ${className}`}
+        className={`text-2xl text-gray-600 hover:text-blue-600 transition duration-200 ${className}`}
         aria-label="Add to cart"
       >
         <i className="bx bxs-cart-add"></i>
