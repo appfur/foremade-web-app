@@ -1,39 +1,26 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { auth, db } from '/src/firebase';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '/src/firebase';
+import { addToCart } from '/src/utils/cartUtils';
+import { toast } from 'react-toastify';
 import ProductCard from '/src/components/home/ProductCard';
 import SkeletonLoader from '/src/components/common/SkeletonLoader';
-import { getCart, updateCart } from '/src/utils/cartUtils';
 
 const Product = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [cartPopup, setCartPopup] = useState(null);
-  const [favoritesPopup, setFavoritesPopup] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [cart, setCart] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [showFullDescription, setShowFullDescription] = useState(false);
 
-  // Load cart and favorites
+  // Load favorites
   useEffect(() => {
-    setDataLoading(true);
     try {
-      const cartItems = getCart();
-      console.log('Loaded cart in Product.jsx:', cartItems);
-      if (Array.isArray(cartItems)) {
-        setCart(cartItems);
-      } else {
-        console.warn('Cart data invalid, resetting to empty array.');
-        setCart([]);
-        updateCart([]);
-      }
-
       const storedFavorites = localStorage.getItem('favorites');
       if (storedFavorites) {
         const parsedFavorites = JSON.parse(storedFavorites);
@@ -43,21 +30,16 @@ const Product = () => {
           console.warn('Favorites data invalid, resetting to empty array.');
           setFavorites([]);
           localStorage.setItem('favorites', JSON.stringify([]));
-          setError('Favorites data was invalid and has been reset.');
         }
       } else {
         setFavorites([]);
         localStorage.setItem('favorites', JSON.stringify([]));
       }
     } catch (err) {
-      console.error('Error loading cart/favorites:', err.message);
-      setCart([]);
+      console.error('Error loading favorites:', err);
       setFavorites([]);
-      updateCart([]);
       localStorage.setItem('favorites', JSON.stringify([]));
-      setError('Failed to load cart or favorites: ' + err.message);
-    } finally {
-      setDataLoading(false);
+      toast.error('Failed to load favorites');
     }
   }, []);
 
@@ -73,13 +55,13 @@ const Product = () => {
             console.warn('Favorites data invalid in storage event, resetting.');
             setFavorites([]);
             localStorage.setItem('favorites', JSON.stringify([]));
-            setError('Favorites data was invalid and has been reset.');
+            toast.error('Favorites data invalid');
           }
         } catch (err) {
-          console.error('Error parsing updated favorites from storage event:', err);
+          console.error('Error parsing updated favorites:', err);
           setFavorites([]);
           localStorage.setItem('favorites', JSON.stringify([]));
-          setError('Failed to sync favorites: ' + err.message);
+          toast.error('Failed to sync favorites');
         }
       }
     };
@@ -93,8 +75,8 @@ const Product = () => {
     try {
       localStorage.setItem('favorites', JSON.stringify(favorites));
     } catch (err) {
-      console.error('Error saving favorites to localStorage:', err);
-      setError('Failed to save favorites changes: ' + err.message);
+      console.error('Error saving favorites:', err);
+      toast.error('Failed to save favorites');
     }
   }, [favorites]);
 
@@ -137,9 +119,8 @@ const Product = () => {
             sizes: data.sizes || [],
             condition: data.condition || '',
             imageUrl: data.imageUrl,
-            sellerId: data.sellerId || '',
-            sellerName: data.sellerName || 'Unknown Seller',
-            rating: Math.random() * 2 + 3, // Mock rating 3–5
+            seller: data.seller || { name: 'Unknown Seller' },
+            rating: data.rating || Math.random() * 2 + 3,
             reviews: data.reviews || [],
           };
           if (!productData.imageUrl || !productData.imageUrl.startsWith('https://')) {
@@ -157,7 +138,6 @@ const Product = () => {
           const similar = querySnapshot.docs
             .map((doc) => {
               const data = doc.data();
-              console.log('Raw product:', { id: doc.id, data });
               if (!data.name || !data.price || !data.category || !data.imageUrl || doc.id === id) {
                 console.warn('Invalid similar product data:', { id: doc.id, data });
                 return null;
@@ -185,16 +165,12 @@ const Product = () => {
                 sizes: data.sizes || [],
                 condition: data.condition || '',
                 imageUrl: data.imageUrl,
-                sellerId: data.sellerId || '',
-                sellerName: data.sellerName || 'Unknown Seller',
-                rating: Math.random() * 2 + 3,
+                seller: data.seller || { name: 'Unknown Seller' },
+                rating: data.rating || Math.random() * 2 + 3,
               };
             })
             .filter((product) => {
-              if (!product) {
-                return false;
-              }
-              console.log('Before image filter:', product);
+              if (!product) return false;
               const isValidImage = product.imageUrl && typeof product.imageUrl === 'string' && product.imageUrl.startsWith('https://');
               if (!isValidImage) {
                 console.warn('Filtered out similar product with invalid imageUrl:', {
@@ -230,91 +206,42 @@ const Product = () => {
     fetchProduct();
   }, [id]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
-
-    const stock = product.stock || 0;
-    const existingItem = cart.find((item) => item.productId === product.id);
-    const currentQuantity = existingItem ? existingItem.quantity : 0;
-    const newTotalQuantity = currentQuantity + quantity;
-
-    if (newTotalQuantity > stock) {
-      setCartPopup(`Cannot add more than ${stock} units of ${product.name}.`);
-      setQuantity(stock - currentQuantity > 0 ? stock - currentQuantity : 1);
+    if (!auth.currentUser) {
+      toast.error('Please log in to add items to cart');
+      navigate('/login');
       return;
     }
 
-    const updatedCart = existingItem
-      ? cart.map((item) =>
-          item.productId === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        )
-      : [...cart, { productId: product.id, quantity }];
-    setCart(updatedCart);
     try {
-      updateCart(updatedCart);
-      console.log('Updated cart in Product.jsx:', updatedCart);
-      setCartPopup(
-        <span>
-          <i className="bx bx-cart text-blue-500"></i> {product.name} added to cart!{' '}
-          <Link to="/cart" className="text-blue-600 hover:underline">
-            View Cart
-          </Link>
-        </span>
-      );
+      if (quantity > product.stock) {
+        toast.error(`Cannot add more than ${product.stock} units of ${product.name}`);
+        setQuantity(product.stock > 0 ? product.stock : 1);
+        return;
+      }
+      await addToCart(auth.currentUser.uid, product.id, quantity);
+      toast.success(`${product.name} added to cart!`);
+      setQuantity(1);
     } catch (err) {
-      console.error('Error updating cart:', err);
-      setError('Failed to update cart: ' + err.message);
+      console.error('Error adding to cart:', err);
+      toast.error('Failed to add to cart');
     }
-    setQuantity(1);
   };
 
   const toggleFavorite = () => {
     if (!product) return;
     setFavorites((prevFavorites) => {
       if (prevFavorites.includes(product.id)) {
-        setFavoritesPopup(
-          <span>
-            <i className="bx bxs-heart text-yellow-500"></i> Removed from favorites.{' '}
-            <Link to="/favorites" className="text-blue-600 hover:underline">
-              View Favorites
-            </Link>
-          </span>
-        );
+        toast.success('Removed from favorites');
         return prevFavorites.filter((id) => id !== product.id);
       }
-      setFavoritesPopup(
-        <span>
-          <i className="bx bxs-heart text-red-500"></i> Added to favorites!{' '}
-          <Link to="/favorites" className="text-blue-600 hover:underline">
-            View Favorites
-          </Link>
-        </span>
-      );
+      toast.success('Added to favorites!');
       return [...prevFavorites, product.id];
     });
   };
 
-  useEffect(() => {
-    if (cartPopup) {
-      const timer = setTimeout(() => {
-        setCartPopup(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [cartPopup]);
-
-  useEffect(() => {
-    if (favoritesPopup) {
-      const timer = setTimeout(() => {
-        setFavoritesPopup(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [favoritesPopup]);
-
-  if (loading || dataLoading) {
+  if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <SkeletonLoader type="productDetail" count={1} />
@@ -345,7 +272,7 @@ const Product = () => {
   }
 
   const category = product.category || 'unknown';
-  const seller = product.sellerName || 'Unknown Seller';
+  const seller = product.seller?.name || 'Unknown Seller';
 
   const DESCRIPTION_LIMIT = 100;
   const truncatedDescription =
@@ -356,26 +283,10 @@ const Product = () => {
 
   return (
     <div className="relative container mx-auto p-5">
-      {cartPopup && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
-          <div className="flex items-center gap-2">
-            {typeof cartPopup === 'string' ? (
-              <span className="text-sm">{cartPopup}</span>
-            ) : (
-              cartPopup
-            )}
-          </div>
-        </div>
-      )}
-      {favoritesPopup && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
-          <div className="flex items-center gap-2">{favoritesPopup}</div>
-        </div>
-      )}
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-3/4">
           <div className="flex flex-col md:flex-row gap-6">
-            <div className="md:w-1/2 p-10">
+            <div className="md:w-1/2">
               <img
                 src={product.imageUrl || '/images/placeholder.jpg'}
                 alt={product.name}
@@ -453,7 +364,7 @@ const Product = () => {
                       favorites.includes(product.id) ? 'text-red-500' : 'text-gray-400'
                     }`}
                   ></i>
-                  {favorites.includes(product.id)}
+                  {favorites.includes(product.id) ? 'Remove' : 'Add'}
                 </button>
               </div>
             </div>
@@ -497,7 +408,7 @@ const Product = () => {
             )}
           </div>
         </div>
-        <div className="w-full md:w-1/4 max-md:hidden overflow-auto">
+        <div className="w-full md:w-1/5 max-md:hidden overflow-auto">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
           <div className="flex flex-col gap-4 md:border-l md:pl-4">
             {similarProducts.length > 0 ? (

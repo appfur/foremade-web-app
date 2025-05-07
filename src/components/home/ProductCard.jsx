@@ -57,9 +57,6 @@ const ProductCard = ({ product }) => {
                 ></i>
               ))}
             </div>
-            <div className="ml-auto">
-              <Help />
-            </div>
           </div>
           <span className="inline-block mt-2 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
             Brand Store
@@ -68,6 +65,9 @@ const ProductCard = ({ product }) => {
       </Link>
       <div className="absolute top-6 right-7 max-md:top-5 max-md:right-6">
         <AddToCartButton productId={product.id} />
+      </div>
+      <div className="absolute bottom-10 right-7 max-md:bottom-9 max-md:right-6">
+        <Help />
       </div>
     </div>
   );

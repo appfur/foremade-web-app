@@ -8,6 +8,8 @@ import {
   clearCart,
   checkout,
 } from '/src/utils/cartUtils';
+import CartItem from '/src/components/cart/CartItem';
+import CartSummary from '/src/components/cart/CartSummary';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -30,6 +32,7 @@ const Cart = () => {
           console.error('Error loading cart:', err);
           setError('Failed to load cart. Please try again.');
           setCartItems([]);
+          toast.error('Failed to load cart');
         }
       } else {
         setError('Please log in to view your cart.');
@@ -51,6 +54,7 @@ const Cart = () => {
         } catch (err) {
           console.error('Error updating cart:', err);
           setError('Failed to update cart.');
+          toast.error('Failed to update cart');
         }
       }
     };
@@ -62,9 +66,14 @@ const Cart = () => {
     };
   }, [user, navigate]);
 
-  const updateQuantity = async (productId, newQuantity) => {
+  const updateCartQuantity = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
     try {
+      const item = cartItems.find((i) => i.productId === productId);
+      if (item && item.product && newQuantity > item.product.stock) {
+        toast.error(`Cannot add more than ${item.product.stock} units of ${item.product.name}`);
+        return;
+      }
       const updatedItems = cartItems.map((item) =>
         item.productId === productId ? { ...item, quantity: newQuantity } : item
       );
@@ -77,7 +86,7 @@ const Cart = () => {
     }
   };
 
-  const removeItem = async (productId) => {
+  const removeFromCart = async (productId) => {
     try {
       const updatedItems = cartItems.filter((item) => item.productId !== productId);
       await updateCart(user.uid, updatedItems);
@@ -116,7 +125,7 @@ const Cart = () => {
   };
 
   const totalPrice = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + (item.product?.price || 0) * item.quantity,
     0
   );
 
@@ -124,86 +133,40 @@ const Cart = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
-      <div className="bg-blue-50 p-6 rounded-lg shadow-md max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Your Cart</h1>
-        {error ? (
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">{error}</p>
-            <Link
-              to="/products"
-              className="inline-block bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition text-sm"
-            >
-              Shop Now
-            </Link>
-          </div>
-        ) : (
-          <>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Your Cart</h1>
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="lg:w-2/3">
+          {error && cartItems.length === 0 ? (
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">{error}</p>
+              <Link
+                to="/products"
+                className="inline-block bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition text-sm"
+              >
+                Shop Now
+              </Link>
+            </div>
+          ) : (
             <div className="space-y-4">
               {cartItems.map((item) => (
-                <div
+                <CartItem
                   key={item.productId}
-                  className="flex items-center gap-4 p-4 bg-white rounded-md shadow-sm"
-                >
-                  {item.imageUrl && (
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="w-20 h-20 object-contain rounded"
-                      onError={(e) => {
-                        e.target.src = '/images/placeholder.jpg';
-                      }}
-                    />
-                  )}
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium text-gray-800">{item.name}</h3>
-                    <p className="text-gray-600">₦{item.price.toFixed(2)}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                        className="bg-gray-200 text-gray-600 px-2 py-1 rounded hover:bg-gray-300 text-sm"
-                        disabled={item.quantity <= 1}
-                      >
-                        -
-                      </button>
-                      <span className="text-gray-800 text-sm">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        className="bg-gray-200 text-gray-600 px-2 py-1 rounded hover:bg-gray-300 text-sm"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => removeItem(item.productId)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <i className="bx bx-trash text-xl"></i>
-                  </button>
-                </div>
+                  item={item}
+                  updateCartQuantity={updateCartQuantity}
+                  removeFromCart={removeFromCart}
+                />
               ))}
             </div>
-            <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <p className="text-lg font-medium text-gray-800">
-                Total: ₦{totalPrice.toFixed(2)}
-              </p>
-              <div className="flex gap-4">
-                <button
-                  onClick={handleClearCart}
-                  className="bg-red-600 text-white py-2 px-4 rounded-full hover:bg-red-700 transition text-sm"
-                >
-                  Clear Cart
-                </button>
-                <button
-                  onClick={handleCheckout}
-                  className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition text-sm"
-                >
-                  Checkout
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+          )}
+        </div>
+        <div className="lg:w-1/3">
+          <CartSummary
+            totalPrice={totalPrice}
+            handleCheckout={handleCheckout}
+            cartItems={cartItems}
+            clearCart={handleClearCart}
+          />
+        </div>
       </div>
     </div>
   );

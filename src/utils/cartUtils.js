@@ -1,185 +1,152 @@
-import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { db } from '/src/firebase';
+import { doc, getDoc, collection, addDoc } from 'firebase/firestore';
+import { toast } from 'react-toastify';
 
-// Constants
-const getCartStorageKey = (userId) => `userCart_${userId}`;
-const getOrderHistoryKey = (userId) => `orderHistory_${userId}`;
+export const addToCart = async (userId, productId, quantity) => {
+  if (!userId || !productId || quantity <= 0) {
+    throw new Error('Invalid cart item data');
+  }
 
-// Initialize cart for a user
-const initializeCart = async (userId) => {
-  const cartStorageKey = getCartStorageKey(userId);
-  let initialCart = { userId, items: [] };
+  // Validate product exists
+  const productRef = doc(db, 'products', productId);
+  const productSnap = await getDoc(productRef);
+  if (!productSnap.exists()) {
+    throw new Error('Product not found');
+  }
+  const productData = productSnap.data();
+  if (productData.stock < quantity) {
+    throw new Error(`Only ${productData.stock} units available`);
+  }
+
+  const cart = await getCart(userId);
+  const existingItem = cart.find((item) => item.productId === productId);
+  let updatedCart;
+
+  if (existingItem) {
+    const newQuantity = existingItem.quantity + quantity;
+    if (newQuantity > productData.stock) {
+      throw new Error(`Cannot add more than ${productData.stock} units`);
+    }
+    updatedCart = cart.map((item) =>
+      item.productId === productId ? { ...item, quantity: newQuantity } : item
+    );
+  } else {
+    updatedCart = [
+      ...cart,
+      {
+        productId,
+        quantity,
+        product: {
+          name: productData.name,
+          price: productData.price,
+          image: productData.imageUrl,
+          stock: productData.stock,
+        },
+      },
+    ];
+  }
+
+  await updateCart(userId, updatedCart);
+  window.dispatchEvent(new Event('cartUpdated'));
+};
+
+export const getCart = async (userId) => {
+  if (!userId) return [];
+  const cartKey = `userCart_${userId}`;
+  let cart = [];
 
   try {
-    const storedCart = localStorage.getItem(cartStorageKey);
+    const storedCart = localStorage.getItem(cartKey);
     if (storedCart) {
-      const parsedCart = JSON.parse(storedCart);
-      if (parsedCart && Array.isArray(parsedCart.items)) {
-        // Validate items with Firestore
-        const validatedItems = [];
-        for (const item of parsedCart.items) {
-          const productRef = doc(db, 'products', item.productId);
-          const productSnap = await getDoc(productRef);
-          if (productSnap.exists()) {
-            validatedItems.push({
-              ...item,
-              imageUrl: productSnap.data().imageUrl || '',
-              name: productSnap.data().name,
-              price: productSnap.data().price,
-            });
-          }
-        }
-        initialCart.items = validatedItems;
-        localStorage.setItem(cartStorageKey, JSON.stringify(initialCart));
-        return initialCart;
+      cart = JSON.parse(storedCart);
+      if (!Array.isArray(cart)) {
+        cart = [];
       }
     }
 
-    localStorage.setItem(cartStorageKey, JSON.stringify(initialCart));
-  } catch (err) {
-    console.error('Error initializing cart:', err);
-    localStorage.setItem(cartStorageKey, JSON.stringify(initialCart));
-  }
+    // Validate and clean cart
+    const validCart = [];
+    for (const item of cart) {
+      if (!item.productId || item.quantity <= 0) {
+        console.warn('Invalid cart item:', item);
+        continue;
+      }
+      const productRef = doc(db, 'products', item.productId);
+      const productSnap = await getDoc(productRef);
+      if (productSnap.exists()) {
+        const productData = productSnap.data();
+        validCart.push({
+          ...item,
+          product: {
+            name: productData.name,
+            price: productData.price,
+            image: productData.imageUrl,
+            stock: productData.stock,
+          },
+        });
+      } else {
+        console.warn(`Product not found for ID: ${item.productId}`);
+        toast.error(`Removed unavailable product (ID: ${item.productId}) from cart`);
+      }
+    }
 
-  return initialCart;
-};
+    if (validCart.length < cart.length) {
+      await updateCart(userId, validCart);
+    }
 
-// Load order history from localStorage
-const getOrderHistory = (userId) => {
-  try {
-    const orderHistoryKey = getOrderHistoryKey(userId);
-    const storedOrders = localStorage.getItem(orderHistoryKey);
-    return storedOrders ? JSON.parse(storedOrders) : [];
+    return validCart;
   } catch (err) {
-    console.error('Error getting order history:', err);
+    console.error('Error fetching cart:', err);
     return [];
   }
 };
 
-// Save order history to localStorage
-const saveOrderHistory = (userId, orders) => {
+export const updateCart = async (userId, cartItems) => {
+  if (!userId) return;
+  const cartKey = `userCart_${userId}`;
   try {
-    const orderHistoryKey = getOrderHistoryKey(userId);
-    localStorage.setItem(orderHistoryKey, JSON.stringify(orders));
-  } catch (err) {
-    console.error('Error saving order history:', err);
-  }
-};
-
-// Utility functions
-export const getCart = async (userId) => {
-  const cartState = await initializeCart(userId);
-  return cartState.items;
-};
-
-export const addToCart = async (userId, productId, quantity = 1) => {
-  try {
-    const cartState = await initializeCart(userId);
-    const productRef = doc(db, 'products', productId);
-    const productSnap = await getDoc(productRef);
-
-    if (!productSnap.exists()) {
-      throw new Error('Product not found');
-    }
-
-    const productData = productSnap.data();
-    const existingItem = cartState.items.find((item) => item.productId === productId);
-
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cartState.items.push({
-        productId,
-        name: productData.name,
-        price: productData.price,
-        imageUrl: productData.imageUrl || '',
-        quantity,
-      });
-    }
-
-    const cartStorageKey = getCartStorageKey(userId);
-    localStorage.setItem(cartStorageKey, JSON.stringify(cartState));
+    localStorage.setItem(cartKey, JSON.stringify(cartItems));
     window.dispatchEvent(new Event('cartUpdated'));
-    return cartState.items;
-  } catch (err) {
-    console.error('Error adding to cart:', err);
-    throw err;
-  }
-};
-
-export const updateCart = async (userId, newItems) => {
-  try {
-    const cartState = await initializeCart(userId);
-    // Validate items with Firestore
-    const validatedItems = [];
-    for (const item of newItems) {
-      const productRef = doc(db, 'products', item.productId);
-      const productSnap = await getDoc(productRef);
-      if (productSnap.exists()) {
-        validatedItems.push({
-          ...item,
-          imageUrl: productSnap.data().imageUrl || '',
-          name: productSnap.data().name,
-          price: productSnap.data().price,
-        });
-      }
-    }
-
-    cartState.items = validatedItems;
-    const cartStorageKey = getCartStorageKey(userId);
-    localStorage.setItem(cartStorageKey, JSON.stringify(cartState));
-    window.dispatchEvent(new Event('cartUpdated'));
-    return cartState.items;
   } catch (err) {
     console.error('Error updating cart:', err);
-    return (await initializeCart(userId)).items;
+    throw err;
   }
 };
 
 export const clearCart = async (userId) => {
-  try {
-    const cartState = await initializeCart(userId);
-    cartState.items = [];
-    const cartStorageKey = getCartStorageKey(userId);
-    localStorage.setItem(cartStorageKey, JSON.stringify(cartState));
-    window.dispatchEvent(new Event('cartUpdated'));
-    return cartState.items;
-  } catch (err) {
-    console.error('Error clearing cart:', err);
-    return (await initializeCart(userId)).items;
-  }
+  await updateCart(userId, []);
 };
 
 export const checkout = async (userId) => {
+  if (!userId) throw new Error('User not authenticated');
+  const cart = await getCart(userId);
+  if (cart.length === 0) throw new Error('Cart is empty');
+
   try {
-    const cartItems = await getCart(userId);
-    if (cartItems.length === 0) {
-      throw new Error('Cart is empty');
+    for (const item of cart) {
+      const productRef = doc(db, 'products', item.productId);
+      const productSnap = await getDoc(productRef);
+      if (!productSnap.exists()) {
+        throw new Error(`Product ${item.productId} no longer available`);
+      }
+      const productData = productSnap.data();
+      if (productData.stock < item.quantity) {
+        throw new Error(`Insufficient stock for ${productData.name}`);
+      }
     }
 
-    const orders = getOrderHistory(userId);
-    const newOrder = {
-      orderId: `ORD${orders.length + 1}`.padStart(7, '0'),
-      date: new Date().toISOString(),
-      items: cartItems,
-    };
-    orders.push(newOrder);
-    saveOrderHistory(userId, orders);
+    const orderRef = collection(db, 'orders');
+    await addDoc(orderRef, {
+      userId,
+      items: cart,
+      total: cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+      createdAt: new Date().toISOString(),
+      status: 'pending',
+    });
 
     await clearCart(userId);
-    window.dispatchEvent(new Event('orderPlaced'));
-    return newOrder;
   } catch (err) {
-    console.error('Error during checkout:', err);
+    console.error('Checkout error:', err);
     throw err;
   }
-};
-
-export const getOrderCount = (userId) => {
-  return getOrderHistory(userId).length;
-};
-
-export const getCartItemCount = async (userId) => {
-  const cartItems = await getCart(userId);
-  return cartItems.reduce((total, item) => total + item.quantity, 0);
 };
