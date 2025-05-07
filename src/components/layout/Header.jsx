@@ -225,7 +225,7 @@ const Header = () => {
         <div className="flex items-center">
             <img
               src={logo}
-              className="h-14"
+              className="h-14 sm:w-[400px] md:w-[400px] lg:w-[400px] xl:w-72 "
               alt="Foremade"
             />
         </div>
@@ -255,7 +255,7 @@ const Header = () => {
               <i className="bx bx-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 text-sm"></i>
             </div>
           </div>
-          <button className="bg-blue-700 text-white px-6 py-2 rounded-full hover:bg-blue-800 text-xs ml-2">
+          <button className="bg-blue-700 sm:hidden md:flex lg:flex xl:flex text-white px-6 py-2 rounded-full hover:bg-blue-800 text-xs ml-2">
             Search
           </button>
 
