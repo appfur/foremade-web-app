@@ -1,60 +1,70 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import ProductList from '../components/product/ProductList';
-import ProductFilter from '../components/product/ProductFilter';
-import db from '../db.json';
+import { Link } from 'react-router-dom';
+// import Help from '../common/Help';
+import AddToCartButton from '/src/components/cart/AddToCartButton';
 
-const Products = () => {
-  const initialProducts = useMemo(() => {
-    const products = Array.isArray(db.products) ? db.products : [];
-    console.log('Initial products from db.json:', products);
-    return products;
-  }, []);
-
-  const [filteredProducts, setFilteredProducts] = useState(initialProducts);
-
-  useEffect(() => {
-    console.log('Filtered products passed to ProductList:', filteredProducts);
-  }, [filteredProducts]);
-
-  const handleFilterChange = useCallback(({ priceRange, selectedCategories, sortOption, searchTerm }) => {
-    let updatedProducts = [...initialProducts];
-
-    updatedProducts = updatedProducts.filter((product) => {
-      const withinPriceRange = product.price >= priceRange[0] && product.price <= priceRange[1];
-      const inSelectedCategories =
-        selectedCategories.length === 0 || selectedCategories.includes(product.categoryId);
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-      return withinPriceRange && inSelectedCategories && matchesSearch;
-    });
-
-    // Apply sorting
-    if (sortOption === 'price-low-high') {
-      updatedProducts.sort((a, b) => a.price - b.price);
-    } else if (sortOption === 'price-high-low') {
-      updatedProducts.sort((a, b) => b.price - a.price);
-    } else if (sortOption === 'alpha-asc') {
-      updatedProducts.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortOption === 'alpha-desc') {
-      updatedProducts.sort((a, b) => b.name.localeCompare(b.name));
+const ProductCard = ({ product }) => {
+  // Truncate product name if > 17 characters
+  const truncateName = (name) => {
+    if (name.length > 17) {
+      return name.slice(0, 14) + '...';
     }
+    return name;
+  };
 
-    console.log('Updated filtered products:', updatedProducts);
-    setFilteredProducts(updatedProducts);
-  }, [initialProducts]);
+  // Validate imageUrl
+  const imageSrc = product.imageUrl && typeof product.imageUrl === 'string' && product.imageUrl.startsWith('https://')
+    ? product.imageUrl
+    : '/images/placeholder.jpg';
 
   return (
-    <div className="container rounded-lg mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4 m-4">All Products</h2>
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="w-full rounded-lg border md:w-1/4">
-          <ProductFilter onFilterChange={handleFilterChange} />
+    <div className="relative">
+      <Link to={`/product/${product.id}`} className="flex-col">
+        <div className="rounded-lg max-md:p-4 p-5 grid justify-center">
+          <div className="relative">
+            <img
+              src={imageSrc}
+              alt={product.name}
+              className="h-40 w-[200px] border max-md:h-36 max-md:w-[160px] object-cover rounded-lg mb-2"
+              onError={(e) => {
+                console.error('Image load error:', {
+                  productId: product.id,
+                  imageUrl: product.imageUrl,
+                  name: product.name,
+                });
+                e.target.src = '/images/placeholder.jpg';
+              }}
+            />
+            <AddToCartButton
+              productId={product.id}
+              className="absolute top-2 right-2"
+            />
+          </div>
+          <h3 className="text-sm font-semibold text-gray-800">{truncateName(product.name)}</h3>
+          <p className="text-gray-600">
+            ₦{product.price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex gap-1">
+              {[...Array(5)].map((_, i) => (
+                <i
+                  key={i}
+                  className={`bx bx-star text-black text-lg ${
+                    i < Math.floor(product.rating) ? 'bx-star-filled' : ''
+                  }`}
+                ></i>
+              ))}
+            </div>
+            <div className="ml-auto">
+              {/* <Help /> */}
+            </div>
+          </div>
+          <span className="inline-block mt-2 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+            Brand Store
+          </span>
         </div>
-        <div className="w-full rounded-lg border md:w-3/4">
-          <ProductList products={filteredProducts} />
-        </div>
-      </div>
+      </Link>
     </div>
   );
 };
 
-export default Products;
+export default ProductCard;

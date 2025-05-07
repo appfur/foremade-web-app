@@ -1,4 +1,3 @@
-// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -7,8 +6,24 @@ export default defineConfig({
   base: '/',
   server: {
     proxy: {
-      '/upload': 'http://localhost:5000',
-      '/products': 'http://localhost:5000',
+      '/upload': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        logLevel: 'debug',
+        onError(err) {
+          console.error('Proxy error for /upload:', err);
+        },
+      },
+      '/products': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        logLevel: 'debug',
+        onError(err) {
+          console.error('Proxy error for /products:', err);
+        },
+      },
     },
   },
 });
