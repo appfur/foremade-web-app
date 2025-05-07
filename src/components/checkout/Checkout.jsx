@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { auth, db } from '/src/firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import dbJson from '/src/db.json';
-import { getCart, clearCart, checkout } from '/src/utils/cartUtils';
-import PaystackCheckout from './PaystackCheckout';
-import Spinner from '/src/components/common/Spinner';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { auth, db } from "/src/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import dbJson from "/src/db.json";
+import { getCart, clearCart, checkout } from "/src/utils/cartUtils";
+import PaystackCheckout from "./PaystackCheckout";
+import Spinner from "/src/components/common/Spinner";
 
 const Checkout = () => {
+  localStorage.removeItem("cart"); // Clear cart from localStorage
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,13 +16,13 @@ const Checkout = () => {
   const [message, setMessage] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [formData, setFormData] = useState({
-    name: 'Emmanuel Chinecherem',
-    email: 'test@example.com',
-    address: 'Not provided',
-    city: '',
-    postalCode: '',
-    country: 'Nigeria',
-    phone: '+234-8052975966',
+    name: "Emmanuel Chinecherem",
+    email: "test@example.com",
+    address: "Not provided",
+    city: "",
+    postalCode: "",
+    country: "Nigeria",
+    phone: "+234-8052975966",
   });
 
   // Load cart, user data, and authentication status
@@ -35,52 +36,61 @@ const Checkout = () => {
         );
         setCart(validCart);
         if (validCart.length !== cartItems.length) {
-          setError('Some cart items were invalid and have been removed.');
+          setError("Some cart items were invalid and have been removed.");
         }
       } else {
         setCart([]);
-        setError('Cart is empty or invalid.');
+        setError("Cart is empty or invalid.");
       }
 
-      const unsubscribe = auth.onAuthStateChanged((user) => {
-        setIsAuthenticated(!!user);
-        if (user) {
-          const storedUserData = localStorage.getItem('userData');
-          let additionalData = {};
-          if (storedUserData) {
-            try {
-              additionalData = JSON.parse(storedUserData);
-              if (typeof additionalData.name !== 'string' || additionalData.name.includes('{')) {
-                console.warn('Corrupted name field:', additionalData.name);
-                additionalData.name = 'Emmanuel Chinecherem';
+      const unsubscribe = auth.onAuthStateChanged(
+        (user) => {
+          setIsAuthenticated(!!user);
+          if (user) {
+            const storedUserData = localStorage.getItem("userData");
+            let additionalData = {};
+            if (storedUserData) {
+              try {
+                additionalData = JSON.parse(storedUserData);
+                if (
+                  typeof additionalData.name !== "string" ||
+                  additionalData.name.includes("{")
+                ) {
+                  console.warn("Corrupted name field:", additionalData.name);
+                  additionalData.name = "Emmanuel Chinecherem";
+                }
+                if (typeof additionalData.username !== "string") {
+                  additionalData.username = "emmaChi";
+                }
+              } catch (err) {
+                console.error("Error parsing userData:", err);
+                additionalData = {};
               }
-              if (typeof additionalData.username !== 'string') {
-                additionalData.username = 'emmaChi';
-              }
-            } catch (err) {
-              console.error('Error parsing userData:', err);
-              additionalData = {};
             }
+            setFormData((prev) => ({
+              ...prev,
+              email: user.email || "test@example.com",
+              name:
+                additionalData.name ||
+                user.displayName ||
+                "Emmanuel Chinecherem",
+              address: additionalData.address || "Not provided",
+              country: additionalData.country || "Nigeria",
+              phone: additionalData.phone || "+234-8052975966",
+            }));
           }
-          setFormData((prev) => ({
-            ...prev,
-            email: user.email || 'test@example.com',
-            name: additionalData.name || user.displayName || 'Emmanuel Chinecherem',
-            address: additionalData.address || 'Not provided',
-            country: additionalData.country || 'Nigeria',
-            phone: additionalData.phone || '+234-8052975966',
-          }));
+        },
+        (error) => {
+          console.error("Auth state error:", error);
+          setIsAuthenticated(false);
         }
-      }, (error) => {
-        console.error('Auth state error:', error);
-        setIsAuthenticated(false);
-      });
+      );
 
       return () => unsubscribe();
     } catch (err) {
-      console.error('Error loading cart:', err);
+      console.error("Error loading cart:", err);
       setCart([]);
-      setError('Failed to load cart.');
+      setError("Failed to load cart.");
     } finally {
       setLoading(false);
     }
@@ -95,7 +105,8 @@ const Checkout = () => {
   // Calculate totals
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cartItems.reduce(
-    (total, item) => total + (item.product ? item.product.price * item.quantity : 0),
+    (total, item) =>
+      total + (item.product ? item.product.price * item.quantity : 0),
     0
   );
   const taxRate = 0.075;
@@ -114,12 +125,12 @@ const Checkout = () => {
   const validateForm = () => {
     const { name, email, address, city, postalCode } = formData;
     if (!name || !email || !address || !city || !postalCode) {
-      return { isValid: false, message: 'Please fill in all required fields.' };
+      return { isValid: false, message: "Please fill in all required fields." };
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
-      return { isValid: false, message: 'Please enter a valid email address.' };
+      return { isValid: false, message: "Please enter a valid email address." };
     }
-    return { isValid: true, message: '' };
+    return { isValid: true, message: "" };
   };
 
   // Memoize form validity
@@ -129,7 +140,7 @@ const Checkout = () => {
   const handlePaymentSuccess = useCallback(async () => {
     try {
       if (cart.length === 0) {
-        setError('Your cart is empty.');
+        setError("Your cart is empty.");
         return;
       }
       const validation = validateForm();
@@ -137,47 +148,50 @@ const Checkout = () => {
         setError(validation.message);
         return;
       }
-      const stockIssues = cartItems.filter((item) => item.quantity > (item.product?.stock || 0));
+      const stockIssues = cartItems.filter(
+        (item) => item.quantity > (item.product?.stock || 0)
+      );
       if (stockIssues.length > 0) {
         const issueMessages = stockIssues.map(
-          (item) => `Only ${item.product.stock} units of ${item.product.name} available.`
+          (item) =>
+            `Only ${item.product.stock} units of ${item.product.name} available.`
         );
-        setError(`Checkout failed:\n${issueMessages.join('\n')}`);
+        setError(`Checkout failed:\n${issueMessages.join("\n")}`);
         return;
       }
 
-      const userId = auth.currentUser?.uid || 'anonymous';
+      const userId = auth.currentUser?.uid || "anonymous";
       const order = {
         userId,
         items: cart,
         total: totalPrice,
         date: new Date().toISOString(),
         shippingDetails: formData,
-        status: 'completed',
+        status: "completed",
       };
       const orderId = `order-${Date.now()}`;
-      
+
       // Save to Firestore
-      await setDoc(doc(db, 'orders', orderId), order);
-      
+      await setDoc(doc(db, "orders", orderId), order);
+
       // Save to localStorage via cartUtils.checkout
-      const localOrder = checkout();
-      
+      checkout(); //come back here for analysis
+
       setCart([]);
       clearCart();
-      setMessage('Order placed successfully!');
-      navigate('/order-confirmation', { state: { order } });
+      setMessage("Order placed successfully!");
+      navigate("/order-confirmation", { state: { order } });
     } catch (err) {
-      console.error('Error saving order:', err);
-      setError('Failed to place order. Please try again.');
+      console.error("Error saving order:", err);
+      setError("Failed to place order. Please try again.");
     }
   }, [cart, cartItems, formData, totalPrice, navigate]);
 
   // Handle payment initiation for unauthenticated users
   const handlePaymentAttempt = () => {
     if (!isAuthenticated) {
-      setError('Please log in to complete your purchase.');
-      navigate('/login', { state: { from: '/checkout' }, replace: true });
+      setError("Please log in to complete your purchase.");
+      navigate("/login", { state: { from: "/checkout" }, replace: true });
       return;
     }
   };
@@ -194,11 +208,13 @@ const Checkout = () => {
   return (
     <div className="container mx-auto px-4 py-8 text-gray-800">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Checkout</h1>
-      {error && <p className="text-red-600 mb-4 whitespace-pre-line">{error}</p>}
+      {error && (
+        <p className="text-red-600 mb-4 whitespace-pre-line">{error}</p>
+      )}
       {message && <p className="text-green-600 mb-4">{message}</p>}
       {cartItems.length === 0 ? (
         <p className="text-gray-600">
-          Your cart is empty.{' '}
+          Your cart is empty.{" "}
           <Link to="/products" className="text-blue-600 hover:underline">
             Continue shopping
           </Link>
@@ -207,10 +223,15 @@ const Checkout = () => {
         <div className="flex flex-col md:flex-row gap-6">
           {/* Shipping Details Form */}
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Shipping Details</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              Shipping Details
+            </h2>
             <form className="space-y-4 bg-gray-50 p-4 rounded-lg shadow-sm">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Full Name
                 </label>
                 <input
@@ -224,7 +245,10 @@ const Checkout = () => {
                 />
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Email
                 </label>
                 <input
@@ -238,7 +262,10 @@ const Checkout = () => {
                 />
               </div>
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Phone
                 </label>
                 <input
@@ -252,7 +279,10 @@ const Checkout = () => {
                 />
               </div>
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="address"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Address
                 </label>
                 <input
@@ -266,7 +296,10 @@ const Checkout = () => {
                 />
               </div>
               <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="city"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   City
                 </label>
                 <input
@@ -280,7 +313,10 @@ const Checkout = () => {
                 />
               </div>
               <div>
-                <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="postalCode"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Postal Code
                 </label>
                 <input
@@ -294,7 +330,10 @@ const Checkout = () => {
                 />
               </div>
               <div>
-                <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="country"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Country
                 </label>
                 <input
@@ -313,7 +352,9 @@ const Checkout = () => {
           {/* Order Summary */}
           <div className="w-full md:w-1/3">
             <div className="p-4 bg-gray-50 rounded-lg shadow-sm sticky top-4">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h2>
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                Order Summary
+              </h2>
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span>Total Items</span>
@@ -322,10 +363,13 @@ const Checkout = () => {
                 {cartItems.map((item) => (
                   <div key={item.productId} className="flex justify-between">
                     <span>
-                      {item.product?.name || 'Unknown'} (x{item.quantity})
+                      {item.product?.name || "Unknown"} (x{item.quantity})
                     </span>
                     <span>
-                      ₦{(item.product?.price * item.quantity || 0).toLocaleString('en-NG', {
+                      ₦
+                      {(
+                        item.product?.price * item.quantity || 0
+                      ).toLocaleString("en-NG", {
                         minimumFractionDigits: 2,
                       })}
                     </span>
@@ -333,20 +377,35 @@ const Checkout = () => {
                 ))}
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>₦{subtotal.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
+                  <span>
+                    ₦
+                    {subtotal.toLocaleString("en-NG", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax (7.5%)</span>
-                  <span>₦{tax.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
+                  <span>
+                    ₦{tax.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>₦{shipping.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
+                  <span>
+                    ₦
+                    {shipping.toLocaleString("en-NG", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
                 </div>
                 <div className="flex justify-between font-bold text-gray-800 border-t pt-2">
                   <span>Grand Total</span>
                   <span>
-                    ₦{totalPrice.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                    ₦
+                    {totalPrice.toLocaleString("en-NG", {
+                      minimumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
               </div>
@@ -357,7 +416,7 @@ const Checkout = () => {
                     amount={totalPrice * 100} // Amount in Kobo
                     totalPrice={totalPrice}
                     onSuccess={handlePaymentSuccess}
-                    onClose={() => setMessage('Payment cancelled.')}
+                    onClose={() => setMessage("Payment cancelled.")}
                     disabled={!formValidity.isValid || cart.length === 0}
                     buttonText="Pay Now"
                     className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -365,7 +424,9 @@ const Checkout = () => {
                   />
                 ) : (
                   <div>
-                    <p className="text-red-600 mb-2">Please log in to complete your purchase.</p>
+                    <p className="text-red-600 mb-2">
+                      Please log in to complete your purchase.
+                    </p>
                     <button
                       onClick={handlePaymentAttempt}
                       className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 flex items-center justify-center"
