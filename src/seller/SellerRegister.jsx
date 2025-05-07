@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { auth } from '../firebase';
 import { createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
@@ -189,7 +190,7 @@ export default function SellerRegister() {
         <div className="w-full">
           <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Create an account</h2>
           <p className="text-gray-600 text-xs sm:text-sm mb-4 sm:mb-6">
-            Create your own Store / Already have a Store? <a href="/login" className="text-blue-600 hover:underline">Login</a>
+            Create your own Store / Already have a Store? <Link to="/seller/login" className="text-blue-600 hover:underline">Login</Link>
           </p>
           {submitError && <p className="text-red-600 text-xs sm:text-sm mb-3 sm:mb-4">{submitError}</p>}
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
@@ -268,7 +269,7 @@ export default function SellerRegister() {
                     className="px-2 py-3 text-xs sm:text-sm bg-gray-100 text-gray-700 border-r border-gray-300 focus:outline-none"
                   >
                     {countryCodes.map((country) => (
-                      <option key={country.code} value={country.code}>
+                      <option key={`${country.code}-${country.country}`} value={country.code}>
                         {country.code} ({country.country})
                       </option>
                     ))}

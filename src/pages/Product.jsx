@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import db from '../db.json';
+import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '/src/firebase';
 import ProductCard from '/src/components/home/ProductCard';
 import SkeletonLoader from '/src/components/common/SkeletonLoader';
 import { getCart, updateCart } from '/src/utils/cartUtils';
@@ -17,16 +18,12 @@ const Product = () => {
   const [quantity, setQuantity] = useState(1);
   const [cart, setCart] = useState([]);
   const [favorites, setFavorites] = useState([]);
-  const [showFullDescription, setShowFullDescription] = useState(false); // New state for description toggle
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
-  // Load cart from cartUtils and favorites from localStorage on mount
+  // Load cart and favorites
   useEffect(() => {
     setDataLoading(true);
     try {
-      if (!window.localStorage) {
-        throw new Error('localStorage is not available in this browser.');
-      }
-
       const cartItems = getCart();
       console.log('Loaded cart in Product.jsx:', cartItems);
       if (Array.isArray(cartItems)) {
@@ -64,7 +61,7 @@ const Product = () => {
     }
   }, []);
 
-  // Listen for changes to localStorage for favorites
+  // Listen for favorites changes
   useEffect(() => {
     const handleStorageChange = (event) => {
       if (event.key === 'favorites') {
@@ -91,7 +88,7 @@ const Product = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Save favorites to localStorage whenever they change
+  // Save favorites
   useEffect(() => {
     try {
       localStorage.setItem('favorites', JSON.stringify(favorites));
@@ -103,33 +100,109 @@ const Product = () => {
 
   // Load product and similar products
   useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => {
+    const fetchProduct = async () => {
       try {
-        const productId = parseInt(id);
-        const foundProduct = db.products.find((p) => p.id === productId);
-        if (foundProduct) {
-          setProduct(foundProduct);
-          const related = db.products
-            .filter((p) => p.categoryId === foundProduct.categoryId && p.id !== foundProduct.id)
-            .slice(0, 4);
-          setSimilarProducts(related);
+        setLoading(true);
+        setError(null);
+        const productRef = doc(db, 'products', id);
+        const productSnap = await getDoc(productRef);
+        if (productSnap.exists()) {
+          const data = productSnap.data();
+          if (!data.name || !data.price || !data.category || !data.imageUrl) {
+            console.warn('Invalid product data:', { id, data });
+            setError('Invalid product data.');
+            setProduct(null);
+            return;
+          }
+          const productData = {
+            id: productSnap.id,
+            name: data.name,
+            description: data.description || '',
+            price: data.price,
+            stock: data.stock || 0,
+            category: data.category,
+            categoryId: data.category === 'Electronics' ? 1 : data.category === 'Clothing' ? 2 : 6,
+            colors: data.colors || [],
+            sizes: data.sizes || [],
+            condition: data.condition || '',
+            imageUrl: data.imageUrl,
+            sellerId: data.sellerId || '',
+            sellerName: data.sellerName || 'Unknown Seller',
+            rating: Math.random() * 2 + 3, // Mock rating 3–5
+            reviews: data.reviews || [],
+          };
+          if (!productData.imageUrl || !productData.imageUrl.startsWith('https://')) {
+            console.warn('Invalid product imageUrl:', { id, imageUrl: productData.imageUrl });
+            setError('Invalid product image.');
+            setProduct(null);
+            return;
+          }
+          setProduct(productData);
+
+          // Fetch similar products
+          const similarQuery = query(collection(db, 'products'), where('category', '==', productData.category));
+          const querySnapshot = await getDocs(similarQuery);
+          const similar = querySnapshot.docs
+            .map((doc) => {
+              const data = doc.data();
+              if (!data.name || !data.price || !data.category || !data.imageUrl || doc.id === id) {
+                console.warn('Invalid similar product data:', { id: doc.id, data });
+                return null;
+              }
+              return {
+                id: doc.id,
+                name: data.name,
+                description: data.description || '',
+                price: data.price,
+                stock: data.stock || 0,
+                category: data.category,
+                categoryId: data.category === 'Electronics' ? 1 : data.category === 'Clothing' ? 2 : 6,
+                colors: data.colors || [],
+                sizes: data.sizes || [],
+                condition: data.condition || '',
+                imageUrl: data.imageUrl,
+                sellerId: data.sellerId || '',
+                sellerName: data.sellerName || 'Unknown Seller',
+                rating: Math.random() * 2 + 3,
+              };
+            })
+            .filter((product) => {
+              if (!product) {
+                return false;
+              }
+              const isValidImage = product.imageUrl && typeof product.imageUrl === 'string' && product.imageUrl.startsWith('https://');
+              if (!isValidImage) {
+                console.warn('Filtered out similar product with invalid imageUrl:', {
+                  id: product.id,
+                  name: product.name,
+                  imageUrl: product.imageUrl,
+                });
+              }
+              return isValidImage;
+            });
+
+          console.log('Fetched similar products:', similar);
+          setSimilarProducts(similar);
         } else {
+          setError('Product not found.');
           setProduct(null);
           setSimilarProducts([]);
-          setError('Product not found.');
         }
       } catch (err) {
-        console.error('Error loading product:', err);
+        console.error('Error loading product:', {
+          message: err.message,
+          code: err.code,
+          stack: err.stack,
+        });
+        setError('Failed to load product: ' + err.message);
         setProduct(null);
         setSimilarProducts([]);
-        setError('Failed to load product: ' + err.message);
       } finally {
         setLoading(false);
       }
-    }, 1500);
+    };
 
-    return () => clearTimeout(timer);
+    fetchProduct();
   }, [id]);
 
   const handleAddToCart = () => {
@@ -198,7 +271,7 @@ const Product = () => {
     });
   };
 
-  // Auto-dismiss cart popup after 3 seconds
+  // Auto-dismiss popups
   useEffect(() => {
     if (cartPopup) {
       const timer = setTimeout(() => {
@@ -208,7 +281,6 @@ const Product = () => {
     }
   }, [cartPopup]);
 
-  // Auto-dismiss favorites popup after 3 seconds
   useEffect(() => {
     if (favoritesPopup) {
       const timer = setTimeout(() => {
@@ -248,10 +320,10 @@ const Product = () => {
     );
   }
 
-  const category = db.categories.find((cat) => cat.id === product.categoryId)?.name || 'Unknown';
-  const seller = db.sellers.find((seller) => seller.id === product.sellerId)?.storeName || 'Unknown Seller';
+  const category = product.category || 'Unknown';
+  const seller = product.sellerName || 'Unknown Seller';
 
-  // Truncate description to first 100 characters for preview
+  // Truncate description
   const DESCRIPTION_LIMIT = 100;
   const truncatedDescription =
     product.description.length > DESCRIPTION_LIMIT
@@ -261,7 +333,7 @@ const Product = () => {
 
   return (
     <div className="relative container mx-auto p-5">
-      {/* Cart Popup */}
+      {/* Popups */}
       {cartPopup && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
           <div className="flex items-center gap-2">
@@ -273,7 +345,6 @@ const Product = () => {
           </div>
         </div>
       )}
-      {/* Favorites Popup */}
       {favoritesPopup && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
           <div className="flex items-center gap-2">{favoritesPopup}</div>
@@ -286,10 +357,13 @@ const Product = () => {
             {/* Product Image */}
             <div className="md:w-1/2 p-10">
               <img
-                src={product.image || 'https://via.placeholder.com/300'}
+                src={product.imageUrl || '/images/placeholder.jpg'}
                 alt={product.name}
                 className="w-full h-96 object-cover rounded-lg"
-                onError={(e) => (e.target.src = 'https://via.placeholder.com/300')}
+                onError={(e) => {
+                  console.error('Image load error:', { id: product.id, imageUrl: product.imageUrl });
+                  e.target.src = '/images/placeholder.jpg';
+                }}
               />
             </div>
             {/* Product Info */}
@@ -347,7 +421,6 @@ const Product = () => {
                 >
                   {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
                 </button>
-
                 <button
                   onClick={toggleFavorite}
                   className={`flex items-center justify-center gap-2 px-2 py-1 text-xs border rounded-lg transition ${
@@ -366,7 +439,7 @@ const Product = () => {
               </div>
             </div>
           </div>
-          {/* Description Section */}
+          {/* Description */}
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Product Description</h2>
             <p className="text-sm text-gray-700 leading-relaxed">
@@ -381,7 +454,7 @@ const Product = () => {
               </button>
             )}
           </div>
-          {/* Reviews Section */}
+          {/* Reviews */}
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Customer Reviews</h2>
             {product.reviews && product.reviews.length > 0 ? (
@@ -407,7 +480,7 @@ const Product = () => {
             )}
           </div>
         </div>
-        {/* Similar Products (Desktop: Sidebar, Mobile: Below) */}
+        {/* Similar Products (Desktop) */}
         <div className="w-full md:w-1/4 max-md:hidden">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
           <div className="flex flex-col gap-4 md:border-l md:pl-4">
@@ -423,7 +496,7 @@ const Product = () => {
           </div>
         </div>
       </div>
-      {/* Similar Products for Mobile (Below Product Details) */}
+      {/* Similar Products (Mobile) */}
       <div className="md:hidden lg:hidden xl:hidden mt-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
         <div className="grid grid-cols-2 gap-4">

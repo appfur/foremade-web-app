@@ -1,46 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import SkeletonLoader from '../common/SkeletonLoader';
 import FeaturedProducts from './FeaturedProducts';
 import BestSelling from './BestSelling';
 import LatestProducts from './LatestProducts';
 
 const RecommendedForYou = () => {
   const [activeTab, setActiveTab] = useState('featured');
-  const [loading, setLoading] = useState(true);
-
-  // Simulate loading delay to match child components
-  setTimeout(() => {
-    setLoading(false);
-  }, 1500);
-
-  if (loading) {
-    return (
-      <section className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-between mb-4">
-          <h2 className="text-lg text-center sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">
-            Recommended For You
-          </h2>
-          {/* Desktop Skeleton (Text) */}
-          <div className="hidden sm:flex items-center justify-center gap-4 sm:gap-6">
-            <div className="h-5 bg-gray-200 rounded w-24"></div>
-            <div className="h-5 bg-gray-200 rounded w-24"></div>
-            <div className="h-5 bg-gray-200 rounded w-24"></div>
-            <div className="h-5 bg-gray-200 rounded w-16"></div>
-          </div>
-          {/* Mobile Skeleton (Icons) */}
-          <div className="flex sm:hidden items-center justify-center gap-4">
-            <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
-            <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
-            <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
-            <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
-          </div>
-        </div>
-        <SkeletonLoader type="recommended" count={4} />
-        <SkeletonLoader type="recommended" count={4} />
-      </section>
-    );
-  }
 
   return (
     <section className="container mx-auto px-4 py-8">
@@ -112,9 +77,7 @@ const RecommendedForYou = () => {
 
       {/* Content based on active tab */}
       {activeTab === 'featured' && <FeaturedProducts />}
-
       {activeTab === 'bestSelling' && <BestSelling />}
-
       {activeTab === 'latest' && <LatestProducts />}
     </section>
   );

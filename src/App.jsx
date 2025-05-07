@@ -23,6 +23,7 @@ import SellerProductUpload from './seller/SellerProductUpload';
 import Orders from './profile/Orders';
 import Address from './profile/Address';
 import Setting from './profile/Setting';
+import SellerLogin from './seller/SellerLogin';
 // import ImageUpload from './components/ImageUpload';
 
 function App() {
@@ -112,7 +113,7 @@ function App() {
             }
           />
           <Route
-            path="/seller-product-details"
+            path="/seller-product-upload"
             element={
               <ProtectedRoute>
                 <SellerProductUpload />
@@ -120,7 +121,8 @@ function App() {
             }
           />
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/sell" element={<SellerRegister />} />
+          <Route path="/seller/register" element={<SellerRegister />} />
+          <Route path="/seller/login" element={<SellerLogin />} />
           <Route
             path="/address"
             element={

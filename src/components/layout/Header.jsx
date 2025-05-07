@@ -205,7 +205,7 @@ const Header = () => {
                 </Link>
               </div>
             </div>
-            <Link to="/sell" className="hover:text-blue-600">
+            <Link to="/seller/register" className="hover:text-blue-600">
               Sell
             </Link>
             <Link to="/watchlist" className="hover:text-blue-600">
@@ -223,13 +223,11 @@ const Header = () => {
 
       <div className="container mx-auto px-4 py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
         <div className="flex items-center">
-          <Link to="/">
             <img
               src={logo}
-              className="h-6 w-40"
+              className="h-14"
               alt="Foremade"
             />
-          </Link>
         </div>
 
         <div className="hidden sm:flex items-center w-full mx-4 relative">
@@ -401,7 +399,7 @@ const Header = () => {
             <i className="bx bx-closet mr-2"></i>Fashion
           </Link>
           <Link
-            to="/sell"
+            to="/seller/register"
             className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
           >
             <i className="bx bx-camera mr-2"></i>Selling
@@ -548,7 +546,7 @@ const Header = () => {
             <i className="bx bx-globe text-lg"></i>
             <span>Delivery Options</span>
           </Link>
-          <Link to="/sell" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link to="/seller/register" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
             <i className="bx bx-camera text-lg"></i>
             <span>Start Selling</span>
           </Link>
@@ -616,9 +614,9 @@ const Header = () => {
           <span className="text-xs">Notifications</span>
         </Link>
         <Link
-          to="/sell"
+          to="/seller/register"
           className={`flex flex-col items-center ${
-            location.pathname === '/sell' ? 'text-blue-600' : 'text-gray-600'
+            location.pathname === '/seller/register' ? 'text-blue-600' : 'text-gray-600'
           } hover:text-blue-600`}
         >
           <i className="bx bx-camera text-2xl"></i>
