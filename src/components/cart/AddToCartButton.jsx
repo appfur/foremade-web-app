@@ -1,51 +1,36 @@
-import { useState } from 'react';
-import { getCart, updateCart } from '/src/utils/cartUtils';
+import { useNavigate } from 'react-router-dom';
+import { auth } from '/src/firebase';
+import { addToCart } from '/src/utils/cartUtils';
+import { toast } from 'react-toastify';
 
 const AddToCartButton = ({ productId, className = '' }) => {
-  const [cartMessage, setCartMessage] = useState('');
+  const navigate = useNavigate();
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.stopPropagation(); // Prevent parent click events
+    if (!auth.currentUser) {
+      toast.error('Please log in to add items to cart');
+      navigate('/login');
+      return;
+    }
+
     try {
-      const cart = getCart();
-      const existingItem = cart.find((item) => item.productId === productId);
-      let updatedCart;
-
-      if (existingItem) {
-        updatedCart = cart.map((item) =>
-          item.productId === productId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        updatedCart = [...cart, { productId, quantity: 1 }];
-      }
-
-      updateCart(updatedCart);
-      setCartMessage('Added to cart!');
-      setTimeout(() => setCartMessage(''), 2000); // Clear after 2s
+      await addToCart(auth.currentUser.uid, productId, 1);
+      toast.success('Added to cart!');
     } catch (err) {
       console.error('Error adding to cart:', err);
-      setCartMessage('Failed to add to cart.');
-      setTimeout(() => setCartMessage(''), 2000);
+      toast.error('Failed to add to cart.');
     }
   };
 
   return (
-    <div className="relative">
-      <button
-        onClick={handleAddToCart}
-        className={`text-2xl text-gray-600 hover:text-green-500 transition duration-200 ${className}`}
-        aria-label="Add to cart"
-      >
-        <i className="bx bx-cart-add p-[3px] border rounded-full"></i>
-      </button>
-      {cartMessage && (
-        <span className="absolute top-8 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] px-2 py-1 rounded">
-          {cartMessage}
-        </span>
-      )}
-    </div>
+    <button
+      onClick={handleAddToCart}
+      className={`text-2xl text-gray-600 hover:text-green-500 transition duration-200 ${className}`}
+      aria-label="Add to cart"
+    >
+      <i className="bx bx-cart-add p-[3px] border rounded-full"></i>
+    </button>
   );
 };
 

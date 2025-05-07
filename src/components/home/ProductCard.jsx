@@ -41,10 +41,6 @@ const ProductCard = ({ product }) => {
                 e.target.src = '/images/placeholder.jpg';
               }}
             />
-            <AddToCartButton
-              productId={product.id}
-              className="absolute top-2 right-2"
-            />
           </div>
           <h3 className="text-sm font-semibold text-gray-800">{truncateName(product.name)}</h3>
           <p className="text-gray-600">
@@ -70,6 +66,9 @@ const ProductCard = ({ product }) => {
           </span>
         </div>
       </Link>
+      <div className="absolute top-6 right-7 max-md:top-5 max-md:right-6">
+        <AddToCartButton productId={product.id} />
+      </div>
     </div>
   );
 };

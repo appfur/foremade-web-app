@@ -1,48 +1,82 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import db from '../../db.json';
-import { getCart } from '/src/utils/cartUtils';
-import { auth } from '../../firebase';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { auth, db } from '../../firebase';
+import { signOut } from 'firebase/auth';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { getCartItemCount } from '/src/utils/cartUtils';
+import { toast } from 'react-toastify';
 import logo from '/src/assets/logo.png';
 
 const Header = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchCategory, setSearchCategory] = useState('All Categories');
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [dataLoading, setDataLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [cart, setCart] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
-  const location = useLocation();
+
+  const categories = [
+    'All Categories',
+    'Tablet & Phones',
+    'Health & Beauty',
+    'Foremade Fashion',
+    'Electronics',
+    'Baby Products',
+    'Computers & Accessories',
+    'Game & Fun',
+    'Drinks & Categories',
+    'Home & Kitchen',
+    'Smart Watches',
+  ];
 
   useEffect(() => {
-    setDataLoading(true);
+    // Auth state
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        try {
+          const storedUserData = localStorage.getItem('userData');
+          if (storedUserData) {
+            setUserData(JSON.parse(storedUserData));
+          }
+          const count = await getCartItemCount(currentUser.uid);
+          setCartCount(count);
+          console.log('Authenticated user:', {
+            uid: currentUser.uid,
+            displayName: currentUser.displayName,
+            email: currentUser.email,
+          });
+        } catch (err) {
+          console.error('Error loading user data:', err);
+        }
+      } else {
+        setUserData(null);
+        setCartCount(0);
+      }
+    });
+
+    // Favorites
     try {
-      const cartItems = getCart();
-      setCart(Array.isArray(cartItems) ? cartItems : []);
       const storedFavorites = localStorage.getItem('favorites');
       setFavorites(storedFavorites ? JSON.parse(storedFavorites) : []);
-      localStorage.setItem('favorites', JSON.stringify([]));
     } catch (err) {
-      console.error('Error loading cart/favorites:', err);
-      setCart([]);
+      console.error('Error loading favorites:', err);
       setFavorites([]);
-      localStorage.setItem('favorites', JSON.stringify([]));
-      setError('Failed to load cart or favorites.');
-    } finally {
-      setDataLoading(false);
     }
-  }, []);
 
-  useEffect(() => {
-    const handleCartUpdate = () => {
-      const updatedCart = getCart();
-      setCart(Array.isArray(updatedCart) ? updatedCart : []);
+    // Event listeners
+    const handleCartUpdate = async () => {
+      if (user) {
+        const count = await getCartItemCount(user.uid);
+        setCartCount(count);
+      }
     };
 
     const handleStorageChange = (event) => {
@@ -60,43 +94,11 @@ const Header = () => {
     window.addEventListener('cartUpdated', handleCartUpdate);
     window.addEventListener('storage', handleStorageChange);
     return () => {
+      unsubscribe();
       window.removeEventListener('cartUpdated', handleCartUpdate);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
-
-  useEffect(() => {
-    try {
-      setLoading(true);
-      const productData = Array.isArray(db.products) ? db.products : [];
-      setProducts(productData);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error loading products:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      if (user) {
-        const storedUserData = localStorage.getItem('userData');
-        if (storedUserData) {
-          setUserData(JSON.parse(storedUserData));
-        }
-        console.log('Authenticated user:', {
-          uid: user.uid,
-          displayName: user.displayName,
-          email: user.email,
-        });
-      } else {
-        setUserData(null);
-      }
-    });
-    return unsubscribe;
-  }, []);
+  }, [user]);
 
   const getDisplayName = () => {
     if (userData && userData.name) {
@@ -105,38 +107,73 @@ const Header = () => {
     return 'Guest';
   };
 
-  const handleSearch = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    if (query.trim() === '') {
+  const handleSearch = async (e) => {
+    const queryText = e.target.value;
+    setSearchQuery(queryText);
+    if (queryText.trim() === '') {
       setSearchResults([]);
       setShowDropdown(false);
       return;
     }
-    const filtered = products.filter((product) =>
-      product.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setSearchResults(filtered);
-    setShowDropdown(true);
+
+    setLoading(true);
+    try {
+      let q = query(collection(db, 'products'));
+      if (searchCategory !== 'All Categories') {
+        q = query(q, where('category', '==', searchCategory.toLowerCase()));
+      }
+      const querySnapshot = await getDocs(q);
+      const filtered = querySnapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .filter((product) =>
+          product.name.toLowerCase().includes(queryText.toLowerCase())
+        );
+      setSearchResults(filtered);
+      setShowDropdown(true);
+    } catch (err) {
+      console.error('Error searching products:', err);
+      setError('Failed to search products.');
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCategoryChange = (e) => {
+    setSearchCategory(e.target.value);
+    if (searchQuery.trim() !== '') {
+      handleSearch({ target: { value: searchQuery } });
+    }
   };
 
   const handleFocus = () => {
-    if (searchQuery.trim() !== '' && searchResults.length > 0) setShowDropdown(true);
+    if (searchQuery.trim() !== '' && searchResults.length > 0) {
+      setShowDropdown(true);
+    }
   };
 
   const handleBlur = () => {
     setTimeout(() => setShowDropdown(false), 200);
   };
 
-  const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast.success('Logged out successfully');
+      navigate('/');
+    } catch (err) {
+      console.error('Error logging out:', err);
+      toast.error('Failed to log out');
+    }
+  };
+
+  const cartItemCount = cartCount;
   const favoritesCount = favorites.length;
 
-  if (loading || dataLoading) return <div className="p-4 text-gray-600">Loading...</div>;
   if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
-  if (products.length === 0) return <div className="p-4 text-gray-600">No products available.</div>;
 
   return (
-    <header className="">
+    <header className="bg-blue-50">
       <div className="hidden sm:block border-b border-gray-200 text-gray-600 py-2">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
@@ -203,6 +240,16 @@ const Header = () => {
                 <Link to="/favorites" className="block px-4 py-1 text-xs hover:bg-gray-100">
                   Favorites ({favoritesCount})
                 </Link>
+                {user && (
+                  <>
+                    <Link to="/my-products" className="block px-4 py-1 text-xs hover:bg-gray-100">
+                      My Products
+                    </Link>
+                    <Link to="/upload-product" className="block px-4 py-1 text-xs hover:bg-gray-100">
+                      Upload Product
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
             <Link to="/seller/register" className="hover:text-blue-600">
@@ -223,22 +270,26 @@ const Header = () => {
 
       <div className="container mx-auto px-4 py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
         <div className="flex items-center">
-            <img
-              src={logo}
-              className="h-14 sm:w-[400px] md:w-[400px] lg:w-[400px] xl:w-72 "
-              alt="Foremade"
-            />
+          <img
+            src={logo}
+            className="h-14 sm:w-[400px] md:w-[400px] lg:w-[400px] xl:w-72"
+            alt="Foremade"
+          />
         </div>
 
         <div className="hidden sm:flex items-center w-full mx-4 relative">
           <div className="flex items-center border-2 border-black rounded-full w-full">
             <div className="relative">
-              <select className="bg-gray-100 py-2 pl-3 pr-8 text-xs focus:outline-none appearance-none rounded-l-full border-r border-gray-300">
-                <option>All Categories</option>
-                <option>Electronics</option>
-                <option>Fashion</option>
-                <option>Motors</option>
-                <option>Home & Garden</option>
+              <select
+                value={searchCategory}
+                onChange={handleCategoryChange}
+                className="bg-gray-100 py-2 pl-3 pr-8 text-xs focus:outline-none appearance-none rounded-l-full border-r border-gray-300"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
               <i className="bx bx-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 text-sm"></i>
             </div>
@@ -255,13 +306,11 @@ const Header = () => {
               <i className="bx bx-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 text-sm"></i>
             </div>
           </div>
-          <button className="bg-blue-700 sm:hidden md:flex lg:flex xl:flex text-white px-6 py-2 rounded-full hover:bg-blue-800 text-xs ml-2">
-            Search
-          </button>
-
           {showDropdown && (
             <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-80 overflow-y-auto">
-              {searchResults.length > 0 ? (
+              {loading ? (
+                <div className="p-2 text-sm text-gray-600">Loading...</div>
+              ) : searchResults.length > 0 ? (
                 searchResults.map((product) => (
                   <Link
                     key={product.id}
@@ -273,7 +322,7 @@ const Header = () => {
                     }}
                   >
                     <img
-                      src={product.image}
+                      src={product.imageUrl}
                       alt={product.name}
                       className="w-10 h-10 object-cover rounded mr-2"
                       onError={(e) => {
@@ -310,7 +359,10 @@ const Header = () => {
               </span>
             )}
           </Link>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-gray-600 focus:outline-none">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="text-gray-600 focus:outline-none"
+          >
             <i className="bx bx-menu text-2xl"></i>
           </button>
         </div>
@@ -341,7 +393,7 @@ const Header = () => {
             <input
               type="text"
               placeholder="Search Foremade"
-              className="w-full h-48 max-md:h-auto text-black border border-gray-300 rounded-l-md p-2 pl-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full border border-gray-300 rounded-l-md p-2 pl-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
               value={searchQuery}
               onChange={handleSearch}
               onFocus={handleFocus}
@@ -352,10 +404,11 @@ const Header = () => {
           <button className="bg-blue-600 text-white p-1 rounded-r-md">
             <i className="bx bx-search text-xl"></i>
           </button>
-
           {showDropdown && (
             <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-80 overflow-y-auto">
-              {searchResults.length > 0 ? (
+              {loading ? (
+                <div className="p-2 text-sm text-gray-600">Loading...</div>
+              ) : searchResults.length > 0 ? (
                 searchResults.map((product) => (
                   <Link
                     key={product.id}
@@ -367,7 +420,7 @@ const Header = () => {
                     }}
                   >
                     <img
-                      src={product.image}
+                      src={product.imageUrl}
                       alt={product.name}
                       className="w-10 h-10 object-cover rounded mr-2"
                       onError={(e) => {
@@ -392,103 +445,55 @@ const Header = () => {
               <i className="bx bx-log-in mr-2"></i>Sign in
             </Link>
           )}
-          <Link
-            to="/fashion"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-closet mr-2"></i>Fashion
-          </Link>
-          <Link
-            to="/seller/register"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-camera mr-2"></i>Selling
-          </Link>
-          <Link
-            to="/local"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-map mr-2"></i>Local
-          </Link>
-          <Link
-            to="/electronics"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-chip mr-2"></i>Electronics
-          </Link>
-          <Link
-            to="/motors"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-car mr-2"></i>Motors
-          </Link>
-          <Link
-            to="/collectibles"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-collection mr-2"></i>Collectibles
-          </Link>
-          <Link
-            to="/sports"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-football mr-2"></i>Sports
-          </Link>
-          <Link
-            to="/health-beauty"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-heart-circle mr-2"></i>Health & Beauty
-          </Link>
-          <Link
-            to="/home-garden"
-            className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-          >
-            <i className="bx bx-home-heart mr-2"></i>Home & Garden
-          </Link>
+          {categories.slice(1).map((category) => (
+            <Link
+              key={category}
+              to={`/${category.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}`}
+              className="flex items-center justify-center bg-white border border-gray-200 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+            >
+              <i className="bx bx-category mr-2"></i>{category}
+            </Link>
+          ))}
         </div>
       </div>
 
       <div className="hidden sm:block border-t border-gray-200 py-2">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 text-xs text-gray-600">
-            <Link to="/foremade-live" className="hover:text-blue-600">
-              Tablet & Phones
-            </Link>
-            <Link to="/favorites" className="hover:text-blue-600">
-              Health & Beauty
-            </Link>
+            {categories.slice(1).map((category) => (
+              <Link
+                key={category}
+                to={`/${category.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}`}
+                className="hover:text-blue-600"
+              >
+                {category}
+              </Link>
+            ))}
             <div className="relative group lg:hidden">
               <button className="hover:text-blue-600 flex items-center">
                 More <i className="bx bx-chevron-down ml-1"></i>
               </button>
               <div className="absolute hidden group-hover:block bg-white border border-gray-200 py-2 mt-1 z-10 w-48 rounded-md shadow-lg">
-                <Link to="/collectibles" className="block px-4 py-1 text-xs hover:bg-gray-100">
+                <Link
+                  to="/baby-products"
+                  className="block px-4 py-1 text-xs hover:bg-gray-100"
+                >
                   Baby Products
                 </Link>
-                <Link to="/sports" className="block px-4 py-1 text-xs hover:bg-gray-100">
-                  Computer & Accessories
+                <Link
+                  to="/computers-accessories"
+                  className="block px-4 py-1 text-xs hover:bg-gray-100"
+                >
+                  Computers & Accessories
                 </Link>
-                <Link to="/health-beauty" className="block px-4 py-1 text-xs hover:bg-gray-100">
+                <Link
+                  to="/game-fun"
+                  className="block px-4 py-1 text-xs hover:bg-gray-100"
+                >
                   Game & Fun
                 </Link>
               </div>
             </div>
-            <Link to="/electronics" className="hover:text-blue-600">
-              Foremade Fashion
-            </Link>
-            <Link to="/motors" className="hover:text-blue-600">
-              Electronics
-            </Link>
-            <Link to="/health-beauty" className="hover:text-blue-600 hidden lg:inline">
-              Drinks & Categories
-            </Link>
-            <Link to="/home-garden" className="hover:text-blue-600 hidden lg:inline">
-              Home & Kitchen
-            </Link>
-            <Link to="/smart-watches" className="hover:text-blue-600 hidden lg:inline">
-              Smart Watches
-            </Link>
           </div>
         </div>
       </div>
@@ -500,7 +505,10 @@ const Header = () => {
       >
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <h2 className="text-base font-bold text-gray-800">Menu</h2>
-          <button onClick={() => setIsSidebarOpen(false)} className="text-gray-600 focus:outline-none">
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="text-gray-600 focus:outline-none"
+          >
             <i className="bx bx-x text-2xl"></i>
           </button>
         </div>
@@ -510,66 +518,141 @@ const Header = () => {
               <i className="bx bx-user-circle text-2xl text-gray-600"></i>
             </Link>
             {user ? (
-              <Link to="/profile" className="cursor-pointer hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+              <Link
+                to="/profile"
+                className="cursor-pointer hover:text-blue-600"
+                onClick={() => setIsSidebarOpen(false)}
+              >
                 Hello, {getDisplayName()}
               </Link>
             ) : (
               <p className="cursor-pointer">
                 Hi!{' '}
-                <Link to="/login" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
+                <Link
+                  to="/login"
+                  className="text-blue-600 underline"
+                  onClick={() => setIsSidebarOpen(false)}
+                >
                   Sign in
                 </Link>
                 <span className="mx-1">|</span>
-                <Link to="/register" className="text-blue-600 underline" onClick={() => setIsSidebarOpen(false)}>
+                <Link
+                  to="/register"
+                  className="text-blue-600 underline"
+                  onClick={() => setIsSidebarOpen(false)}
+                >
                   Register
                 </Link>
               </p>
             )}
           </div>
-          <Link to="/deals" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/deals"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-bolt-circle text-lg"></i>
             <span>Hot Deals</span>
           </Link>
-          <Link to="/brands" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/brands"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-store text-lg"></i>
             <span>Premium Brands</span>
           </Link>
-          <Link to="/gift-cards" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/gift-cards"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-gift text-lg"></i>
             <span>Gift Vouchers</span>
           </Link>
-          <Link to="/help" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/help"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-help-circle text-lg"></i>
             <span>Support Center</span>
           </Link>
-          <Link to="/ship-to" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/ship-to"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-globe text-lg"></i>
             <span>Delivery Options</span>
           </Link>
-          <Link to="/seller/register" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/seller/register"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-camera text-lg"></i>
             <span>Start Selling</span>
           </Link>
-          <Link to="/favorites" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/favorites"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-heart text-lg"></i>
             <span>Favorites ({favoritesCount})</span>
           </Link>
-          <Link to="/profile" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/profile"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-user text-lg"></i>
             <span>Profile</span>
           </Link>
-          <Link to="/watchlist" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/watchlist"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-bookmark text-lg"></i>
             <span>Watchlist</span>
           </Link>
-          <Link to="/orders" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+          <Link
+            to="/orders"
+            className="flex items-center space-x-2 hover:text-blue-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <i className="bx bx-package text-lg"></i>
             <span>Orders</span>
           </Link>
-          <Link to="/settings" className="flex items-center space-x-2 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
-            <i className="bx bx-cog text-lg"></i>
-            <span>Settings</span>
-          </Link>
+          {user && (
+            <>
+              <Link
+                to="/my-products"
+                className="flex items-center space-x-2 hover:text-blue-600"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <i className="bx bx-store-alt text-lg"></i>
+                <span>My Products</span>
+              </Link>
+              <Link
+                to="/upload-product"
+                className="flex items-center space-x-2 hover:text-blue-600"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <i className="bx bx-upload text-lg"></i>
+                <span>Upload Product</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 hover:text-blue-600 text-left"
+              >
+                <i className="bx bx-log-out text-lg"></i>
+                <span>Logout</span>
+              </button>
+            </>
+          )}
         </nav>
       </div>
 

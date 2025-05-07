@@ -1,44 +1,54 @@
-import db from '../db.json';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Constants
-const CART_STORAGE_KEY = 'userCart_1'; // Key for localStorage, specific to userId: 1
-const ORDER_HISTORY_KEY = 'orderHistory_1'; // Key for order history
+const getCartStorageKey = (userId) => `userCart_${userId}`;
+const getOrderHistoryKey = (userId) => `orderHistory_${userId}`;
 
-// Load cart from localStorage or initialize from db.json
-const initializeCart = () => {
-  let initialCart = { userId: 1, items: [] };
+// Initialize cart for a user
+const initializeCart = async (userId) => {
+  const cartStorageKey = getCartStorageKey(userId);
+  let initialCart = { userId, items: [] };
 
   try {
-    const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+    const storedCart = localStorage.getItem(cartStorageKey);
     if (storedCart) {
       const parsedCart = JSON.parse(storedCart);
       if (parsedCart && Array.isArray(parsedCart.items)) {
-        initialCart.items = parsedCart.items;
+        // Validate items with Firestore
+        const validatedItems = [];
+        for (const item of parsedCart.items) {
+          const productRef = doc(db, 'products', item.productId);
+          const productSnap = await getDoc(productRef);
+          if (productSnap.exists()) {
+            validatedItems.push({
+              ...item,
+              imageUrl: productSnap.data().imageUrl || '',
+              name: productSnap.data().name,
+              price: productSnap.data().price,
+            });
+          }
+        }
+        initialCart.items = validatedItems;
+        localStorage.setItem(cartStorageKey, JSON.stringify(initialCart));
         return initialCart;
       }
     }
 
-    const userCart = db.cart.find((cart) => cart.userId === 1);
-    if (userCart && Array.isArray(userCart.items)) {
-      initialCart.items = userCart.items;
-    }
-
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(initialCart));
+    localStorage.setItem(cartStorageKey, JSON.stringify(initialCart));
   } catch (err) {
     console.error('Error initializing cart:', err);
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(initialCart));
+    localStorage.setItem(cartStorageKey, JSON.stringify(initialCart));
   }
 
   return initialCart;
 };
 
-// Initialize cart state
-let cartState = initializeCart();
-
 // Load order history from localStorage
-const getOrderHistory = () => {
+const getOrderHistory = (userId) => {
   try {
-    const storedOrders = localStorage.getItem(ORDER_HISTORY_KEY);
+    const orderHistoryKey = getOrderHistoryKey(userId);
+    const storedOrders = localStorage.getItem(orderHistoryKey);
     return storedOrders ? JSON.parse(storedOrders) : [];
   } catch (err) {
     console.error('Error getting order history:', err);
@@ -47,60 +57,116 @@ const getOrderHistory = () => {
 };
 
 // Save order history to localStorage
-const saveOrderHistory = (orders) => {
+const saveOrderHistory = (userId, orders) => {
   try {
-    localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders));
+    const orderHistoryKey = getOrderHistoryKey(userId);
+    localStorage.setItem(orderHistoryKey, JSON.stringify(orders));
   } catch (err) {
     console.error('Error saving order history:', err);
   }
 };
 
 // Utility functions
-export const getCart = () => {
+export const getCart = async (userId) => {
+  const cartState = await initializeCart(userId);
   return cartState.items;
 };
 
-export const updateCart = (newItems) => {
+export const addToCart = async (userId, productId, quantity = 1) => {
   try {
-    cartState.items = newItems;
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartState));
+    const cartState = await initializeCart(userId);
+    const productRef = doc(db, 'products', productId);
+    const productSnap = await getDoc(productRef);
+
+    if (!productSnap.exists()) {
+      throw new Error('Product not found');
+    }
+
+    const productData = productSnap.data();
+    const existingItem = cartState.items.find((item) => item.productId === productId);
+
+    if (existingItem) {
+      existingItem.quantity += quantity;
+    } else {
+      cartState.items.push({
+        productId,
+        name: productData.name,
+        price: productData.price,
+        imageUrl: productData.imageUrl || '',
+        quantity,
+      });
+    }
+
+    const cartStorageKey = getCartStorageKey(userId);
+    localStorage.setItem(cartStorageKey, JSON.stringify(cartState));
+    window.dispatchEvent(new Event('cartUpdated'));
+    return cartState.items;
+  } catch (err) {
+    console.error('Error adding to cart:', err);
+    throw err;
+  }
+};
+
+export const updateCart = async (userId, newItems) => {
+  try {
+    const cartState = await initializeCart(userId);
+    // Validate items with Firestore
+    const validatedItems = [];
+    for (const item of newItems) {
+      const productRef = doc(db, 'products', item.productId);
+      const productSnap = await getDoc(productRef);
+      if (productSnap.exists()) {
+        validatedItems.push({
+          ...item,
+          imageUrl: productSnap.data().imageUrl || '',
+          name: productSnap.data().name,
+          price: productSnap.data().price,
+        });
+      }
+    }
+
+    cartState.items = validatedItems;
+    const cartStorageKey = getCartStorageKey(userId);
+    localStorage.setItem(cartStorageKey, JSON.stringify(cartState));
     window.dispatchEvent(new Event('cartUpdated'));
     return cartState.items;
   } catch (err) {
     console.error('Error updating cart:', err);
-    return cartState.items;
+    return (await initializeCart(userId)).items;
   }
 };
 
-export const clearCart = () => {
+export const clearCart = async (userId) => {
   try {
+    const cartState = await initializeCart(userId);
     cartState.items = [];
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartState));
+    const cartStorageKey = getCartStorageKey(userId);
+    localStorage.setItem(cartStorageKey, JSON.stringify(cartState));
     window.dispatchEvent(new Event('cartUpdated'));
     return cartState.items;
   } catch (err) {
     console.error('Error clearing cart:', err);
-    return cartState.items;
+    return (await initializeCart(userId)).items;
   }
 };
 
-export const checkout = () => {
+export const checkout = async (userId) => {
   try {
-    const cartItems = getCart();
+    const cartItems = await getCart(userId);
     if (cartItems.length === 0) {
       throw new Error('Cart is empty');
     }
 
-    const orders = getOrderHistory();
+    const orders = getOrderHistory(userId);
     const newOrder = {
       orderId: `ORD${orders.length + 1}`.padStart(7, '0'),
       date: new Date().toISOString(),
       items: cartItems,
     };
     orders.push(newOrder);
-    saveOrderHistory(orders);
+    saveOrderHistory(userId, orders);
 
-    clearCart();
+    await clearCart(userId);
     window.dispatchEvent(new Event('orderPlaced'));
     return newOrder;
   } catch (err) {
@@ -109,6 +175,11 @@ export const checkout = () => {
   }
 };
 
-export const getOrderCount = () => {
-  return getOrderHistory().length;
+export const getOrderCount = (userId) => {
+  return getOrderHistory(userId).length;
+};
+
+export const getCartItemCount = async (userId) => {
+  const cartItems = await getCart(userId);
+  return cartItems.reduce((total, item) => total + item.quantity, 0);
 };
