@@ -33,7 +33,7 @@ const Carousel = () => {
   }, [current, slides.length]);
 
   return (
-    <div className="relative h-[200px] sm:h-[300px] md:h-[400px] lg:h-[300px] xl:h-[300px] max-w-full w-full md:max-w-full md:w-full lg:max-w-[90%] xl:max-w-[93%] lg:mx-auto overflow-hidden rounded-lg">
+    <div className="relative h-[300px] sm:h-[300px] md:h-[450px] lg:h-[340px] xl:h-[380px] max-w-full w-full md:max-w-full md:w-full lg:max-w-[90%] xl:max-w-[93%] lg:mx-auto overflow-hidden rounded-lg">
       {slides.map((slide, index) => (
         <div
           key={index}

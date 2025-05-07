@@ -15,15 +15,6 @@ export default defineConfig({
           console.error('Proxy error for /upload:', err);
         },
       },
-      '/products': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-        logLevel: 'debug',
-        onError(err) {
-          console.error('Proxy error for /products:', err);
-        },
-      },
     },
   },
 });

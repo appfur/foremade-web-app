@@ -3,13 +3,25 @@ import Help from '../common/Help';
 import AddToCartButton from '/src/components/cart/AddToCartButton';
 
 const ProductCard = ({ product }) => {
+  // Log invalid product
+  if (!product || typeof product !== 'object') {
+    console.error('Invalid product prop:', product);
+    return null;
+  }
+
   // Truncate product name if > 17 characters
   const truncateName = (name) => {
+    if (!name) return '';
     if (name.length > 17) {
       return name.slice(0, 14) + '...';
     }
     return name;
   };
+
+  // Validate imageUrl
+  const imageSrc = product.imageUrl && typeof product.imageUrl === 'string' && product.imageUrl.startsWith('https://')
+    ? product.imageUrl
+    : '/images/placeholder.jpg';
 
   return (
     <div className="relative">
@@ -17,10 +29,17 @@ const ProductCard = ({ product }) => {
         <div className="rounded-lg max-md:p-4 p-5 grid justify-center">
           <div className="relative">
             <img
-              src={product.image || 'https://via.placeholder.com/150'}
-              alt={product.name}
+              src={imageSrc}
+              alt={product.name || 'Product'}
               className="h-40 w-[200px] border max-md:h-36 max-md:w-[160px] object-cover rounded-lg mb-2"
-              onError={(e) => (e.target.src = 'https://via.placeholder.com/150')}
+              onError={(e) => {
+                console.error('Image load error:', {
+                  productId: product.id,
+                  imageUrl: product.imageUrl,
+                  name: product.name,
+                });
+                e.target.src = '/images/placeholder.jpg';
+              }}
             />
             <AddToCartButton
               productId={product.id}
@@ -29,7 +48,7 @@ const ProductCard = ({ product }) => {
           </div>
           <h3 className="text-sm font-semibold text-gray-800">{truncateName(product.name)}</h3>
           <p className="text-gray-600">
-            ₦{product.price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ₦{(product.price || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           <div className="flex items-center justify-between mt-1">
             <div className="flex gap-1">
@@ -37,7 +56,7 @@ const ProductCard = ({ product }) => {
                 <i
                   key={i}
                   className={`bx bx-star text-black text-lg ${
-                    i < Math.floor(product.rating) ? 'bx-star-filled' : ''
+                    i < Math.floor(product.rating || 0) ? 'bx-star-filled' : ''
                   }`}
                 ></i>
               ))}
