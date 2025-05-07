@@ -341,7 +341,7 @@ const Header = () => {
             <input
               type="text"
               placeholder="Search Foremade"
-              className="w-full text-black border border-gray-300 rounded-l-md p-2 pl-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full h-48 max-md:h-auto text-black border border-gray-300 rounded-l-md p-2 pl-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
               value={searchQuery}
               onChange={handleSearch}
               onFocus={handleFocus}

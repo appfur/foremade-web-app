@@ -1,82 +1,91 @@
 const express = require('express');
-const cors = require('cors');
+const { initializeApp } = require('firebase/app');
+const { getFirestore, collection, addDoc } = require('firebase/firestore');
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
 
-// Cloudinary Config
-try {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
-  console.log('Cloudinary configured successfully');
-} catch (err) {
-  console.error('Cloudinary config error:', err.message);
-}
-
-// Middleware
 app.use(cors());
 app.use(express.json());
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error('Invalid file type. Only JPEG, PNG, and GIF are allowed.'));
-    }
-    cb(null, true);
-  },
+
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// API Endpoints
 app.post('/upload', upload.single('image'), async (req, res) => {
-  console.log('Received request to /upload');
   try {
-    if (!req.file) {
-      console.error('No image file provided');
-      return res.status(400).json({ error: 'Image file is required' });
+    const {
+      sellerName,
+      name,
+      description,
+      price,
+      stock,
+      category,
+      colors,
+      sizes,
+      condition,
+      productUrl,
+      sellerId,
+    } = req.body;
+
+    let imageUrl = '';
+    if (req.file) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'products' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(req.file.buffer);
+      });
+      imageUrl = result.secure_url;
     }
 
-    console.log('Uploading image:', {
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-    });
+    const productData = {
+      sellerName,
+      name,
+      description,
+      price: parseFloat(price),
+      stock: parseInt(stock),
+      category,
+      colors: JSON.parse(colors),
+      sizes: JSON.parse(sizes),
+      condition,
+      productUrl: productUrl || '',
+      sellerId,
+      imageUrl,
+      createdAt: new Date().toISOString(),
+    };
 
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream({ folder: 'products' }, (error, result) => {
-        if (error) {
-          console.error('Cloudinary upload error:', {
-            message: error.message,
-            name: error.name,
-            http_code: error.http_code,
-          });
-          reject(error);
-        }
-        resolve(result);
-      }).end(req.file.buffer);
-    });
-
-    console.log('Image uploaded to Cloudinary:', result.secure_url);
-    res.status(200).json({ imageUrl: result.secure_url });
-  } catch (err) {
-    console.error('Upload error:', {
-      message: err.message,
-      stack: err.stack,
-    });
-    res.status(500).json({ error: 'Failed to upload image', details: err.message });
+    const docRef = await addDoc(collection(db, 'products'), productData);
+    res.json({ message: 'Product uploaded successfully', id: docRef.id });
+  } catch (error) {
+    console.error('Error uploading product:', error);
+    res.status(500).json({ error: 'Failed to upload product' });
   }
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  console.log('Received request to /health');
-  res.status(200).json({ status: 'Server running' });
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
-
-app.listen(5000, () => console.log('Server running on http://localhost:5000'));

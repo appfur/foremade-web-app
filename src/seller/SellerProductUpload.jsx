@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { auth } from '/src/firebase';
+import { useNavigate } from 'react-router-dom';
+import { auth, db } from '/src/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function SellerProductUpload() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     sellerName: '',
     name: '',
@@ -13,8 +17,9 @@ export default function SellerProductUpload() {
     category: '',
     colors: [],
     sizes: [],
-    condition: '',
+    condition: 'New',
     productUrl: '',
+    imageUrl: '',
   });
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -27,7 +32,18 @@ export default function SellerProductUpload() {
   const fileInputRef = useRef(null);
   const dropZoneRef = useRef(null);
 
-  const categories = ['Electronics', 'Clothing', 'Home & Garden', 'Books', 'Toys', 'Other'];
+  const categories = [
+    'Tablet & Phones',
+    'Health & Beauty',
+    'Foremade Fashion',
+    'Electronics',
+    'Baby Products',
+    'Computers & Accessories',
+    'Game & Fun',
+    'Drinks & Categories',
+    'Home & Kitchen',
+    'Smart Watches',
+  ];
   const availableColors = [
     { name: 'Red', hex: '#ff0000' },
     { name: 'Blue', hex: '#0000ff' },
@@ -35,8 +51,12 @@ export default function SellerProductUpload() {
     { name: 'Yellow', hex: '#ffff00' },
     { name: 'Black', hex: '#000000' },
     { name: 'White', hex: '#ffffff' },
+    { name: 'Purple', hex: '#800080' },
+    { name: 'Pink', hex: '#ffc1cc' },
+    { name: 'Gray', hex: '#808080' },
+    { name: 'Brown', hex: '#8b4513' },
   ];
-  const sizes = ['S', 'M', 'L', 'XL'];
+  const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
   const conditions = ['New', 'Used', 'Refurbished'];
 
   useEffect(() => {
@@ -44,14 +64,12 @@ export default function SellerProductUpload() {
       if (currentUser) {
         setUser(currentUser);
         try {
-          let sellerName = currentUser.displayName;
-          if (sellerName) {
-            if (sellerName.startsWith('{')) {
-              const parsed = JSON.parse(sellerName);
-              sellerName = parsed.name || '';
-            }
-            setFormData((prev) => ({ ...prev, sellerName }));
+          let sellerName = currentUser.displayName || '';
+          if (sellerName && sellerName.startsWith('{')) {
+            const parsed = JSON.parse(sellerName);
+            sellerName = parsed.name || '';
           }
+          setFormData((prev) => ({ ...prev, sellerName }));
         } catch (err) {
           console.error('Error parsing displayName:', err);
         }
@@ -69,10 +87,13 @@ export default function SellerProductUpload() {
   };
 
   const handleImageChange = (file) => {
-    if (file) {
+    if (file && file.type.startsWith('image/')) {
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
-      setErrors((prev) => ({ ...prev, image: '' }));
+      setFormData((prev) => ({ ...prev, imageUrl: '' }));
+      setErrors((prev) => ({ ...prev, image: '', imageUrl: '' }));
+    } else {
+      toast.error('Please select a valid image file.');
     }
   };
 
@@ -84,12 +105,7 @@ export default function SellerProductUpload() {
     e.preventDefault();
     e.stopPropagation();
     dropZoneRef.current.classList.remove('border-blue-500');
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      handleImageChange(file);
-    } else {
-      toast.error('Please drop a valid image file.');
-    }
+    handleImageChange(e.dataTransfer.files[0]);
   };
 
   const handleDragOver = (e) => {
@@ -108,6 +124,7 @@ export default function SellerProductUpload() {
     setImage(null);
     setImagePreview('');
     fileInputRef.current.value = '';
+    setFormData((prev) => ({ ...prev, imageUrl: '' }));
   };
 
   const handleColorToggle = (color) => {
@@ -117,7 +134,6 @@ export default function SellerProductUpload() {
         : [...prev.colors, color];
       return { ...prev, colors: newColors };
     });
-    setErrors((prev) => ({ ...prev, colors: '' }));
     setCustomColor('');
     setShowColorDropdown(false);
   };
@@ -148,7 +164,6 @@ export default function SellerProductUpload() {
       setCustomColor('');
       setColorSuggestions([]);
       setShowColorDropdown(false);
-      setErrors((prev) => ({ ...prev, colors: '' }));
     }
   };
 
@@ -166,21 +181,21 @@ export default function SellerProductUpload() {
         : [...prev.sizes, size];
       return { ...prev, sizes: newSizes };
     });
-    setErrors((prev) => ({ ...prev, sizes: '' }));
   };
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.sellerName.trim()) newErrors.sellerName = 'Please enter your full name.';
     if (!formData.name.trim()) newErrors.name = 'Product name is required.';
-    if (!formData.description.trim()) newErrors.description = 'Description is required.';
-    if (!formData.price || isNaN(formData.price) || formData.price <= 0) newErrors.price = 'Enter a valid price.';
-    if (!formData.stock || isNaN(formData.stock) || formData.stock < 0) newErrors.stock = 'Enter a valid stock quantity.';
+    if (!formData.price || isNaN(formData.price) || formData.price <= 0)
+      newErrors.price = 'Enter a valid price.';
+    if (!formData.stock || isNaN(formData.stock) || formData.stock < 0)
+      newErrors.stock = 'Enter a valid stock quantity.';
     if (!formData.category) newErrors.category = 'Select a category.';
-    if (formData.colors.length === 0) newErrors.colors = 'Select or add at least one color.';
-    if (formData.sizes.length === 0) newErrors.sizes = 'Select at least one size.';
-    if (!formData.condition) newErrors.condition = 'Select a condition.';
-    if (!image) newErrors.image = 'Select an image.';
+    if (!image && !formData.imageUrl)
+      newErrors.image = 'Select an image or provide an image URL.';
+    if (formData.imageUrl && !formData.imageUrl.startsWith('https://'))
+      newErrors.imageUrl = 'Image URL must start with https://.';
     return newErrors;
   };
 
@@ -203,30 +218,49 @@ export default function SellerProductUpload() {
     }
 
     try {
-      const uploadData = new FormData();
-      uploadData.append('image', image);
-      uploadData.append('sellerName', formData.sellerName);
-      uploadData.append('name', formData.name);
-      uploadData.append('description', formData.description);
-      uploadData.append('price', formData.price);
-      uploadData.append('stock', formData.stock);
-      uploadData.append('category', formData.category);
-      uploadData.append('colors', JSON.stringify(formData.colors));
-      uploadData.append('sizes', JSON.stringify(formData.sizes));
-      uploadData.append('condition', formData.condition);
-      uploadData.append('productUrl', formData.productUrl);
-      uploadData.append('sellerId', user.uid);
+      let finalImageUrl = formData.imageUrl;
 
-      const response = await fetch('/upload', {
-        method: 'POST',
-        body: uploadData,
-      });
+      if (image) {
+        const uploadData = new FormData();
+        uploadData.append('image', image);
 
-      if (!response.ok) throw new Error('Failed to upload product');
-      const result = await response.json();
-      console.log('Upload result:', result);
+        const response = await axios.post('http://localhost:5000/upload', uploadData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
 
-      toast.success('Product added successfully!');
+        if (response.status !== 200) {
+          throw new Error('Failed to upload image to Cloudinary.');
+        }
+
+        finalImageUrl = response.data.imageUrl;
+        console.log('Cloudinary upload success:', finalImageUrl);
+      }
+
+      if (!finalImageUrl || !finalImageUrl.startsWith('https://')) {
+        throw new Error('A valid image URL (starting with https://) is required.');
+      }
+
+      const productData = {
+        sellerName: formData.sellerName,
+        name: formData.name,
+        description: formData.description || '',
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
+        category: formData.category.toLowerCase(),
+        colors: formData.colors,
+        sizes: formData.sizes,
+        condition: formData.condition || 'New',
+        productUrl: formData.productUrl || '',
+        imageUrl: finalImageUrl,
+        sellerId: user.uid,
+        createdAt: new Date().toISOString(),
+        reviews: [],
+      };
+
+      const docRef = await addDoc(collection(db, 'products'), productData);
+      console.log('Product saved to Firestore:', { id: docRef.id, ...productData });
+
+      toast.success('Product uploaded successfully!');
       setFormData({
         sellerName: formData.sellerName,
         name: '',
@@ -236,25 +270,33 @@ export default function SellerProductUpload() {
         category: '',
         colors: [],
         sizes: [],
-        condition: '',
+        condition: 'New',
         productUrl: '',
+        imageUrl: '',
       });
       setImage(null);
       setImagePreview('');
       fileInputRef.current.value = '';
       setColorSuggestions([]);
       setShowColorDropdown(false);
+      navigate('/my-products');
     } catch (error) {
-      console.error('Error uploading product:', error);
+      console.error('Error uploading product:', {
+        message: error.message,
+        stack: error.stack,
+      });
       toast.error(`Failed to upload product: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-6 min-h-screen flex flex-col items-center justify-center">
-      <div className="w-full max-w-2xl bg-blue-50 p-4 sm:p-6 rounded-lg flex flex-col gap-6">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Add Product</h2>
+      <div className="w-full max-w-2xl bg-blue-50 p-4 sm:p-6 rounded-lg shadow-md flex flex-col gap-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 text-center">
+          Add Product
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="w-full sm:w-1/2">
@@ -267,11 +309,15 @@ export default function SellerProductUpload() {
                 value={formData.sellerName}
                 onChange={handleChange}
                 placeholder="Enter your full name"
-                className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                  errors.sellerName ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                className={`mt-1 w-full py-3 px-3 border rounded-md shadow-sm text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                  errors.sellerName
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
-              {errors.sellerName && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.sellerName}</p>}
+              {errors.sellerName && (
+                <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.sellerName}</p>
+              )}
             </div>
             <div className="w-full sm:w-1/2">
               <label className="block text-xs sm:text-sm font-medium text-gray-700">
@@ -282,27 +328,37 @@ export default function SellerProductUpload() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                  errors.name ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                placeholder="Enter product name"
+                className={`mt-1 w-full py-3 px-3 border rounded-md shadow-sm text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                  errors.name
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
-              {errors.name && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.name}</p>}
+              {errors.name && (
+                <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.name}</p>
+              )}
             </div>
           </div>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700">
-              Description <span className="text-red-500">*</span>
+              Description
             </label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                errors.description ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+              placeholder="Describe your product"
+              className={`mt-1 w-full py-3 px-3 border rounded-md shadow-sm text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                errors.description
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:ring-blue-500'
               }`}
               rows="4"
             />
-            {errors.description && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.description}</p>}
+            {errors.description && (
+              <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.description}</p>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="w-full sm:w-1/2">
@@ -315,11 +371,16 @@ export default function SellerProductUpload() {
                 value={formData.price}
                 onChange={handleChange}
                 step="0.01"
-                className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                  errors.price ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                placeholder="Enter price"
+                className={`mt-1 w-full py-3 px-3 border rounded-md shadow-sm text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                  errors.price
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
-              {errors.price && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.price}</p>}
+              {errors.price && (
+                <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.price}</p>
+              )}
             </div>
             <div className="w-full sm:w-1/2">
               <label className="block text-xs sm:text-sm font-medium text-gray-700">
@@ -330,11 +391,16 @@ export default function SellerProductUpload() {
                 name="stock"
                 value={formData.stock}
                 onChange={handleChange}
-                className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                  errors.stock ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                placeholder="Enter stock quantity"
+                className={`mt-1 w-full py-3 px-3 border rounded-md shadow-sm text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                  errors.stock
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
-              {errors.stock && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.stock}</p>}
+              {errors.stock && (
+                <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.stock}</p>
+              )}
             </div>
           </div>
           <div>
@@ -345,8 +411,10 @@ export default function SellerProductUpload() {
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className={`mt-1 block w-full border rounded-md py-3 px-2 text-xs sm:text-sm focus:outline-none focus:ring-2 ${
-                errors.category ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+              className={`mt-1 block w-full border rounded-md py-3 px-3 text-xs sm:text-sm shadow-sm focus:outline-none focus:ring-2 ${
+                errors.category
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:ring-blue-500'
               }`}
             >
               <option value="">Select a category</option>
@@ -356,15 +424,17 @@ export default function SellerProductUpload() {
                 </option>
               ))}
             </select>
-            {errors.category && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.category}</p>}
+            {errors.category && (
+              <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.category}</p>
+            )}
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700">
-              Colors <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700">Colors</label>
             <div className="flex flex-wrap gap-2 mt-2 mb-2">
               {formData.colors.map((color) => {
-                const predefinedColor = availableColors.find((c) => c.name.toLowerCase() === color.toLowerCase());
+                const predefinedColor = availableColors.find(
+                  (c) => c.name.toLowerCase() === color.toLowerCase()
+                );
                 return (
                   <div
                     key={color}
@@ -395,8 +465,10 @@ export default function SellerProductUpload() {
                 onFocus={() => customColor.trim() && setShowColorDropdown(true)}
                 onBlur={() => setTimeout(() => setShowColorDropdown(false), 200)}
                 placeholder="Type a color and press Enter"
-                className={`w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                  errors.colors ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                className={`w-full py-3 px-3 border rounded-md shadow-sm text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                  errors.colors
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
               {showColorDropdown && colorSuggestions.length > 0 && (
@@ -418,56 +490,42 @@ export default function SellerProductUpload() {
                 </div>
               )}
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {availableColors.map((color) => (
-                <button
-                  key={color.name}
-                  type="button"
-                  onClick={() => handleColorToggle(color.name)}
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    formData.colors.includes(color.name)
-                      ? 'border-blue-500 opacity-100'
-                      : 'border-gray-300 opacity-50'
-                  }`}
-                  style={{ backgroundColor: color.hex }}
-                  title={color.name}
-                />
-              ))}
-            </div>
-            {errors.colors && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.colors}</p>}
+            {errors.colors && (
+              <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.colors}</p>
+            )}
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700">
-              Sizes <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700">Sizes</label>
             <div className="flex flex-wrap gap-2 mt-2">
               {sizes.map((size) => (
                 <button
                   key={size}
                   type="button"
                   onClick={() => handleSizeToggle(size)}
-                  className={`px-4 py-2 rounded border ${
+                  className={`px-4 py-2 rounded border transition text-xs sm:text-sm ${
                     formData.sizes.includes(size)
-                      ? 'border-blue-500 bg-blue-100'
-                      : 'border-gray-300 bg-gray-100'
-                  } text-xs sm:text-sm`}
+                      ? 'border-blue-500 bg-blue-100 text-blue-700'
+                      : 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
                   {size}
                 </button>
               ))}
             </div>
-            {errors.sizes && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.sizes}</p>}
+            {errors.sizes && (
+              <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.sizes}</p>
+            )}
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700">
-              Condition <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700">Condition</label>
             <select
               name="condition"
               value={formData.condition}
               onChange={handleChange}
-              className={`mt-1 block w-full border rounded-md py-3 px-2 text-xs sm:text-sm focus:outline-none focus:ring-2 ${
-                errors.condition ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+              className={`mt-1 block w-full border rounded-md py-3 px-3 text-xs sm:text-sm shadow-sm focus:outline-none focus:ring-2 ${
+                errors.condition
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:ring-blue-500'
               }`}
             >
               <option value="">Select a condition</option>
@@ -477,7 +535,9 @@ export default function SellerProductUpload() {
                 </option>
               ))}
             </select>
-            {errors.condition && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.condition}</p>}
+            {errors.condition && (
+              <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.condition}</p>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="w-full sm:w-1/2">
@@ -490,24 +550,30 @@ export default function SellerProductUpload() {
                 value={formData.productUrl}
                 onChange={handleChange}
                 placeholder="Enter product URL (optional)"
-                className={`mt-1 w-full py-3 px-2 border rounded focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                  errors.productUrl ? 'border-red-500' : 'border-gray-300 focus:ring-blue-500'
+                className={`mt-1 w-full py-3 px-3 border rounded-md shadow-sm text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                  errors.productUrl
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
-              {errors.productUrl && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.productUrl}</p>}
+              {errors.productUrl && (
+                <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.productUrl}</p>
+              )}
             </div>
             <div className="w-full sm:w-1/2">
               <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                Product Image <span className="text-red-500">*</span>
+                Product Image or URL <span className="text-red-500">*</span>
               </label>
               <div
                 ref={dropZoneRef}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
-                className={`mt-1 w-full p-4 border-2 border-dashed rounded-lg flex items-center justify-center min-h-[200px] ${
-                  errors.image ? 'border-red-500' : 'border-gray-300'
-                } hover:border-blue-500 transition-colors`}
+                className={`mt-1 w-full p-4 border-2 border-dashed rounded-lg flex items-center justify-center min-h-[200px] transition-colors ${
+                  errors.image || errors.imageUrl
+                    ? 'border-red-500'
+                    : 'border-gray-300 hover:border-blue-500'
+                }`}
               >
                 {!imagePreview ? (
                   <div className="text-center">
@@ -542,19 +608,37 @@ export default function SellerProductUpload() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/gif"
                   onChange={handleFileInputChange}
                   className="hidden"
                 />
               </div>
-              {errors.image && <p className="text-red-600 text-xs sm:text-sm mt-1">{errors.image}</p>}
+              <input
+                type="url"
+                name="imageUrl"
+                value={formData.imageUrl}
+                onChange={handleChange}
+                placeholder="Or enter image URL (e.g., https://...)"
+                className={`mt-2 w-full py-3 px-3 border rounded-md shadow-sm text-xs sm:text-sm focus:outline-none focus:ring-2 ${
+                  errors.imageUrl
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+              />
+              {(errors.image || errors.imageUrl) && (
+                <p className="text-red-600 text-xs sm:text-sm mt-1">
+                  {errors.image || errors.imageUrl}
+                </p>
+              )}
             </div>
           </div>
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 px-4 rounded text-white text-sm sm:text-base transition duration-200 ${
-              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-900 hover:bg-blue-800'
+            className={`w-full py-3 px-4 rounded-md text-white text-sm sm:text-base font-medium transition duration-200 shadow ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-900 hover:bg-blue-800'
             }`}
           >
             {loading ? 'Uploading...' : 'Add Product'}

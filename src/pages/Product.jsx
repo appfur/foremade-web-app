@@ -120,8 +120,19 @@ const Product = () => {
             description: data.description || '',
             price: data.price,
             stock: data.stock || 0,
-            category: data.category,
-            categoryId: data.category === 'Electronics' ? 1 : data.category === 'Clothing' ? 2 : 6,
+            category: data.category.trim().toLowerCase(),
+            categoryId: {
+              'tablet & phones': 1,
+              'health & beauty': 2,
+              'foremade fashion': 3,
+              'electronics': 4,
+              'baby products': 5,
+              'computers & accessories': 6,
+              'game & fun': 7,
+              'drinks & categories': 8,
+              'home & kitchen': 9,
+              'smart watches': 10,
+            }[data.category.toLowerCase()] || 0,
             colors: data.colors || [],
             sizes: data.sizes || [],
             condition: data.condition || '',
@@ -142,9 +153,11 @@ const Product = () => {
           // Fetch similar products
           const similarQuery = query(collection(db, 'products'), where('category', '==', productData.category));
           const querySnapshot = await getDocs(similarQuery);
+          console.log('Raw similar products count:', querySnapshot.size);
           const similar = querySnapshot.docs
             .map((doc) => {
               const data = doc.data();
+              console.log('Raw product:', { id: doc.id, data });
               if (!data.name || !data.price || !data.category || !data.imageUrl || doc.id === id) {
                 console.warn('Invalid similar product data:', { id: doc.id, data });
                 return null;
@@ -156,7 +169,18 @@ const Product = () => {
                 price: data.price,
                 stock: data.stock || 0,
                 category: data.category,
-                categoryId: data.category === 'Electronics' ? 1 : data.category === 'Clothing' ? 2 : 6,
+                categoryId: {
+                  'tablet & phones': 1,
+                  'health & beauty': 2,
+                  'foremade fashion': 3,
+                  'electronics': 4,
+                  'baby products': 5,
+                  'computers & accessories': 6,
+                  'game & fun': 7,
+                  'drinks & categories': 8,
+                  'home & kitchen': 9,
+                  'smart watches': 10,
+                }[data.category.toLowerCase()] || 0,
                 colors: data.colors || [],
                 sizes: data.sizes || [],
                 condition: data.condition || '',
@@ -170,6 +194,7 @@ const Product = () => {
               if (!product) {
                 return false;
               }
+              console.log('Before image filter:', product);
               const isValidImage = product.imageUrl && typeof product.imageUrl === 'string' && product.imageUrl.startsWith('https://');
               if (!isValidImage) {
                 console.warn('Filtered out similar product with invalid imageUrl:', {
@@ -271,7 +296,6 @@ const Product = () => {
     });
   };
 
-  // Auto-dismiss popups
   useEffect(() => {
     if (cartPopup) {
       const timer = setTimeout(() => {
@@ -320,10 +344,9 @@ const Product = () => {
     );
   }
 
-  const category = product.category || 'Unknown';
+  const category = product.category || 'unknown';
   const seller = product.sellerName || 'Unknown Seller';
 
-  // Truncate description
   const DESCRIPTION_LIMIT = 100;
   const truncatedDescription =
     product.description.length > DESCRIPTION_LIMIT
@@ -333,7 +356,6 @@ const Product = () => {
 
   return (
     <div className="relative container mx-auto p-5">
-      {/* Popups */}
       {cartPopup && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
           <div className="flex items-center gap-2">
@@ -351,10 +373,8 @@ const Product = () => {
         </div>
       )}
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Main Product Details */}
         <div className="w-full md:w-3/4">
           <div className="flex flex-col md:flex-row gap-6">
-            {/* Product Image */}
             <div className="md:w-1/2 p-10">
               <img
                 src={product.imageUrl || '/images/placeholder.jpg'}
@@ -366,7 +386,6 @@ const Product = () => {
                 }}
               />
             </div>
-            {/* Product Info */}
             <div className="md:w-1/2">
               <h1 className="text-3xl font-bold text-gray-800 mb-3">{product.name}</h1>
               <p className="text-sm text-gray-600 mb-2">
@@ -439,7 +458,6 @@ const Product = () => {
               </div>
             </div>
           </div>
-          {/* Description */}
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Product Description</h2>
             <p className="text-sm text-gray-700 leading-relaxed">
@@ -454,7 +472,6 @@ const Product = () => {
               </button>
             )}
           </div>
-          {/* Reviews */}
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Customer Reviews</h2>
             {product.reviews && product.reviews.length > 0 ? (
@@ -480,8 +497,7 @@ const Product = () => {
             )}
           </div>
         </div>
-        {/* Similar Products (Desktop) */}
-        <div className="w-full md:w-1/4 max-md:hidden">
+        <div className="w-full md:w-1/4 max-md:hidden overflow-auto">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
           <div className="flex flex-col gap-4 md:border-l md:pl-4">
             {similarProducts.length > 0 ? (
@@ -496,10 +512,9 @@ const Product = () => {
           </div>
         </div>
       </div>
-      {/* Similar Products (Mobile) */}
       <div className="md:hidden lg:hidden xl:hidden mt-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 overflow-auto">
           {similarProducts.length > 0 ? (
             similarProducts.map((similarProduct) => (
               <ProductCard key={similarProduct.id} product={similarProduct} />
