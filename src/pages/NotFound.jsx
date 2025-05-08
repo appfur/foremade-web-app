@@ -94,7 +94,7 @@ const NotFound = () => {
       <h1 className="text-4xl font-bold text-gray-800 mb-4">
         Discover More Products
       </h1>
-    <p className="text-lg text-gray-600 mb-8">
+      <p className="text-lg text-gray-600 mb-8">
         Shop sell, smile, check out these great products!
       </p>
       {products.length === 0 ? (
@@ -115,7 +115,7 @@ const NotFound = () => {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (
             <div
               key={product.id}
@@ -152,15 +152,6 @@ const NotFound = () => {
           ))}
         </div>
       )}
-      <div className="text-center mt-12">
-        <Link
-          to="/"
-          className="inline-flex items-center text-blue-600 hover:underline text-lg"
-        >
-          <i className="bx bx-home-alt mr-2"></i>
-          Back to Home
-        </Link>
-      </div>
     </div>
   );
 };

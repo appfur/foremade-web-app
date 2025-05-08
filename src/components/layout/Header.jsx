@@ -5,7 +5,7 @@ import { signOut } from 'firebase/auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getCartItemCount } from '/src/utils/cartUtils';
 import { toast } from 'react-toastify';
-import logo from '/src/assets/logo.png';
+import logo from '/src/assets/logi.png';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -312,7 +312,7 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 bg-[#fff] text-black py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
+      <div className="mx-auto px-4 bg-[#112c47] text-white py-2 flex justify-between items-center sm:border-gray-200">
         <div className="flex items-center">
           <img
             src={logo}
@@ -327,7 +327,7 @@ const Header = () => {
               <select
                 value={searchCategory}
                 onChange={handleCategoryChange}
-                className="bg-gray-100 py-2 pl-3 pr-8 text-xs text-black focus:outline-none appearance-none rounded-l-full border-r border-gray-300"
+                className="bg-gray-100 py-2 pl-3 pr-8 text-md text-black focus:outline-none appearance-none rounded-l-full border-r border-gray-300"
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -341,7 +341,7 @@ const Header = () => {
               <input
                 type="text"
                 placeholder="Search Foremade"
-                className="w-full bg-white py-2 pl-10 pr-3 text-xs focus:outline-none placeholder-black border-none rounded-r-full"
+                className="w-full bg-white py-2 pl-10 pr-3 text-md focus:outline-none placeholder-black text-black border-none rounded-r-full"
                 value={searchQuery}
                 onChange={handleSearch}
                 onFocus={handleFocus}
