@@ -329,7 +329,7 @@ const Header = () => {
         <div className="flex items-center">
           <img
             src={logo}
-            className="h-14 sm:w-[400px] md:w-[400px] lg:w-[400px] xl:w-[300px]"
+            className="h-14 sm:w-[400px] md:w-[400px] lg:w-[400px] xl:w-72"
             alt="Foremade"
           />
         </div>
