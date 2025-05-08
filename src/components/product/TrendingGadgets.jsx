@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '/src/firebase';
 import ProductCard from '/src/components/home/ProductCard';
 
@@ -13,12 +13,21 @@ export default function TrendingGadgets() {
     const fetchTrendingGadgets = async () => {
       try {
         setLoading(true);
-        const querySnapshot = await getDocs(collection(db, 'products'));
+        const gadgetCategories = [
+          'tablet & phones',
+          'smart watches',
+          'computers & accessories',
+        ];
+        const q = query(
+          collection(db, 'products'),
+          where('category', 'in', gadgetCategories),
+        );
+        const querySnapshot = await getDocs(q);
         const products = querySnapshot.docs
           .map((doc) => {
             const data = doc.data();
             if (!data.name || !data.price || !data.category || !data.imageUrl) {
-              // console.warn('Invalid product data:', { id: doc.id, data });
+              console.warn('Invalid product data:', { id: doc.id, data });
               return null;
             }
             return {
@@ -28,7 +37,7 @@ export default function TrendingGadgets() {
               price: data.price,
               stock: data.stock || 0,
               category: data.category,
-              categoryId: data.category === 'Electronics' ? 1 : null,
+              categoryId: gadgetCategories.includes(data.category) ? 'gadgets' : null,
               colors: data.colors || [],
               sizes: data.sizes || [],
               condition: data.condition || '',
@@ -38,7 +47,7 @@ export default function TrendingGadgets() {
             };
           })
           .filter((product) => {
-            if (!product || product.category !== 'Electronics' || product.rating < 4.5) {
+            if (!product || !gadgetCategories.includes(product.category) || product.rating < 4.5) {
               return false;
             }
             const isValidImage = product.imageUrl && typeof product.imageUrl === 'string' && product.imageUrl.startsWith('https://');
@@ -56,8 +65,8 @@ export default function TrendingGadgets() {
         console.log('Fetched trending gadget products:', products);
         setTrendingProducts(products);
       } catch (err) {
-        console.error('Error loading trending gadgets:', err);
-        setError('Failed to load trending gadgets.');
+        console.error('Error loading trending gadget products:', err);
+        setError('Failed to load trending gadget products.');
       } finally {
         setLoading(false);
       }
@@ -72,7 +81,7 @@ export default function TrendingGadgets() {
         <h2 className="text-lg sm:text-lg md:text-xl font-bold mt-4 text-gray-800 mb-4">
           Trending in Gadgets
         </h2>
-        <Link to="/products?category=1" className="text-blue-600 hover:underline text-sm">
+        <Link to="/products?category=gadgets" className="text-blue-600 hover:underline text-sm">
           See All
         </Link>
       </div>
@@ -85,7 +94,7 @@ export default function TrendingGadgets() {
           ))}
         </div>
       ) : trendingProducts.length === 0 ? (
-        <p className="text-gray-600">No trending gadgets found.</p>
+        <p className="text-gray-600">No trending gadget products found.</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {trendingProducts.map((product) => (

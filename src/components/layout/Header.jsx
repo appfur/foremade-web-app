@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { auth, db } from '../../firebase';
+import { auth, db } from '/src/firebase';
 import { signOut } from 'firebase/auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getCartItemCount } from '/src/utils/cartUtils';
@@ -38,29 +38,25 @@ const Header = () => {
   ];
 
   useEffect(() => {
-    // Auth state and cart count
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
       try {
-        // Fetch cart count for guest or user
+        // Fetch cart count
         const count = await getCartItemCount(currentUser?.uid);
         setCartCount(count);
 
         if (currentUser) {
-          // Fetch user data
-          const storedUserData = localStorage.getItem('userData');
-          if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
+          // Fetch user data from localStorage
+          try {
+            const storedUserData = localStorage.getItem('userData');
+            if (storedUserData) {
+              setUserData(JSON.parse(storedUserData));
+            }
+          } catch (err) {
+            console.error('Error parsing userData from localStorage:', err);
+            setUserData(null);
+            toast.error('Failed to load user profile');
           }
-
-          // Fetch notification count
-          const notificationsQuery = query(
-            collection(db, 'notifications'),
-            where('userId', '==', currentUser.uid),
-            where('read', '==', false)
-          );
-          const notificationsSnap = await getDocs(notificationsQuery);
-          setNotificationCount(notificationsSnap.size);
 
           console.log('Authenticated user:', {
             uid: currentUser.uid,
@@ -72,11 +68,37 @@ const Header = () => {
           setNotificationCount(0);
         }
       } catch (err) {
-        console.error('Error loading user data or cart:', err);
-        toast.error('Failed to load user data');
+        console.error('Error in auth state change:', err);
+        toast.error('Failed to initialize user session');
       }
     });
 
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      // Fetch notification count
+      const fetchNotifications = async () => {
+        try {
+          const notificationsQuery = query(
+            collection(db, 'notifications'),
+            where('userId', '==', user.uid),
+            where('read', '==', false)
+          );
+          const notificationsSnap = await getDocs(notificationsQuery);
+          setNotificationCount(notificationsSnap.size);
+        } catch (err) {
+          console.error('Error fetching notifications:', err);
+          setNotificationCount(0);
+          toast.error('Failed to load notifications');
+        }
+      };
+      fetchNotifications();
+    }
+  }, [user]);
+
+  useEffect(() => {
     // Favorites
     try {
       const storedFavorites = localStorage.getItem('favorites');
@@ -94,6 +116,7 @@ const Header = () => {
         setCartCount(count);
       } catch (err) {
         console.error('Error updating cart count:', err);
+        setCartCount(0);
         toast.error('Failed to update cart count');
       }
     };
@@ -114,7 +137,6 @@ const Header = () => {
     window.addEventListener('cartUpdated', handleCartUpdate);
     window.addEventListener('storage', handleStorageChange);
     return () => {
-      unsubscribe();
       window.removeEventListener('cartUpdated', handleCartUpdate);
       window.removeEventListener('storage', handleStorageChange);
     };
@@ -124,7 +146,7 @@ const Header = () => {
     if (userData && userData.name) {
       return userData.name.split(' ')[0] || 'User';
     }
-    return 'Guest';
+    return user ? user.displayName?.split(' ')[0] || 'User' : 'Guest';
   };
 
   const handleSearch = async (e) => {
@@ -281,7 +303,7 @@ const Header = () => {
             <Link to="/notifications" className="relative">
               <i className="bx bx-bell text-lg text-gray-600"></i>
               {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-600 text- text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {notificationCount}
                 </span>
               )}
@@ -290,7 +312,7 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="container bg-[#c0c0c0] mx-auto px-4 py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
+      <div className="container mx-auto px-4 bg-black text-white py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
         <div className="flex items-center">
           <img
             src={logo}

@@ -72,13 +72,15 @@ export default function SellerProductUpload() {
           setFormData((prev) => ({ ...prev, sellerName }));
         } catch (err) {
           console.error('Error parsing displayName:', err);
+          toast.error('Failed to load seller profile');
         }
       } else {
         toast.error('Please log in to add products.');
+        navigate('/login');
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -224,16 +226,42 @@ export default function SellerProductUpload() {
         const uploadData = new FormData();
         uploadData.append('image', image);
 
-        const response = await axios.post('http://localhost:5000/upload', uploadData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+        let attempts = 3;
+        let lastError = null;
 
-        if (response.status !== 200) {
-          throw new Error('Failed to upload image to Cloudinary.');
+        while (attempts > 0) {
+          try {
+            const response = await axios.post(
+              `${backendUrl}/upload`,
+              uploadData,
+              {
+                headers: { 'Content-Type': 'multipart/form-data' },
+              }
+            );
+
+            if (response.status !== 200) {
+              throw new Error('Failed to upload image to Cloudinary.');
+            }
+
+            finalImageUrl = response.data.imageUrl;
+            toast.success(response.data.message); // Show success toast immediately
+            console.log('Cloudinary upload success:', finalImageUrl);
+            break;
+          } catch (error) {
+            lastError = error;
+            attempts--;
+            if (attempts === 0 || error.message !== 'Network Error') {
+              throw error;
+            }
+            console.warn(`Retrying image upload (${attempts} attempts left)...`);
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s before retry
+          }
         }
 
-        finalImageUrl = response.data.imageUrl;
-        console.log('Cloudinary upload success:', finalImageUrl);
+        if (!finalImageUrl) {
+          throw lastError || new Error('Image upload failed after retries.');
+        }
       }
 
       if (!finalImageUrl || !finalImageUrl.startsWith('https://')) {
@@ -284,8 +312,17 @@ export default function SellerProductUpload() {
       console.error('Error uploading product:', {
         message: error.message,
         stack: error.stack,
+        code: error.code,
       });
-      toast.error(`Failed to upload product: ${error.message}`);
+      let errorMessage = 'Failed to upload product';
+      if (error.message.includes('Network Error')) {
+        errorMessage = 'Unable to connect to the server. Please ensure the backend server is running on port 5000.';
+      } else if (error.response && error.response.data.error) {
+        errorMessage = error.response.data.error; // Use server error message
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -8,45 +8,52 @@ export const addToCart = async (productId, quantity, userId = null) => {
   }
 
   // Validate product exists
-  const productRef = doc(db, 'products', productId);
-  const productSnap = await getDoc(productRef);
-  if (!productSnap.exists()) {
-    throw new Error('Product not found');
-  }
-  const productData = productSnap.data();
-  if (productData.stock < quantity) {
-    throw new Error(`Only ${productData.stock} units available`);
-  }
-
-  const cart = await getCart(userId);
-  const existingItem = cart.find((item) => item.productId === productId);
-  let updatedCart;
-
-  if (existingItem) {
-    const newQuantity = existingItem.quantity + quantity;
-    if (newQuantity > productData.stock) {
-      throw new Error(`Cannot add more than ${productData.stock} units`);
+  try {
+    const productRef = doc(db, 'products', productId);
+    const productSnap = await getDoc(productRef);
+    if (!productSnap.exists()) {
+      throw new Error('Product not found');
     }
-    updatedCart = cart.map((item) =>
-      item.productId === productId ? { ...item, quantity: newQuantity } : item
-    );
-  } else {
-    updatedCart = [
-      ...cart,
-      {
-        productId,
-        quantity,
-        product: {
-          name: productData.name,
-          price: productData.price,
-          image: productData.imageUrl,
-          stock: productData.stock,
-        },
-      },
-    ];
-  }
+    const productData = productSnap.data();
+    if (productData.stock < quantity) {
+      throw new Error(`Only ${productData.stock} units available`);
+    }
 
-  await updateCart(updatedCart, userId);
+    const cart = await getCart(userId);
+    const existingItem = cart.find((item) => item.productId === productId);
+    let updatedCart;
+
+    if (existingItem) {
+      const newQuantity = existingItem.quantity + quantity;
+      if (newQuantity > productData.stock) {
+        throw new Error(`Cannot add more than ${productData.stock} units`);
+      }
+      updatedCart = cart.map((item) =>
+        item.productId === productId ? { ...item, quantity: newQuantity } : item
+      );
+    } else {
+      updatedCart = [
+        ...cart,
+        {
+          productId,
+          quantity,
+          product: {
+            name: productData.name,
+            price: productData.price,
+            image: productData.imageUrl,
+            stock: productData.stock,
+          },
+        },
+      ];
+    }
+
+    await updateCart(updatedCart, userId);
+    toast.success('Added to cart');
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    toast.error(error.message);
+    throw error;
+  }
 };
 
 export const getCart = async (userId = null) => {
@@ -58,6 +65,7 @@ export const getCart = async (userId = null) => {
     if (storedCart) {
       cart = JSON.parse(storedCart);
       if (!Array.isArray(cart)) {
+        console.warn('Invalid cart format, resetting:', cart);
         cart = [];
       }
     }
@@ -69,22 +77,27 @@ export const getCart = async (userId = null) => {
         console.warn('Invalid cart item:', item);
         continue;
       }
-      const productRef = doc(db, 'products', item.productId);
-      const productSnap = await getDoc(productRef);
-      if (productSnap.exists()) {
-        const productData = productSnap.data();
-        validCart.push({
-          ...item,
-          product: {
-            name: productData.name,
-            price: productData.price,
-            image: productData.imageUrl,
-            stock: productData.stock,
-          },
-        });
-      } else {
-        console.warn(`Product not found for ID: ${item.productId}`);
-        toast.error(`Removed unavailable product (ID: ${item.productId}) from cart`);
+      try {
+        const productRef = doc(db, 'products', item.productId);
+        const productSnap = await getDoc(productRef);
+        if (productSnap.exists()) {
+          const productData = productSnap.data();
+          validCart.push({
+            ...item,
+            product: {
+              name: productData.name,
+              price: productData.price,
+              image: productData.imageUrl,
+              stock: productData.stock,
+            },
+          });
+        } else {
+          console.warn(`Product not found for ID: ${item.productId}`);
+          toast.error(`Removed unavailable product (ID: ${item.productId}) from cart`);
+        }
+      } catch (error) {
+        console.error(`Error validating product ${item.productId}:`, error);
+        toast.error(`Error validating product (ID: ${item.productId})`);
       }
     }
 
@@ -95,13 +108,19 @@ export const getCart = async (userId = null) => {
     return validCart;
   } catch (err) {
     console.error('Error fetching cart:', err);
+    toast.error('Failed to fetch cart');
     return [];
   }
 };
 
 export const getCartItemCount = async (userId = null) => {
-  const cart = await getCart(userId);
-  return cart.reduce((total, item) => total + item.quantity, 0);
+  try {
+    const cart = await getCart(userId);
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  } catch (error) {
+    console.error('Error getting cart item count:', error);
+    return 0;
+  }
 };
 
 export const updateCart = async (cartItems, userId = null) => {
@@ -111,12 +130,20 @@ export const updateCart = async (cartItems, userId = null) => {
     window.dispatchEvent(new Event('cartUpdated'));
   } catch (err) {
     console.error('Error updating cart:', err);
+    toast.error('Failed to update cart');
     throw err;
   }
 };
 
 export const clearCart = async (userId = null) => {
-  await updateCart([], userId);
+  try {
+    await updateCart([], userId);
+    toast.success('Cart cleared');
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+    toast.error('Failed to clear cart');
+    throw error;
+  }
 };
 
 export const checkout = async (userId) => {
@@ -147,38 +174,50 @@ export const checkout = async (userId) => {
     });
 
     await clearCart(userId);
+    toast.success('Order placed successfully');
   } catch (err) {
     console.error('Checkout error:', err);
+    toast.error(err.message);
     throw err;
   }
 };
 
 export const mergeGuestCart = async (userId) => {
-  const guestCart = await getCart(null);
-  if (guestCart.length === 0) return;
+  try {
+    const guestCart = await getCart(null);
+    if (guestCart.length === 0) return;
 
-  const userCart = await getCart(userId);
-  const mergedCart = [...userCart];
+    const userCart = await getCart(userId);
+    const mergedCart = [...userCart];
 
-  for (const guestItem of guestCart) {
-    const existingItem = mergedCart.find((item) => item.productId === guestItem.productId);
-    if (existingItem) {
-      existingItem.quantity += guestItem.quantity;
-      const productRef = doc(db, 'products', existingItem.productId);
-      const productSnap = await getDoc(productRef);
-      if (productSnap.exists()) {
-        const productData = productSnap.data();
-        if (existingItem.quantity > productData.stock) {
-          existingItem.quantity = productData.stock;
-          toast.warn(`Adjusted quantity for ${productData.name} to available stock`);
+    for (const guestItem of guestCart) {
+      const existingItem = mergedCart.find((item) => item.productId === guestItem.productId);
+      if (existingItem) {
+        existingItem.quantity += guestItem.quantity;
+        try {
+          const productRef = doc(db, 'products', existingItem.productId);
+          const productSnap = await getDoc(productRef);
+          if (productSnap.exists()) {
+            const productData = productSnap.data();
+            if (existingItem.quantity > productData.stock) {
+              existingItem.quantity = productData.stock;
+              toast.warn(`Adjusted quantity for ${productData.name} to available stock`);
+            }
+          }
+        } catch (error) {
+          console.error(`Error validating product ${existingItem.productId}:`, error);
+          toast.error(`Error validating product (ID: ${existingItem.productId})`);
         }
+      } else {
+        mergedCart.push(guestItem);
       }
-    } else {
-      mergedCart.push(guestItem);
     }
-  }
 
-  await updateCart(mergedCart, userId);
-  await clearCart(null); // Clear guest cart
-  toast.success('Guest cart merged with your account');
+    await updateCart(mergedCart, userId);
+    await clearCart(null); // Clear guest cart
+    toast.success('Guest cart merged with your account');
+  } catch (error) {
+    console.error('Error merging guest cart:', error);
+    toast.error('Failed to merge guest cart');
+  }
 };
