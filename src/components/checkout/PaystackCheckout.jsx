@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const PaystackCheckout = ({
   email,
   amount,
-  // totalPrice,
   onSuccess,
   onClose,
   disabled,
@@ -11,6 +12,8 @@ const PaystackCheckout = ({
   className,
   iconClass,
 }) => {
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://js.paystack.co/v1/inline.js';
@@ -21,40 +24,68 @@ const PaystackCheckout = ({
     };
   }, []);
 
-  const payNow = () => {
+  const payNow = async () => {
     if (!window.PaystackPop) {
-      alert('Paystack not loaded. Please try again.');
+      toast.error('Paystack not loaded. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
       return;
     }
 
     if (!email || !amount) {
-      alert('Please provide a valid email and amount.');
+      toast.error('Please provide a valid email and amount.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
       return;
     }
 
-    const handler = window.PaystackPop.setup({
-      key: 'pk_live_80ce5e6562afd9418a07b2fd2f1a261dbb62a9bd', // Test key (replace with your test key)
-      email,
-      amount: parseInt(amount, 10), // Amount in Kobo
-      currency: 'NGN',
-      ref: `ref-${Date.now()}`,
-      callback: (response) => {
-        onSuccess(response);
-      },
-      onClose,
-    });
+    setLoading(true);
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const { data } = await axios.post(`${backendUrl}/initiate-paystack-payment`, {
+        amount: amount / 100, // Convert back to NGN
+        email,
+        metadata: {
+          userId: auth.currentUser?.uid || 'anonymous',
+          orderId: `order-${Date.now()}`,
+        },
+      });
 
-    handler.openIframe();
+      const handler = window.PaystackPop.setup({
+        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        email,
+        amount: parseInt(amount, 10),
+        currency: 'NGN',
+        ref: data.reference,
+        callback: (response) => {
+          onSuccess(response);
+          setLoading(false);
+        },
+        onClose: () => {
+          onClose();
+          setLoading(false);
+        },
+      });
+
+      handler.openIframe();
+    } catch (err) {
+      console.error('Paystack payment error:', err);
+      toast.error(
+        err.response?.status === 404
+          ? 'Payment service unavailable. Please check backend URL.'
+          : 'Payment initiation failed. Try again.',
+        { position: 'top-right', autoClose: 3000 }
+      );
+      setLoading(false);
+    }
   };
 
   return (
-    <button
-      onClick={payNow}
-      disabled={disabled}
-      className={className}
-    >
+    <button onClick={payNow} disabled={disabled || loading} className={className}>
       {iconClass && <i className={iconClass}></i>}
-      {buttonText}
+      {loading ? 'Processing...' : buttonText}
     </button>
   );
 };
