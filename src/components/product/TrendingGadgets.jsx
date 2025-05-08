@@ -18,7 +18,7 @@ export default function TrendingGadgets() {
           .map((doc) => {
             const data = doc.data();
             if (!data.name || !data.price || !data.category || !data.imageUrl) {
-              console.warn('Invalid product data:', { id: doc.id, data });
+              // console.warn('Invalid product data:', { id: doc.id, data });
               return null;
             }
             return {

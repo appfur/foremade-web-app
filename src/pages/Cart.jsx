@@ -142,11 +142,13 @@ const Cart = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Your Cart</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        Your Cart
+      </h1>
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="lg:w-2/3">
           {error && cartItems.length === 0 ? (
-            <div className="text-center">
+            <div className="">
               <p className="text-gray-600 mb-4">{error}</p>
               <Link
                 to="/products"
