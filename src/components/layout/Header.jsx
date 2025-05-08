@@ -303,7 +303,7 @@ const Header = () => {
             <Link to="/notifications" className="relative">
               <i className="bx bx-bell text-lg text-gray-600"></i>
               {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-600 text- text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {notificationCount}
                 </span>
               )}
@@ -312,7 +312,7 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 bg-black text-white py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
+      <div className="container mx-auto px-4 bg-[#112c47] text-white py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
         <div className="flex items-center">
           <img
             src={logo}
@@ -327,7 +327,7 @@ const Header = () => {
               <select
                 value={searchCategory}
                 onChange={handleCategoryChange}
-                className="bg-gray-100 py-2 pl-3 pr-8 text-xs focus:outline-none appearance-none rounded-l-full border-r border-gray-300"
+                className="bg-gray-100 py-2 pl-3 pr-8 text-xs text-black focus:outline-none appearance-none rounded-l-full border-r border-gray-300"
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -413,7 +413,7 @@ const Header = () => {
 
         <div className="hidden sm:flex items-center gap-3">
           <Link to="/favorites" className="flex items-center relative">
-            <i className="bx bx-heart text-gray-600 text-xl"></i>
+            <i className="bx bx-heart text-red-600 text-3xl"></i>
             {favoritesCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {favoritesCount}
@@ -421,7 +421,7 @@ const Header = () => {
             )}
           </Link>
           <Link to="/cart" className="flex items-center relative">
-            <i className="bx bx-cart-alt text-gray-600 text-xl"></i>
+            <i className="bx bx-cart-alt text-amber-600 text-3xl"></i>
             {cartCount > 0 && (
               <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {cartCount}
