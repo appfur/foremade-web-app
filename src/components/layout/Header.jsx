@@ -301,13 +301,31 @@ const Header = () => {
               Watchlist
             </Link>
             <Link to="/notifications" className="relative">
-              <i className="bx bx-bell text-lg text-gray-600"></i>
+              <i className="bx bx-bell text-xl text-gray-600"></i>
               {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[12px] rounded-full h-4 w-4 flex items-center justify-center">
                   {notificationCount}
                 </span>
               )}
             </Link>
+            <div className="hidden sm:flex items-center gap-3">
+              <Link to="/favorites" className="flex items-center relative">
+                <i className="bx bx-heart text-red-600 text-xl"></i>
+                {favoritesCount > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[12px] rounded-full h-4 w-4 flex items-center justify-center">
+                    {favoritesCount}
+                  </span>
+                )}
+              </Link>
+              <Link to="/cart" className="flex items-center relative">
+                <i className="bx bx-cart-alt text-[#ec9d38] text-xl"></i>
+                {cartCount > 0 && (
+                  <div className="absolute -top-1 -right-2 bg-red-600 text-white text-[12px] rounded-full h-4 w-4 flex items-center justify-center">
+                    {cartCount}
+                  </div>
+                )}
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -323,11 +341,23 @@ const Header = () => {
 
         <div className="hidden sm:flex items-center w-full mx-4 relative">
           <div className="flex items-center border-2 border-black rounded-full w-full">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search Foremade"
+                className="w-full bg-white py-2 pl-10 pr-3 text-md focus:outline-none placeholder-black text-black border-none rounded-l-full"
+                value={searchQuery}
+                onChange={handleSearch}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+              <i className="bx bx-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 text-xl"></i>
+            </div>
             <div className="relative">
               <select
                 value={searchCategory}
                 onChange={handleCategoryChange}
-                className="bg-gray-100 py-2 pl-3 pr-8 text-md text-black focus:outline-none appearance-none rounded-l-full border-r border-gray-300"
+                className="bg-gray-100 py-2 pl-3 pr-8 text-md text-black focus:outline-none appearance-none rounded-r-full border-r border-gray-300"
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -337,19 +367,10 @@ const Header = () => {
               </select>
               <i className="bx bx-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 text-sm"></i>
             </div>
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Search Foremade"
-                className="w-full bg-white py-2 pl-10 pr-3 text-md focus:outline-none placeholder-black text-black border-none rounded-r-full"
-                value={searchQuery}
-                onChange={handleSearch}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-              />
-              <i className="bx bx-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 text-sm"></i>
-            </div>
           </div>
+          <button className="bg-blue-600 py-2 px-4 rounded-full text-white text-md">
+            Search
+          </button>
           {showDropdown && (
             <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-80 overflow-y-auto">
               {loading ? (
@@ -385,10 +406,10 @@ const Header = () => {
 
         <div className="sm:hidden flex items-center gap-3">
           <Link to="/profile">
-            <i className="bx bx-user text-gray-600 text-xl"></i>
+            <i className="bx bx-user text-gray-600 text-2xl"></i>
           </Link>
           <Link to="/favorites" className="relative">
-            <i className="bx bx-heart text-gray-600 text-xl"></i>
+            <i className="bx bx-heart text-gray-600 text-2xl"></i>
             {favoritesCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {favoritesCount}
@@ -396,7 +417,7 @@ const Header = () => {
             )}
           </Link>
           <Link to="/cart" className="relative">
-            <i className="bx bx-cart-alt text-gray-600 text-xl"></i>
+            <i className="bx bx-cart-alt text-gray-600 text-7xl"></i>
             {cartCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {cartCount}
@@ -409,25 +430,6 @@ const Header = () => {
           >
             <i className="bx bx-menu text-2xl"></i>
           </button>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-3">
-          <Link to="/favorites" className="flex items-center relative">
-            <i className="bx bx-heart text-red-600 text-3xl"></i>
-            {favoritesCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {favoritesCount}
-              </span>
-            )}
-          </Link>
-          <Link to="/cart" className="flex items-center relative">
-            <i className="bx bx-cart-alt text-[#ec9d38] text-3xl"></i>
-            {cartCount > 0 && (
-              <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {cartCount}
-              </div>
-            )}
-          </Link>
         </div>
       </div>
 
