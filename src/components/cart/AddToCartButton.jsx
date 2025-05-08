@@ -24,7 +24,7 @@ const AddToCartButton = ({ productId }) => {
       onClick={handleAddToCart}
       disabled={loading}
       className={`p-1 rounded-full transition ${
-        loading ? 'bg-gray-300 cursor-not-allowed' : 'text-2xl bg-white shadow-xl text-black text-center hover:bg-blue-700'
+        loading ? 'bg-gray-300 cursor-not-allowed' : 'text-2xl bg-gray-50 shadow-xl text-black text-center hover:bg-[#ec9d38]'
       }`}
       aria-label="Add to cart"
     >
