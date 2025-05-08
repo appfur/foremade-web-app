@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 const AddToCartButton = ({ productId }) => {
   const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState(null);
 
   const handleAddToCart = async () => {
     setLoading(true);
