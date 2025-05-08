@@ -308,6 +308,7 @@ const Header = () => {
                 </span>
               )}
             </Link>
+            {/* cart and fav icons desktop and tab */}
             <div className="hidden sm:flex items-center gap-3">
               <Link to="/favorites" className="flex items-center relative">
                 <i className="bx bx-heart text-red-600 text-xl"></i>
@@ -404,12 +405,13 @@ const Header = () => {
           )}
         </div>
 
+        {/* cart and fav for mobile */}
         <div className="sm:hidden flex items-center gap-3">
           <Link to="/profile">
-            <i className="bx bx-user text-gray-600 text-2xl"></i>
+            <i className="bx bx-user text-white text-2xl"></i>
           </Link>
           <Link to="/favorites" className="relative">
-            <i className="bx bx-heart text-gray-600 text-2xl"></i>
+            <i className="bx bx-heart text-white text-2xl"></i>
             {favoritesCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {favoritesCount}
@@ -417,7 +419,7 @@ const Header = () => {
             )}
           </Link>
           <Link to="/cart" className="relative">
-            <i className="bx bx-cart-alt text-gray-600 text-7xl"></i>
+            <i className="bx bx-cart-alt text-white text-2xl"></i>
             {cartCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {cartCount}
@@ -428,7 +430,7 @@ const Header = () => {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="text-gray-600 focus:outline-none"
           >
-            <i className="bx bx-menu text-2xl"></i>
+            <i className="bx bx-menu text-2xl text-white"></i>
           </button>
         </div>
       </div>

@@ -1,18 +1,141 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth, db } from '/src/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import dbJson from '/src/db.json';
 import { getCart, clearCart, checkout } from '/src/utils/cartUtils';
-import PaystackCheckout from './PaystackCheckout';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Spinner from '/src/components/common/Spinner';
+import CartSummary from '/src/components/cart/CartSummary.jsx';
+import PaystackCheckout from './PaystackCheckout';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+const StripeCheckoutForm = ({ totalPrice, cartItems, formData, onSuccess, onCancel }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Convert NGN to GBP (example rate: 1 NGN = 0.0005 GBP, adjust as needed)
+      const gbpAmount = totalPrice * 0.0005;
+
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/create-payment-intent`,
+        {
+          amount: gbpAmount,
+          currency: 'gbp',
+          metadata: {
+            userId: auth.currentUser?.uid || 'anonymous',
+            orderId: `order-${Date.now()}`,
+          },
+        }
+      );
+
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
+        data.clientSecret,
+        {
+          payment_method: {
+            card: elements.getElement(CardElement),
+            billing_details: {
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              address: {
+                line1: formData.address,
+                city: formData.city,
+                postal_code: formData.postalCode,
+                country: 'GB',
+              },
+            },
+          },
+        }
+      );
+
+      if (stripeError) {
+        toast.error(stripeError.message, { position: 'top-right', autoClose: 3000 });
+        setLoading(false);
+        return;
+      }
+
+      if (paymentIntent.status === 'succeeded') {
+        toast.success('Payment successful!', { position: 'top-right', autoClose: 3000 });
+        await onSuccess(paymentIntent);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Payment failed. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <div className="bg-white p-4 rounded-lg shadow-sm">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Card Details
+        </label>
+        <CardElement
+          options={{
+            style: {
+              base: {
+                fontSize: '16px',
+                color: '#424770',
+                '::placeholder': {
+                  color: '#aab7c4',
+                },
+              },
+              invalid: {
+                color: '#9e2146',
+              },
+            },
+          }}
+          className="p-3 border border-gray-300 rounded-lg"
+        />
+      </div>
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={loading || !stripe || !elements}
+          className={`flex-1 py-3 px-4 rounded-lg text-white text-sm font-medium transition duration-200 shadow ${
+            loading || !stripe || !elements
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-900 hover:bg-blue-800'
+          }`}
+        >
+          {loading
+            ? 'Processing...'
+            : `Pay £${(totalPrice * 0.0005).toLocaleString('en-GB', {
+                minimumFractionDigits: 2,
+              })}`}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+};
 
 const Checkout = () => {
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [formData, setFormData] = useState({
     name: 'Emmanuel Chinecherem',
@@ -35,11 +158,14 @@ const Checkout = () => {
         );
         setCart(validCart);
         if (validCart.length !== cartItems.length) {
-          setError('Some cart items were invalid and have been removed.');
+          toast.error('Some cart items were invalid and have been removed.', {
+            position: 'top-right',
+            autoClose: 3000,
+          });
         }
       } else {
         setCart([]);
-        setError('Cart is empty or invalid.');
+        toast.error('Cart is empty or invalid.', { position: 'top-right', autoClose: 3000 });
       }
 
       const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -80,7 +206,7 @@ const Checkout = () => {
     } catch (err) {
       console.error('Error loading cart:', err);
       setCart([]);
-      setError('Failed to load cart.');
+      toast.error('Failed to load cart.', { position: 'top-right', autoClose: 3000 });
     } finally {
       setLoading(false);
     }
@@ -94,6 +220,7 @@ const Checkout = () => {
 
   // Calculate totals
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  console.log(totalItems)
   const subtotal = cartItems.reduce(
     (total, item) => total + (item.product ? item.product.price * item.quantity : 0),
     0
@@ -107,17 +234,22 @@ const Checkout = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(null);
   };
 
   // Validate form
   const validateForm = () => {
-    const { name, email, address, city, postalCode } = formData;
-    if (!name || !email || !address || !city || !postalCode) {
+    const { name, email, address, city, postalCode, country } = formData;
+    if (!name || !email || !address || !city || !postalCode || !country) {
       return { isValid: false, message: 'Please fill in all required fields.' };
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
       return { isValid: false, message: 'Please enter a valid email address.' };
+    }
+    if (!['Nigeria', 'United Kingdom', 'UK'].includes(country)) {
+      return {
+        isValid: false,
+        message: 'Payments are only supported for Nigeria and the United Kingdom.',
+      };
     }
     return { isValid: true, message: '' };
   };
@@ -125,61 +257,93 @@ const Checkout = () => {
   // Memoize form validity
   const formValidity = useMemo(() => validateForm(), [formData]);
 
-  // Handle Paystack success
-  const handlePaymentSuccess = useCallback(async () => {
-    try {
-      if (cart.length === 0) {
-        setError('Your cart is empty.');
-        return;
-      }
-      const validation = validateForm();
-      if (!validation.isValid) {
-        setError(validation.message);
-        return;
-      }
-      const stockIssues = cartItems.filter((item) => item.quantity > (item.product?.stock || 0));
-      if (stockIssues.length > 0) {
-        const issueMessages = stockIssues.map(
-          (item) => `Only ${item.product.stock} units of ${item.product.name} available.`
-        );
-        setError(`Checkout failed:\n${issueMessages.join('\n')}`);
-        return;
-      }
+  // Handle payment success
+  const handlePaymentSuccess = useCallback(
+    async (paymentData) => {
+      try {
+        if (cart.length === 0) {
+          toast.error('Your cart is empty.', { position: 'top-right', autoClose: 3000 });
+          return;
+        }
+        const validation = validateForm();
+        if (!validation.isValid) {
+          toast.error(validation.message, { position: 'top-right', autoClose: 3000 });
+          return;
+        }
+        const stockIssues = cartItems.filter((item) => item.quantity > (item.product?.stock || 0));
+        if (stockIssues.length > 0) {
+          const issueMessages = stockIssues.map(
+            (item) => `Only ${item.product.stock} units of ${item.product.name} available.`
+          );
+          toast.error(`Checkout failed: ${issueMessages.join(', ')}`, {
+            position: 'top-right',
+            autoClose: 3000,
+          });
+          return;
+        }
 
-      const userId = auth.currentUser?.uid || 'anonymous';
-      const order = {
-        userId,
-        items: cart,
-        total: totalPrice,
-        date: new Date().toISOString(),
-        shippingDetails: formData,
-        status: 'completed',
-      };
-      const orderId = `order-${Date.now()}`;
-      
-      // Save to Firestore
-      await setDoc(doc(db, 'orders', orderId), order);
-      
-      // Save to localStorage via cartUtils.checkout
-      const localOrder = checkout();
-      
-      setCart([]);
-      clearCart();
-      setMessage('Order placed successfully!');
-      navigate('/order-confirmation', { state: { order } });
-    } catch (err) {
-      console.error('Error saving order:', err);
-      setError('Failed to place order. Please try again.');
-    }
-  }, [cart, cartItems, formData, totalPrice, navigate]);
+        const userId = auth.currentUser?.uid || 'anonymous';
+        const orderId = `order-${Date.now()}`;
+        const order = {
+          userId,
+          items: cart,
+          total: totalPrice,
+          date: new Date().toISOString(),
+          shippingDetails: formData,
+          status: 'completed',
+          paymentGateway: formData.country === 'Nigeria' ? 'Paystack' : 'Stripe',
+          paymentId: paymentData.id || paymentData.reference,
+        };
 
-  // Handle payment initiation for unauthenticated users
-  const handlePaymentAttempt = () => {
+        // Save order to Firestore
+        await setDoc(doc(db, 'orders', orderId), order);
+
+        // Update stock in Firestore
+        for (const item of cartItems) {
+          const productRef = doc(db, 'products', item.productId);
+          const productSnap = await getDoc(productRef);
+          if (productSnap.exists()) {
+            const newStock = productSnap.data().stock - item.quantity;
+            await updateDoc(productRef, { stock: newStock });
+          }
+        }
+
+        // Update cart in localStorage
+        checkout(); // Call without assigning to localOrder
+
+        setCart([]);
+        clearCart();
+        toast.success('Order placed successfully!', { position: 'top-right', autoClose: 3000 });
+        navigate('/order-confirmation', { state: { order } });
+      } catch (err) {
+        console.error('Error saving order:', err);
+        toast.error('Failed to place order. Please try again.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    },
+    [cart, cartItems, formData, totalPrice, navigate]
+  );
+
+  // Handle checkout initiation
+  const handleCheckout = () => {
     if (!isAuthenticated) {
-      setError('Please log in to complete your purchase.');
+      toast.error('Please log in to complete your purchase.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
       navigate('/login', { state: { from: '/checkout' }, replace: true });
       return;
     }
+    if (!formValidity.isValid) {
+      toast.error(formValidity.message, { position: 'top-right', autoClose: 3000 });
+    }
+  };
+
+  // Handle cancel
+  const handleCancel = () => {
+    toast.info('Payment cancelled.', { position: 'top-right', autoClose: 3000 });
   };
 
   if (loading) {
@@ -194,8 +358,6 @@ const Checkout = () => {
   return (
     <div className="container mx-auto px-4 py-8 text-gray-800">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Checkout</h1>
-      {error && <p className="text-red-600 mb-4 whitespace-pre-line">{error}</p>}
-      {message && <p className="text-green-600 mb-4">{message}</p>}
       {cartItems.length === 0 ? (
         <p className="text-gray-600">
           Your cart is empty.{' '}
@@ -204,14 +366,14 @@ const Checkout = () => {
           </Link>
         </p>
       ) : (
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Shipping Details Form */}
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Shipping Details</h2>
-            <form className="space-y-4 bg-gray-50 p-4 rounded-lg shadow-sm">
+            <form className="space-y-4 bg-white p-6 rounded-lg shadow-sm">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Full Name
+                  Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -219,13 +381,13 @@ const Checkout = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
+                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -233,13 +395,13 @@ const Checkout = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
+                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Phone
+                  Phone <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -247,13 +409,13 @@ const Checkout = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
+                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               <div>
                 <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                  Address
+                  Address <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -261,13 +423,13 @@ const Checkout = () => {
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
+                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               <div>
                 <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                  City
+                  City <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -275,13 +437,13 @@ const Checkout = () => {
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
+                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               <div>
                 <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">
-                  Postal Code
+                  Postal Code <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -289,96 +451,78 @@ const Checkout = () => {
                   name="postalCode"
                   value={formData.postalCode}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
+                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               <div>
                 <label htmlFor="country" className="block text-sm font-medium text-gray-700">
-                  Country
+                  Country <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   id="country"
                   name="country"
                   value={formData.country}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
+                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
-                />
+                >
+                  <option value="">Select a country</option>
+                  <option value="Nigeria">Nigeria</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                </select>
               </div>
             </form>
           </div>
 
-          {/* Order Summary */}
-          <div className="w-full md:w-1/3">
-            <div className="p-4 bg-gray-50 rounded-lg shadow-sm sticky top-4">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h2>
-              <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span>Total Items</span>
-                  <span>{totalItems}</span>
-                </div>
-                {cartItems.map((item) => (
-                  <div key={item.productId} className="flex justify-between">
-                    <span>
-                      {item.product?.name || 'Unknown'} (x{item.quantity})
-                    </span>
-                    <span>
-                      ₦{(item.product?.price * item.quantity || 0).toLocaleString('en-NG', {
-                        minimumFractionDigits: 2,
-                      })}
-                    </span>
-                  </div>
-                ))}
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>₦{subtotal.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tax (7.5%)</span>
-                  <span>₦{tax.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span>₦{shipping.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between font-bold text-gray-800 border-t pt-2">
-                  <span>Grand Total</span>
-                  <span>
-                    ₦{totalPrice.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-4">
-                {isAuthenticated ? (
+          {/* Order Summary and Payment */}
+          <div className="w-full lg:w-1/3">
+            <CartSummary
+              totalPrice={totalPrice}
+              handleCheckout={handleCheckout}
+              cartItems={cartItems}
+              clearCart={clearCart}
+            />
+            {isAuthenticated && formValidity.isValid && cart.length > 0 && (
+              <div className="mt-6 bg-white p-6 rounded-lg shadow-sm">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Payment Details</h2>
+                {['United Kingdom', 'UK'].includes(formData.country) ? (
+                  <Elements stripe={stripePromise}>
+                    <StripeCheckoutForm
+                      totalPrice={totalPrice}
+                      cartItems={cartItems}
+                      formData={formData}
+                      onSuccess={handlePaymentSuccess}
+                      onCancel={handleCancel}
+                    />
+                  </Elements>
+                ) : formData.country === 'Nigeria' ? (
                   <PaystackCheckout
                     email={formData.email}
                     amount={totalPrice * 100} // Amount in Kobo
                     totalPrice={totalPrice}
                     onSuccess={handlePaymentSuccess}
-                    onClose={() => setMessage('Payment cancelled.')}
+                    onClose={handleCancel}
                     disabled={!formValidity.isValid || cart.length === 0}
                     buttonText="Pay Now"
-                    className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className={`w-full py-3 px-4 rounded-lg text-white text-sm font-medium transition duration-200 shadow ${
+                      !formValidity.isValid || cart.length === 0
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-blue-900 hover:bg-blue-800'
+                    }`}
                     iconClass="bx bx-cart mr-2"
                   />
                 ) : (
-                  <div>
-                    <p className="text-red-600 mb-2">Please log in to complete your purchase.</p>
-                    <button
-                      onClick={handlePaymentAttempt}
-                      className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 flex items-center justify-center"
-                    >
-                      <i className="bx bx-user mr-2"></i> Log In to Pay
-                    </button>
-                  </div>
+                  <p className="text-red-600 text-sm">
+                    Please select a valid country (Nigeria or United Kingdom) to proceed with payment.
+                  </p>
                 )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };
