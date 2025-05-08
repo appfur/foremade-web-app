@@ -1,35 +1,34 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { auth } from '/src/firebase';
 import { addToCart } from '/src/utils/cartUtils';
 import { toast } from 'react-toastify';
 
-const AddToCartButton = ({ productId, className = '' }) => {
-  const navigate = useNavigate();
+const AddToCartButton = ({ productId }) => {
+  const [loading, setLoading] = useState(false);
 
-  const handleAddToCart = async (e) => {
-    e.stopPropagation(); // Prevent parent click events
-    if (!auth.currentUser) {
-      toast.error('Please log in to add items to cart');
-      navigate('/login');
-      return;
-    }
-
+  const handleAddToCart = async () => {
+    setLoading(true);
     try {
-      await addToCart(auth.currentUser.uid, productId, 1);
+      await addToCart(productId, 1, auth.currentUser?.uid);
       toast.success('Added to cart!');
     } catch (err) {
       console.error('Error adding to cart:', err);
-      toast.error('Failed to add to cart.');
+      toast.error(err.message || 'Failed to add to cart');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <button
       onClick={handleAddToCart}
-      className={`text-2xl text-gray-600 hover:text-green-500 transition duration-200 ${className}`}
+      disabled={loading}
+      className={`p-1 rounded-full transition ${
+        loading ? 'bg-gray-300 cursor-not-allowed' : 'text-2xl bg-white shadow-xl text-black text-center hover:bg-blue-700'
+      }`}
       aria-label="Add to cart"
     >
-      <i className="bx bx-cart-add p-[3px] border rounded-full"></i>
+      <i className={`bx bx-plus text-black ${loading ? 'opacity-50' : ''}`}></i>
     </button>
   );
 };

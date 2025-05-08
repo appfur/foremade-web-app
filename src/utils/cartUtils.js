@@ -2,8 +2,8 @@ import { db } from '/src/firebase';
 import { doc, getDoc, collection, addDoc } from 'firebase/firestore';
 import { toast } from 'react-toastify';
 
-export const addToCart = async (userId, productId, quantity) => {
-  if (!userId || !productId || quantity <= 0) {
+export const addToCart = async (productId, quantity, userId = null) => {
+  if (!productId || quantity <= 0) {
     throw new Error('Invalid cart item data');
   }
 
@@ -46,13 +46,11 @@ export const addToCart = async (userId, productId, quantity) => {
     ];
   }
 
-  await updateCart(userId, updatedCart);
-  window.dispatchEvent(new Event('cartUpdated'));
+  await updateCart(updatedCart, userId);
 };
 
-export const getCart = async (userId) => {
-  if (!userId) return [];
-  const cartKey = `userCart_${userId}`;
+export const getCart = async (userId = null) => {
+  const cartKey = userId ? `userCart_${userId}` : 'guestCart';
   let cart = [];
 
   try {
@@ -91,7 +89,7 @@ export const getCart = async (userId) => {
     }
 
     if (validCart.length < cart.length) {
-      await updateCart(userId, validCart);
+      await updateCart(validCart, userId);
     }
 
     return validCart;
@@ -101,9 +99,13 @@ export const getCart = async (userId) => {
   }
 };
 
-export const updateCart = async (userId, cartItems) => {
-  if (!userId) return;
-  const cartKey = `userCart_${userId}`;
+export const getCartItemCount = async (userId = null) => {
+  const cart = await getCart(userId);
+  return cart.reduce((total, item) => total + item.quantity, 0);
+};
+
+export const updateCart = async (cartItems, userId = null) => {
+  const cartKey = userId ? `userCart_${userId}` : 'guestCart';
   try {
     localStorage.setItem(cartKey, JSON.stringify(cartItems));
     window.dispatchEvent(new Event('cartUpdated'));
@@ -113,12 +115,12 @@ export const updateCart = async (userId, cartItems) => {
   }
 };
 
-export const clearCart = async (userId) => {
-  await updateCart(userId, []);
+export const clearCart = async (userId = null) => {
+  await updateCart([], userId);
 };
 
 export const checkout = async (userId) => {
-  if (!userId) throw new Error('User not authenticated');
+  if (!userId) throw new Error('Please log in to checkout');
   const cart = await getCart(userId);
   if (cart.length === 0) throw new Error('Cart is empty');
 
@@ -149,4 +151,34 @@ export const checkout = async (userId) => {
     console.error('Checkout error:', err);
     throw err;
   }
+};
+
+export const mergeGuestCart = async (userId) => {
+  const guestCart = await getCart(null);
+  if (guestCart.length === 0) return;
+
+  const userCart = await getCart(userId);
+  const mergedCart = [...userCart];
+
+  for (const guestItem of guestCart) {
+    const existingItem = mergedCart.find((item) => item.productId === guestItem.productId);
+    if (existingItem) {
+      existingItem.quantity += guestItem.quantity;
+      const productRef = doc(db, 'products', existingItem.productId);
+      const productSnap = await getDoc(productRef);
+      if (productSnap.exists()) {
+        const productData = productSnap.data();
+        if (existingItem.quantity > productData.stock) {
+          existingItem.quantity = productData.stock;
+          toast.warn(`Adjusted quantity for ${productData.name} to available stock`);
+        }
+      }
+    } else {
+      mergedCart.push(guestItem);
+    }
+  }
+
+  await updateCart(mergedCart, userId);
+  await clearCart(null); // Clear guest cart
+  toast.success('Guest cart merged with your account');
 };

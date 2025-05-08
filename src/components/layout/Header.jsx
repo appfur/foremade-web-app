@@ -21,6 +21,7 @@ const Header = () => {
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const categories = [
     'All Categories',
@@ -37,28 +38,42 @@ const Header = () => {
   ];
 
   useEffect(() => {
-    // Auth state
+    // Auth state and cart count
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        try {
+      try {
+        // Fetch cart count for guest or user
+        const count = await getCartItemCount(currentUser?.uid);
+        setCartCount(count);
+
+        if (currentUser) {
+          // Fetch user data
           const storedUserData = localStorage.getItem('userData');
           if (storedUserData) {
             setUserData(JSON.parse(storedUserData));
           }
-          const count = await getCartItemCount(currentUser.uid);
-          setCartCount(count);
+
+          // Fetch notification count
+          const notificationsQuery = query(
+            collection(db, 'notifications'),
+            where('userId', '==', currentUser.uid),
+            where('read', '==', false)
+          );
+          const notificationsSnap = await getDocs(notificationsQuery);
+          setNotificationCount(notificationsSnap.size);
+
           console.log('Authenticated user:', {
             uid: currentUser.uid,
             displayName: currentUser.displayName,
             email: currentUser.email,
           });
-        } catch (err) {
-          console.error('Error loading user data:', err);
+        } else {
+          setUserData(null);
+          setNotificationCount(0);
         }
-      } else {
-        setUserData(null);
-        setCartCount(0);
+      } catch (err) {
+        console.error('Error loading user data or cart:', err);
+        toast.error('Failed to load user data');
       }
     });
 
@@ -69,13 +84,17 @@ const Header = () => {
     } catch (err) {
       console.error('Error loading favorites:', err);
       setFavorites([]);
+      toast.error('Failed to load favorites');
     }
 
     // Event listeners
     const handleCartUpdate = async () => {
-      if (user) {
-        const count = await getCartItemCount(user.uid);
+      try {
+        const count = await getCartItemCount(user?.uid);
         setCartCount(count);
+      } catch (err) {
+        console.error('Error updating cart count:', err);
+        toast.error('Failed to update cart count');
       }
     };
 
@@ -87,6 +106,7 @@ const Header = () => {
         } catch (err) {
           console.error('Error parsing favorites:', err);
           setFavorites([]);
+          toast.error('Failed to sync favorites');
         }
       }
     };
@@ -134,6 +154,7 @@ const Header = () => {
       console.error('Error searching products:', err);
       setError('Failed to search products.');
       setSearchResults([]);
+      toast.error('Failed to search products');
     } finally {
       setLoading(false);
     }
@@ -167,13 +188,12 @@ const Header = () => {
     }
   };
 
-  const cartItemCount = cartCount;
   const favoritesCount = favorites.length;
 
   if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
 
   return (
-    <header className="">
+    <header className="bg-white">
       <div className="hidden sm:block border-b border-gray-200 text-gray-600 py-2">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
@@ -260,15 +280,17 @@ const Header = () => {
             </Link>
             <Link to="/notifications" className="relative">
               <i className="bx bx-bell text-lg text-gray-600"></i>
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                0
-              </span>
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {notificationCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="container bg-gray-100 mx-auto px-4 py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
+      <div className="container bg-[#c0c0c0] mx-auto px-4 py-2 flex justify-between items-center sm:border-b sm:border-gray-200">
         <div className="flex items-center">
           <img
             src={logo}
@@ -353,9 +375,9 @@ const Header = () => {
           </Link>
           <Link to="/cart" className="relative">
             <i className="bx bx-cart-alt text-gray-600 text-xl"></i>
-            {cartItemCount > 0 && (
+            {cartCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {cartItemCount}
+                {cartCount}
               </span>
             )}
           </Link>
@@ -378,10 +400,10 @@ const Header = () => {
           </Link>
           <Link to="/cart" className="flex items-center relative">
             <i className="bx bx-cart-alt text-gray-600 text-xl"></i>
-            {cartItemCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {cartItemCount}
-              </span>
+            {cartCount > 0 && (
+              <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {cartCount}
+              </div>
             )}
           </Link>
         </div>
@@ -691,9 +713,11 @@ const Header = () => {
           } hover:text-blue-600`}
         >
           <i className="bx bx-bell text-2xl"></i>
-          <span className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-            6
-          </span>
+          {notificationCount > 0 && (
+            <span className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              {notificationCount}
+            </span>
+          )}
           <span className="text-xs">Notifications</span>
         </Link>
         <Link

@@ -7,6 +7,7 @@ import {
   updateCart,
   clearCart,
   checkout,
+  mergeGuestCart,
 } from '/src/utils/cartUtils';
 import CartItem from '/src/components/cart/CartItem';
 import CartSummary from '/src/components/cart/CartSummary';
@@ -21,41 +22,44 @@ const Cart = () => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        try {
+      try {
+        if (currentUser) {
+          await mergeGuestCart(currentUser.uid);
           const items = await getCart(currentUser.uid);
+          setCartItems(items);
           if (items.length === 0) {
             setError('Your cart is empty.');
           }
+        } else {
+          const items = await getCart();
           setCartItems(items);
-        } catch (err) {
-          console.error('Error loading cart:', err);
-          setError('Failed to load cart. Please try again.');
-          setCartItems([]);
-          toast.error('Failed to load cart');
+          if (items.length === 0) {
+            setError('Your cart is empty.');
+          }
         }
-      } else {
-        setError('Please log in to view your cart.');
-        navigate('/login');
+      } catch (err) {
+        console.error('Error loading cart:', err);
+        setError('Failed to load cart. Please try again.');
+        setCartItems([]);
+        toast.error('Failed to load cart');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     const handleCartUpdate = async () => {
-      if (user) {
-        try {
-          const items = await getCart(user.uid);
-          if (items.length === 0) {
-            setError('Your cart is empty.');
-          } else {
-            setError(null);
-          }
-          setCartItems(items);
-        } catch (err) {
-          console.error('Error updating cart:', err);
-          setError('Failed to update cart.');
-          toast.error('Failed to update cart');
+      try {
+        const items = await getCart(user?.uid);
+        setCartItems(items);
+        if (items.length === 0) {
+          setError('Your cart is empty.');
+        } else {
+          setError(null);
         }
+      } catch (err) {
+        console.error('Error updating cart:', err);
+        setError('Failed to update cart.');
+        toast.error('Failed to update cart');
       }
     };
 
@@ -77,7 +81,7 @@ const Cart = () => {
       const updatedItems = cartItems.map((item) =>
         item.productId === productId ? { ...item, quantity: newQuantity } : item
       );
-      await updateCart(user.uid, updatedItems);
+      await updateCart(updatedItems, user?.uid);
       setCartItems(updatedItems);
       toast.success('Quantity updated');
     } catch (err) {
@@ -89,7 +93,7 @@ const Cart = () => {
   const removeFromCart = async (productId) => {
     try {
       const updatedItems = cartItems.filter((item) => item.productId !== productId);
-      await updateCart(user.uid, updatedItems);
+      await updateCart(updatedItems, user?.uid);
       setCartItems(updatedItems);
       toast.success('Item removed from cart');
       if (updatedItems.length === 0) {
@@ -103,7 +107,7 @@ const Cart = () => {
 
   const handleClearCart = async () => {
     try {
-      await clearCart(user.uid);
+      await clearCart(user?.uid);
       setCartItems([]);
       setError('Your cart is empty.');
       toast.success('Cart cleared successfully');
@@ -114,6 +118,11 @@ const Cart = () => {
   };
 
   const handleCheckout = async () => {
+    if (!user) {
+      toast.error('Please log in to checkout');
+      navigate('/login');
+      return;
+    }
     try {
       await checkout(user.uid);
       toast.success('Order placed successfully!');

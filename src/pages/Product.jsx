@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { auth, db } from '/src/firebase';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { addToCart } from '/src/utils/cartUtils';
@@ -9,7 +9,6 @@ import SkeletonLoader from '/src/components/common/SkeletonLoader';
 
 const Product = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -208,11 +207,6 @@ const Product = () => {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    if (!auth.currentUser) {
-      toast.error('Please log in to add items to cart');
-      navigate('/login');
-      return;
-    }
 
     try {
       if (quantity > product.stock) {
@@ -220,12 +214,12 @@ const Product = () => {
         setQuantity(product.stock > 0 ? product.stock : 1);
         return;
       }
-      await addToCart(auth.currentUser.uid, product.id, quantity);
+      await addToCart(product.id, quantity, auth.currentUser?.uid);
       toast.success(`${product.name} added to cart!`);
       setQuantity(1);
     } catch (err) {
       console.error('Error adding to cart:', err);
-      toast.error('Failed to add to cart');
+      toast.error(err.message || 'Failed to add to cart');
     }
   };
 
@@ -286,7 +280,7 @@ const Product = () => {
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-3/4">
           <div className="flex flex-col md:flex-row gap-6">
-            <div className="md:w-1/2">
+            <div className="md:w-1/2 p-10">
               <img
                 src={product.imageUrl || '/images/placeholder.jpg'}
                 alt={product.name}
@@ -408,7 +402,7 @@ const Product = () => {
             )}
           </div>
         </div>
-        <div className="w-full md:w-1/5 max-md:hidden overflow-auto">
+        <div className="w-full md:w-1/4 max-md:hidden overflow-auto">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Similar Products</h2>
           <div className="flex flex-col gap-4 md:border-l md:pl-4">
             {similarProducts.length > 0 ? (
