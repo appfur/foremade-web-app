@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { auth } from '/src/firebase';
 
 const PaystackCheckout = ({
   email,

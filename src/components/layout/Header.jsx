@@ -41,10 +41,12 @@ const Header = () => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
       try {
+        // Fetch cart count
         const count = await getCartItemCount(currentUser?.uid);
         setCartCount(count);
 
         if (currentUser) {
+          // Fetch user data from localStorage
           try {
             const storedUserData = localStorage.getItem('userData');
             if (storedUserData) {
@@ -76,6 +78,7 @@ const Header = () => {
 
   useEffect(() => {
     if (user) {
+      // Fetch notification count
       const fetchNotifications = async () => {
         try {
           const notificationsQuery = query(
@@ -96,6 +99,7 @@ const Header = () => {
   }, [user]);
 
   useEffect(() => {
+    // Favorites
     try {
       const storedFavorites = localStorage.getItem('favorites');
       setFavorites(storedFavorites ? JSON.parse(storedFavorites) : []);
@@ -105,6 +109,7 @@ const Header = () => {
       toast.error('Failed to load favorites');
     }
 
+    // Event listeners
     const handleCartUpdate = async () => {
       try {
         const count = await getCartItemCount(user?.uid);
@@ -212,7 +217,7 @@ const Header = () => {
   return (
     <header className="bg-white">
       <div className="hidden sm:block border-b border-gray-200 text-gray-600 py-2">
-        <div className="container mx-auto px-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
+        <div className="container mx-auto px-4 flex flex-col justify-between sm:flex-row sm:justify-between sm:items-center">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
             {user ? (
               <Link to="/profile" className="cursor-pointer hover:text-blue-600">
@@ -303,9 +308,10 @@ const Header = () => {
                 </span>
               )}
             </Link>
+            {/* cart and fav icons desktop and tab */}
             <div className="hidden sm:flex items-center gap-3">
               <Link to="/favorites" className="flex items-center relative">
-                <i className="bx bx-heart text-red-600 text-xl"></i>
+                <i className="bx bx-heart text-slate-500 text-xl"></i>
                 {favoritesCount > 0 && (
                   <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[12px] rounded-full h-4 w-4 flex items-center justify-center">
                     {favoritesCount}
@@ -325,22 +331,28 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="mx-auto px-4 bg-[#112c47] justify-center items-center text-white py-2 flex sm:border-gray-200">
+      <div className="mx-auto px-4 bg-[#112c47] text-white py-2 flex justify-between items-center sm:border-gray-200">
         <div className="flex items-center">
           <img
             src={logo}
-            className="h-14 sm:w-[400px] md:w-[400px] lg:w-[400px] xl:w-72"
+            className="h-14 sm:w-[400px] md:w-[400px] lg:w-[400px] xl:w-[300px]"
             alt="Foremade"
           />
         </div>
 
-        <div className="hidden sm:flex items-center mx-4 relative justify-center">
-          <div className="flex items-center border-2 border-black rounded-full">
+        <select className="bg-[#112c47] text-sm text-white w-14 m-5">
+          <option>Select country</option>
+          <option>UK</option>
+          <option>Nigeria</option>
+        </select>
+
+        <div className="hidden sm:flex items-center w-full mx-4 relative">
+          <div className="flex items-center rounded-full w-full">
             <div className="relative flex-1">
               <input
                 type="text"
                 placeholder="Search Foremade"
-                className="w-[400px] sm:w-[450px] md:w-[500px] lg:w-[550px] xl:w-[600px] bg-white py-2 pl-10 pr-3 text-md focus:outline-none placeholder-black text-black border-none rounded-l-full"
+                className="w-full bg-white py-2 pl-10 pr-3 text-md focus:outline-none placeholder-black text-black border-none rounded-l-full"
                 value={searchQuery}
                 onChange={handleSearch}
                 onFocus={handleFocus}
@@ -352,7 +364,7 @@ const Header = () => {
               <select
                 value={searchCategory}
                 onChange={handleCategoryChange}
-                className="bg-gray-100 py-2 pl-3 pr-8 text-md text-black focus:outline-none appearance-none rounded-r-full border-r border-gray-300"
+                className="bg-gray-100 py-2 pl-3 w-40 text-md text-black focus:outline-none appearance-none rounded-r-full border-r border-gray-300"
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -363,11 +375,11 @@ const Header = () => {
               <i className="bx bx-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 text-sm"></i>
             </div>
           </div>
-          <button className="bg-blue-600 py-2 px-4 rounded-full text-white text-md">
+          <button className="m-3 bg-blue-600 py-2 px-4 rounded-full text-white text-md">
             Search
           </button>
           {showDropdown && (
-            <div className="absolute top-full left-0 mt-1 w-[400px] sm:w-[450px] md:w-[500px] lg:w-[550px] xl:w-[600px] bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-80 overflow-y-auto">
+            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-80 overflow-y-auto">
               {loading ? (
                 <div className="p-2 text-sm text-gray-600">Loading...</div>
               ) : searchResults.length > 0 ? (
@@ -399,6 +411,7 @@ const Header = () => {
           )}
         </div>
 
+        {/* cart and fav for mobile */}
         <div className="sm:hidden flex items-center gap-3">
           <Link to="/profile">
             <i className="bx bx-user text-white text-2xl"></i>

@@ -57,7 +57,13 @@ const StripeCheckoutForm = ({ totalPrice, cartItems, formData, onSuccess, onCanc
         await onSuccess(paymentIntent);
       }
     } catch (err) {
-      toast.error('Payment failed. Try again.', { position: 'top-right', autoClose: 3000 });
+      console.error('Stripe payment error:', err);
+      toast.error(
+        err.code === 'ERR_NETWORK'
+          ? 'Unable to connect to payment server. Please try again later.'
+          : 'Payment failed. Try again.',
+        { position: 'top-right', autoClose: 3000 }
+      );
     } finally {
       setLoading(false);
     }
